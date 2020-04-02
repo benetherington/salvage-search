@@ -24,5 +24,11 @@
   },
   "options_ui": {
     "page": "options.html"
+  },
+  "applications": {
+    "gecko": {
+      "id": "ben.j.etherington+salvage-search@gmail.com",
+      "update_url": "https://benetherington.github.io/salvage-search/updates.json"
+    }
   }
 }
