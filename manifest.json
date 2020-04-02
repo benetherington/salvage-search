@@ -1,0 +1,28 @@
+{
+  "description": "Opens salvage inventory sites in new tabs, searching for the copied VIN",
+  "manifest_version": 2,
+  "name": "Salvage Search",
+  "version": "0.1",
+  "homepage_url": "http://github.com/benetherington",
+  "icons": {
+    "48": "icons/SS-48.png"
+  },
+  "permissions": [
+    "storage",
+    "clipboardRead"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "browser_action": {
+    "default_icon": {
+      "48": "icons/icon.svg",
+      "96": "icons/icon.svg"
+    }
+  },
+  "options_ui": {
+    "page": "options.html"
+  }
+}
