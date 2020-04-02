@@ -1,10 +1,10 @@
 {
   "addons": {
-    "ben.j.etherington+salvage-search@gmail.com": {
+    "ben.j.etherington@gmail.com": {
       "updates": [
         {
           "version": "1.0",
-          "update_link": "https://benetherington.github.io/salvage-search/addon-1.0.xpi"
+          "update_link": "https://benetherington.com/salvage-search/releases/salvage_search-1.0-fx.xpi"
         }
       ]
     }

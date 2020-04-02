@@ -5,7 +5,7 @@
   "version": "1.0",
   "homepage_url": "https://github.com/benetherington/salvage-search",
   "icons": {
-    "48": "icons/SS-48.png"
+    "48": "icons/icon.svg"
   },
   "permissions": [
     "storage",
@@ -27,8 +27,8 @@
   },
   "applications": {
     "gecko": {
-      "id": "ben.j.etherington+salvage-search@gmail.com",
-      "update_url": "https://benetherington.github.io/salvage-search/updates.json"
+      "id": "ben.j.etherington@gmail.com",
+      "update_url": "https://benetherington.com/salvage-search/updates.json"
     }
   }
 }
