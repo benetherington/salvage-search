@@ -3,18 +3,25 @@ async function openMyPage(resolve, reject) {
   settings = storage.settings
   let clip = await navigator.clipboard.readText()
 
-  const vin_regex = RegExp("^[A-HJ-NPR-Z0-9]{3}[A-HJ-NPR-Z0-9]{5}[0-9X][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9]{6}$")
-
+  // test the clipboard text out of an abundance of caution since we need to do code injection for Copart.
+  clip = encodeURIComponent(clip).replace(/^\s+|\s+$/g, '')
+  const vin_regex = RegExp("^[A-HJ-NPR-Z0-9]{3}[A-HJ-NPR-Z0-9]{5}[0-9X][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9]{6}$", "i")
   if (!vin_regex.test(clip)) {
    browser.tabs.create({'url':'malformed.html'})
    return
   };
 
   if ((typeof settings === 'undefined') || settings.copart) {
-    browser.tabs.create({
-     "url": "https://www.copart.com/lotSearchResults/?query="+clip
+    payload = "".concat(
+      "document.querySelector(\'input[data-uname=homeFreeFormSearch]\').value = \'", clip, "\';",
+      "document.querySelector(\'input[data-uname=homeFreeFormSearch]\').dispatchEvent(new CompositionEvent(\'compositionend\'));",
+      "document.querySelector(\'button[data-uname=homepageHeadersearchsubmit]\').click();")
+    browser.tabs.create({url: "https://www.copart.com/"}, function (tab) {
+      console.log('tabs.create')
+        browser.tabs.executeScript(tab.id, {code: payload});
     });
   };
+
   if ((typeof settings === 'undefined') || settings.iaai) {
     browser.tabs.create({
       "url": "https://www.iaai.com/VehicleSearch/SearchDetails?Keyword="+clip

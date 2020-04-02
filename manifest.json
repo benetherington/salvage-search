@@ -9,7 +9,8 @@
   },
   "permissions": [
     "storage",
-    "clipboardRead"
+    "clipboardRead",
+    "*://www.copart.com/*"
   ],
   "background": {
     "scripts": [
