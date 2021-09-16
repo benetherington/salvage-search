@@ -2,7 +2,7 @@
   "description": "Opens salvage inventory sites in new tabs, searching for the copied VIN",
   "manifest_version": 2,
   "name": "Salvage Search",
-  "version": "1.1",
+  "version": "2.0",
   "homepage_url": "https://github.com/benetherington/salvage-search",
   "icons": {
     "48": "icons/icon.svg"
@@ -14,22 +14,20 @@
   ],
   "background": {
     "scripts": [
-      "background.js"
+      "browser-polyfill.js",
+      "background.js",
+      "download.js"
     ]
   },
   "browser_action": {
     "default_icon": {
-      "48": "icons/icon.svg",
-      "96": "icons/icon.svg"
+      "24": "icons/SS-24.bmp",
+      "48": "icons/SS-48.bmp",
+      "96": "icons/SS-96.bmp"
     }
   },
   "options_ui": {
     "page": "options.html"
   },
-  "applications": {
-    "gecko": {
-      "id": "ben.j.etherington@gmail.com",
-      "update_url": "https://benetherington.com/salvage-search/updates.json"
-    }
-  }
+  "update_url": "https://benetherington.com/salvage-search/updates.json"
 }
