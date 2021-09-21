@@ -9,14 +9,21 @@
   },
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "clipboardRead",
-    "*://www.copart.com/*"
+    "activeTab",
+    "tabs",
+    "*://www.copart.com/lot/*",
+    "*://www.iaai.com/*",
+    "https://anvis.iaai.com/deepzoom*",
+    "https://knicknic.github.io/wasm-imagemagick/*",
+    "webRequest", "webRequestBlocking"
   ],
   "background": {
     "scripts": [
-      "browser-polyfill.js",
-      "background.js",
-      "download.js"
+      "search.js",
+      "canvastobmp.js",
+      "background.js"
     ]
   },
   "browser_action": {
@@ -26,8 +33,23 @@
       "96": "icons/SS-96.bmp"
     }
   },
+  "page_action": {
+    "default_icon": {
+      "24": "icons/SS-24.bmp",
+      "48": "icons/SS-48.bmp",
+      "96": "icons/SS-96.bmp"
+    },
+    "default_title": "Salvage Search",
+    "show_matches": [
+      "https://www.copart.com/lot/*",
+      "https://www.iaai.com/vehicledetails/*"
+    ]
+  },
   "options_ui": {
     "page": "options.html"
   },
-  "update_url": "https://benetherington.com/salvage-search/updates.json"
+  "browser_specific_settings":
+    {"gecko":
+      {"update_url": "https://benetherington.com/salvage-search/updates.json"}
+    }
 }
