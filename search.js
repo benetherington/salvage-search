@@ -1,10 +1,10 @@
 const VINREGEX = RegExp("^[A-HJ-NPR-Z0-9]{3}[A-HJ-NPR-Z0-9]{5}[0-9X][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9]{6}$", "i");
 
 async function openSalvagePages(vinInput) {
-    let storage = await browser.storage.local.get("settings");
-    // console.log(storage);
-    settings = storage.settings;
-    let vinInput = await navigator.clipboard.readText();
+    let storage
+    await browser.storage.local.get("settings")
+        .then(s=>storage=s.settings);
+    // TODO: add settings defaults
 
     // test the clipboard text out of an abundance of caution since we need to do code injection for Copart.
     vinInput = encodeURIComponent(vinInput).replace(/^\s+|\s+$/g, '');
