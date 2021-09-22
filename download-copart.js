@@ -19,10 +19,10 @@ function clickDragDownload(uriArray) {
     });
 };
 
-function messageHandler(data) {
+function messageHandler(message) {
     // incoming messages from background.js will contain image URLs to download
-    if (data.type == 'copart') {
-        clickDragDownload(data.values);
+    if (message.type == 'copart') {
+        clickDragDownload(message.values);
         return Promise.resolve('done');
     };
     return false
