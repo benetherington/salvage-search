@@ -24,6 +24,7 @@
     "scripts": [
       "browser-polyfill.js",
       "search.js",
+      "download-background.js",
       "background.js"
     ]
   },
