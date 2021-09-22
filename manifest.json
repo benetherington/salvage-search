@@ -35,9 +35,5 @@
   },
   "options_ui": {
     "page": "options.html"
-  },
-  "browser_specific_settings":
-    {"gecko":
-      {"update_url": "https://benetherington.com/salvage-search/updates.json"}
-    }
+  }
 }
