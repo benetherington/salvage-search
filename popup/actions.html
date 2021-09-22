@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="actions.css"/>
+        <script src="/browser-polyfill.js"></script>
+        <script src="actions.js"></script>
+    </head>
+      <body>
+
+        <div id="popup-content">
+            <div class="grouped">
+                Search for a VIN: <input type="text" id="input-vin">
+                <div class="button action-search">Search</div>
+            </div>
+            <div class="button ungrouped action-download">Download Images</div>
+        </div>
+        <div id="error-content" class="hidden">
+            <p>That VIN doesn't look right...</p>
+        </div>
+
+    </body>
+</html>

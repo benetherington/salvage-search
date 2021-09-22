@@ -42,7 +42,8 @@
       "24": "icons/SS-24.jpg",
       "48": "icons/SS-48.jpg",
       "96": "icons/SS-96.jpg"
-    }
+    },
+    "default_popup": "popup/actions.html"
   },
   "options_ui": {
     "page": "options.html"

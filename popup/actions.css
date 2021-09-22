@@ -1,0 +1,56 @@
+/* html, body {
+    width: 100px;
+} */
+
+.hidden {
+    display: none;
+}
+
+.error-attention {
+    animation-name: shakehead;
+    animation-duration: 250ms;
+}
+@keyframes shakehead {
+    0%   {transform: translate( 0px, 0px);}
+    10%  {transform: translate( 3px, 0px);}
+    30%  {transform: translate(-3px, 0px);}
+    50%  {transform: translate( 3px, 0px);}
+    70%  {transform: translate(-3px, 0px);}
+    80%  {transform: translate( 3px, 0px);}
+    100% {transform: translate( 0px, 0px);}
+}
+
+.grouped {
+    margin: 3% auto;
+    padding: 4px;
+    border: 2px solid #718f8f;
+    border-radius: 5px;
+}
+
+.ungrouped {
+    margin: 3% auto;
+    padding: 4px;
+}
+
+.button {
+    margin: 3% auto;
+    padding: 4px;
+    text-align: center;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+.action-search {
+    background-color: #b2f1f1;
+}
+.action-search:hover {
+    background-color: #85c7c7;
+}
+
+.action-download {
+    background-color: #aef0a8;
+}
+.action-download:hover {
+    background-color: #8fc994;
+}
+
