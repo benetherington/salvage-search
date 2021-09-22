@@ -27,6 +27,16 @@
       "background.js"
     ]
   },
+  "content_scripts": [
+    {
+      "matches": ["*://www.copart.com/lot/*"],
+      "js": ["download-copart.js"]
+    },
+    {
+      "matches": ["*://www.iaai.com/vehicledetails/*"],
+      "js": ["download-iaai.js"]
+    }
+  ],
   "browser_action": {
     "default_icon": {
       "24": "icons/SS-24.jpg",

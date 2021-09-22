@@ -1,19 +1,3 @@
-/*------------------------*\
-  CONTENT SCRIPT INJECTION
-\*------------------------*/
-browser.contentScripts.register({
-    "matches": ["*://www.copart.com/lot/*"],
-    "js": [
-        {file: "/download-copart.js"}
-    ]
-});
-browser.contentScripts.register({
-    "matches": ["*://www.iaai.com/vehicledetails/*"],
-    "js": [
-        {file: "/download-iaai.js"}
-    ]
-});
-
 
 /*----------------------*\
   CONTENT CODE INTERFACE  
