@@ -5,7 +5,9 @@
   "version": "2.0",
   "homepage_url": "https://github.com/benetherington/salvage-search",
   "icons": {
-    "48": "icons/icon.svg"
+    "24": "icons/SS-24.jpg",
+    "48": "icons/SS-48.jpg",
+    "96": "icons/SS-96.jpg"
   },
   "permissions": [
     "storage",
