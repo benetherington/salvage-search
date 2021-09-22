@@ -33,18 +33,6 @@
       "96": "icons/SS-96.jpg"
     }
   },
-  "page_action": {
-    "default_icon": {
-      "24": "icons/SS-24.jpg",
-      "48": "icons/SS-48.jpg",
-      "96": "icons/SS-96.jpg"
-    },
-    "default_title": "Salvage Search",
-    "show_matches": [
-      "https://www.copart.com/lot/*",
-      "https://www.iaai.com/vehicledetails/*"
-    ]
-  },
   "options_ui": {
     "page": "options.html"
   },
