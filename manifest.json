@@ -31,11 +31,11 @@
   "content_scripts": [
     {
       "matches": ["*://www.copart.com/lot/*"],
-      "js": ["download-copart.js"]
+      "js": ["browser-polyfill.js", "download-copart.js"]
     },
     {
       "matches": ["*://www.iaai.com/vehicledetails/*"],
-      "js": ["download-iaai.js"]
+      "js": ["browser-polyfill.js", "download-iaai.js"]
     }
   ],
   "browser_action": {
