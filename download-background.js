@@ -4,19 +4,8 @@
 async function downloadImages() {
     // Called when the page action button is clicked. Retrieves local storage
     // values and hands them to the correct function to handle.
-    console.log("Downloading images.")
-    browser.storage.local
-        .get("imageData")
-        .then( (storage) => {
-            if (!storage.hasOwnProperty('imageData')) {
-                browser.runtime.sendMessage(
-                    { type: "feedback",
-                    values: ["Hmm, something went wrong!"] }
-                )
-            }
-            else if (storage.imageData.type == "copart") { copartDownloadImages(storage.imageData); }
-            else if (storage.imageData.type == "iaai")   { iaaiDownloadImages(storage.imageData);   };
-        }); 
+    console.log("Downloading images.");
+    copartDownloadImages();
 };
 // listen for messages from content code
 browser.runtime.onMessage.addListener( (message, sender) => {
@@ -33,62 +22,30 @@ browser.runtime.onMessage.addListener( (message, sender) => {
 // allows us to sniff server responses that have HD image URLs, and store those
 // values in local storage. When the page action button is clicked, a message is
 // sent to content code asking it to download those images.
-function copartDownloadImages(imageData) {
-    // called after page action button is clicked
-    browser.tabs.sendMessage(
-        imageData.tabId,
-        imageData
-    );
-}
-function copartParseHdResponse(data) {
-    // called when copartHdImgRequestListener's request filter is all done
-    // data.tabId contains the tab that recieved the lotImages response
-    // data.values is an array of strings to JSON-ify
-    valuesString = data.values.join("")
-    try { valuesJson = JSON.parse(valuesString); }
-    catch(err) {
-        console.log("Error decoding Copart HD images JSON!");
-        console.log(valuesString);
-        console.log(data);
-        console.log(err.message);
-        return;
-    }
-    urlArray = valuesJson.data.imagesList.HIGH_RESOLUTION_IMAGE
-        .map( image => {
-            return image.url;
+async function copartDownloadImages() {
+    // Checks active tabs for Copart lot pages, gathers data, including HD image
+    // URLs, and sends a message with data.
+    let copartTabs = await browser.tabs.query({active:true, url:"*://*.copart.com/lot/*"});
+    for (tab of copartTabs) {
+        let ymm = tab.title.match(/^(.*) for Sale/i)[1];
+        let lotNumber = tab.url.match(/copart\.com\/lot\/(\d*)\//)[1];
+        let hdUrls = await copartFetchLotData(lotNumber)
+        console.log(tab)
+        browser.tabs.sendMessage(
+            tab.id,
+            {
+                type: "copart",
+                values: [{ ymm:ymm,
+                           lotNumber:lotNumber,
+                           hdUrls:hdUrls }]
         });
-    let imageData = {
-        "tabId": data.tabId,
-        "type": "copart",
-        "values": urlArray
     };
-    browser.storage.local.set({imageData});
-};
-function copartHdImgRequestListener(details) {
-    // When a request is made to copart.com/.../lotImages, this function is
-    // called before the request goes out. We set up a request filter that will
-    // let us sniff the response before handing it to the requesting script.
-    console.log("Sniffing Copart packet!")
-    let filter = browser.webRequest.filterResponseData(details.requestId);
-    let decoder = new TextDecoder("utf-8");
-    var responseData = {
-        "tabId": details.tabId,
-        "type": "copart",
-        "values": []
-    };
-    // we'll set up two events to handle the incoming data
-    filter.ondata = event => {
-        // called as each packet comes in
-        let str = decoder.decode(event.data, {stream: true});
-        responseData.values.push(str);
-        filter.write(event.data); // pass the data on
-    };
-    filter.onstop = event => {
-        // called when all the data is recieved
-        filter.disconnect(); // prevent timeout
-        copartParseHdResponse(responseData); // store the data
-    };
-    return {};
+}
+async function copartFetchLotData(lotNumber) {
+    jsn = await fetch(`https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`)
+        .then(r=>r.json())
+    return jsn.data.imagesList.HIGH_RESOLUTION_IMAGE
+            .map( image => {return image.url} )
 };
 
 /*----*\

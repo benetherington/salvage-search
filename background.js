@@ -33,11 +33,13 @@ to pass along.
 \*---------------*/
 
 // intercept image URL requests from Copart
-browser.webRequest.onBeforeRequest.addListener(
-    copartHdImgRequestListener,
-    {urls: ["https://www.copart.com/public/data/lotdetails/solr/lotImages/*/USA"]},
-    ["requestBody"] // for Firefox, we had ["blocking"] and used a filter.
-);
+// browser.webRequest.onBeforeRequest.addListener(
+//     copartHdImgRequestListener,
+//     {urls: ["https://www.copart.com/public/data/lotdetails/solr/lotImages/*/USA"]},
+//     ["blocking"]
+// );
+
+
 // button actions
 // browser.browserAction.onClicked.addListener(openSalvagePages);
 
