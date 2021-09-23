@@ -6,13 +6,16 @@ async function downloadImages() {
     // values and hands them to the correct function to handle.
     console.log("Downloading images.");
     copartDownloadImages();
+    iaaiDownloadImages();
 };
 // listen for messages from content code
 browser.runtime.onMessage.addListener( (message, sender) => {
-    // Called on incoming message and calls the appropriate function.
     if (message.type == "iaai") {
+        // an IAAI tab has scraped page data and returned oSeaDragon URLs
         iaaiStoreImages(sender.tab.id, message)
+        return Promise.resolve('done');
     }
+    return false;
 });
 
 /*------*\
@@ -51,15 +54,7 @@ async function copartFetchLotData(lotNumber) {
 /*----*\
   IAAI  
 \*----*/
-// UTILITIES
-var incrementProgressBar = ()=>{
-    // used by download... and store... below
-    console.log("increment background")
-    browser.tabs.sendMessage(
-        imageData.tabId,
-        {type: "loading_bar", action: "increment"}
-    )
-};
+// IMAGE PROCESSING
 var isBlackish = (imageData) => {
     // used by iaaiTrimImage below
     // every fourth element will be full opacity
@@ -68,51 +63,11 @@ var isBlackish = (imageData) => {
     ishComponent = 20 * imageData.data.length
     return alphaComponent + ishComponent >= imageData.data.reduce( (prev, curr) => {return prev+curr} )
 };
-
-// IMAGE PROCESSING
 async function iaaiStoreImages(tabId, data) {
     // called after message from content script
     imageData = data;
     imageData.tabId = tabId;
     browser.storage.local.set({imageData});
-}
-async function iaaiDownloadImages(imageData) {
-    // called after page action button
-    console.log("iaaiDownloadImages beginning fetches")
-    // Configure progress bar. We want to be at 50% after processing images (ie
-    // at the end of this function), so we want to set the max to double the
-    // number of increments we'll do.
-    browser.tabs.sendMessage(
-        imageData.tabId,
-        {type: "loading_bar", action: "configure", max: imageData.values.length*2 }
-    );
-    // go over each image and start trimming them down to size
-    trimmedImages = []
-    canvas = document.createElement("canvas")
-    var processPromises = [];
-    var processedImages = [];
-    imageData.values.forEach( key => {
-        var imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" + key + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
-        processPromises.push(fetch(imageUrl)
-            .then(r => r.blob())
-            .then(createImageBitmap)
-            .then(img => iaaiTrimImage(canvas, img))
-            .then(img => processedImages.push(img))
-            .then(()=>{ incrementProgressBar(); })
-        )
-    });
-    // wait for work to complete
-    console.log("built "+processPromises.length+" promises. Loading...")
-    await Promise.all(processPromises)
-    console.log("promises awaited.")
-    // store trimmed images.. they're too big to pass in a message!
-    await iaaiStoreImages(processedImages)
-    // ask the content script to pull data from storage and download them
-    browser.tabs.sendMessage(
-        imageData.tabId,
-        { "type": "iaai",
-          "values": "storage-local" } // TODO: this values should be an Array!
-    );
 }
 async function iaaiTrimImage(canvas, img) {
     // Uses the canvas to operate on the provided image. Trims off the black borders
@@ -155,9 +110,62 @@ async function iaaiStoreImages(imageArray) {
         obj[idx] = image
         obj['type'] = 'large_image'
         largePromises.push(
-            browser.storage.local.set(obj)
+            browser.storage.local
+            .set(obj)
         );
     };
     await Promise.all(largePromises)
     console.log("iaaiStoreImages complete")
+}
+
+// INITIATOR
+async function iaaiDownloadImages() {
+    console.log("iaaiDownloadImages beginning fetches")
+    // find IAAI tabs
+    let iaaiTabs = await browser.tabs.query({active:true, url:"*://*.iaai.com/vehicledetails/*"});
+    // TOOD: send error feedback
+    await browser.runtime.sendMessage({
+        type: "feedback",
+        values: [{ action: "download-started", tabs:iaaiTabs.length }]
+    });
+    for (iaaiTab of iaaiTabs) { await iaaiTabDownload(iaaiTab); }
+}
+async function iaaiTabDownload(iaaiTab) {
+    // Configure progress bar. We want to be at 50% after processing images (ie
+    // at the end of this function), so we want to set the max to double the
+    // number of increments we'll do.
+    console.log(`Requesting info from tab #${iaaiTab.id}`)
+    imageKeys = await browser.tabs.sendMessage(
+        iaaiTab.id, {type: "iaai", values:["scrape-images"]}
+    ).catch((error)=>{ console.log(error) });
+    // TODO: send error feedback
+    await browser.runtime.sendMessage({
+        type: "feedback",
+        values: [{ action: "download-tab", images: imageKeys.length }]
+    });
+    // go over each image and start trimming them down to size
+    trimmedImages = []
+    canvas = document.createElement("canvas")
+    var processedImages = [];
+    await Promise.all(
+        imageKeys.map( async key => {
+            console.log(key)
+            var imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" + key + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
+            await fetch(imageUrl)
+                .then(r => r.blob())
+                .then(createImageBitmap)
+                .then(img => iaaiTrimImage(canvas, img))
+                .then(img => processedImages.push(img))
+            await browser.runtime.sendMessage({type:'feedback', values:[{action: 'tab-increment'}]})
+            console.log(`${key} processed`)
+        })
+    );
+    // store trimmed images.. they're too big to pass in a message!
+    await iaaiStoreImages(processedImages)
+    // ask the content script to pull data from storage and download them
+    browser.tabs.sendMessage(
+        iaaiTab.id,
+        { "type": "iaai",
+          "values": ["storage-local"] }
+    );
 }
