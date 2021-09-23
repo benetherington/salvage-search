@@ -30,11 +30,11 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.copart.com/lot/*"],
+      "matches": ["*://*.copart.com/lot/*"],
       "js": ["browser-polyfill.js", "download-copart.js"]
     },
     {
-      "matches": ["*://www.iaai.com/vehicledetails/*"],
+      "matches": ["*://*.iaai.com/vehicledetails/*"],
       "js": ["browser-polyfill.js", "download-iaai.js"]
     }
   ],
