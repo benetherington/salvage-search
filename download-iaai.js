@@ -1,43 +1,59 @@
-/*-----------*\
-  RUN ON LOAD  
-\*-----------*/
+/*--------*\
+  MESSAGES  
+\*--------*/
+browser.runtime.onMessage.addListener( (message) => {
+    if (message.type == 'iaai' && message.values.includes("scrape-images")) {
+        // DATA COLLECTION
+        return new Promise((resolve, reject)=>{
+            let imageKeys;
+            try {
+                imageKeys = getImageKeys();
+                if (imageKeys) { resolve(imageKeys) };
+            }
+            catch {console.log("uh-oh")};
+            reject("Something went wrong fetching imageKeys.");
+        });
+    } else if (message.type == 'iaai' && message.values.includes("storage-local")) {
+        // DOWNLOAD
+        console.log("iaai downloading from storage");
+        downloadFromStorage()
+        return Promise.resolve('done');
+        };
+    return false;
+});
+
+
+/*---------------*\
+  DATA COLLECTION  
+\*---------------*/
 function getImageKeys() {
     dimensionsString = document.getElementById("fullViewImg").attributes['dimensionsallimagekeys'].nodeValue;
     keysIter = dimensionsString.matchAll(/K":"(.*?)",/g);
     imageKeys = Array.from(keysIter, (item) => item[1]);
     return imageKeys;
 }
-function collectImageData() {
-    let imageData = {
-        "type": "iaai",
-        "values": getImageKeys()
-    };
-    browser.runtime.sendMessage(imageData)
-};
 
 
 /*---------*\
   DOWNLOADS  
 \*---------*/
-function clickDragDownload(storage) {
-    console.log("click drag invoked")
+async function downloadFromStorage() {
     // Update loadingBar. Start at 50%. Max will be twice the number of images
     // we have to handle, so that we hit 100% after iterating once for each
     // image.
-    loadingBar.progress = storage.length
-    loadingBar.max = Object.keys(storage).length*2
+    await browser.runtime.sendMessage({ type: "feedback", values: [{ action: "download-nearly-finished" }] })
+    storage = await browser.storage.local.get() // TODO: pass in storage keys from background
+    // go over each value in storage, looking for large images
     for ( [key, value] of Object.entries(storage) ) {
-        console.log(key)
         if (parseInt(key)+1) { // add to avoid falsy zero
+            console.log(`Retrieving ${key}`)
             // that's a large image
             downloadUri(value, key);
             try {browser.storage.local.remove(key.toString());}
             catch (err) {console.log(err)};
         };
-        loadingBar.increment()
     };
-    loadingBar.hide()
-    console.log("click drag done!")
+    browser.runtime.sendMessage({ type: "feedback", values: [{ action: "download-finished" }] })
 };
 async function downloadUri(uri, name) {
     // Opens a single URI in a new tab for click-drop downloading
@@ -49,73 +65,10 @@ async function downloadUri(uri, name) {
     link.click()
 };
 
-/*--------*\
-  MESSAGES  
-\*--------*/
-function messageHandler(data) {
-    // listens to incoming messages and downloads copart uris
-    if (data.type == 'iaai' && data.values == "storage-local") {
-        // incoming request to download large images from storage
-        console.log("iaai downloading from storage")
-        browser.storage.local.get()
-            .then(storage => {
-                clickDragDownload(storage)
-            })
-        return Promise.resolve('done')
-    } else if (data.type == 'iaai') {
-        // incoming request to download included images
-        console.log("iaai downloading from message")
-        clickDragDownload(data.values);
-        return Promise.resolve('done');
-    } else if (data.type == 'loading_bar') {
-        // incoming request to start or update a loading bar
-        loadingBar.handleMessage(data)
-        return Promise.resolve('done')
-    };
-    console.log("message wasn't for iaai")
-    return false;
-};
-
-
-/*---------*\
-  UTILITIES  
-\*---------*/
-var loadingBar = new class {
-    constructor() {
-        this.indicator = document.createElement("progress")
-        this.indicator.id = 'download-iaai-indicator'
-        this.indicator.max = 1
-    }
-    set progress(value=0) {
-        if (value) {
-            document.body.prepend(this.indicator);
-            this.indicator.value=value
-        } else { this.indicator.removeAttribute('value') };
-    }
-    get progress() {
-        return this.indicator.value
-    }
-    set max(value) {
-        window.scrollTo(0,0)
-        this.indicator.max = Math.ceil(value)
-    }
-    handleMessage(data) {
-        if      (data.action == 'progress')  { this.progress = data.progress }
-        else if (data.action == 'stop')      { this.hide() }
-        else if (data.action == 'increment') { this.increment() }
-        else if (data.action == 'configure') { this.max = data.max };
-    }
-    increment() {
-        ++this.progress
-    }
-    hide() {
-        this.indicator.remove()
-    }
-}
 
 /*-----*\
   SETUP  
 \*-----*/
-browser.runtime.onMessage.addListener( messageHandler );
-collectImageData()
 console.log("download-iaai loaded!")
+
+//-url:https://cdn.spincar.com/spincar-static/ana2/client_id.html?_=c14713aa64cab8 -url:https://nebula-cdn.kampyle.com/wu/653475/onsite/embed.js -url:https://spins.spincar.com/iaa-avanel/000-31168924 -url:https://iaai.com/bundles/coreJS?v=y9T2fhLkDxs26cv9yrT4QDRjWuXWqqp7Q7D0HXpkMGs1 -url:https://cdn.adpushup.com/38903/adpushup.js -url:https://iaai.com/dist/js/vendors/gauge.js?v=20201015 -url:https://iaai.com/vehicledetails/41483004 -url:chrome-extension://gfhcppdamigjkficnjnhmnljljhagaha/content.js
