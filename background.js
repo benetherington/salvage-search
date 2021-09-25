@@ -44,14 +44,11 @@ to pass along.
 // browser.browserAction.onClicked.addListener(openSalvagePages);
 
 browser.runtime.onMessage.addListener( (message)=>{
-    console.log(message)
     if (message.type === "popup-action") {
         for (value of message.values) {
             if (value.action === "download") {
-                console.log("that's an image download request!")
                 downloadImages()
             } else if (value.action === "search"){
-                console.log("that's a search request!")
                 openSalvagePages(value.vin)
             };
         };

@@ -32,3 +32,4 @@ browser.runtime.onMessage.addListener( (message) => {
 
 console.log("download-copart loaded!");
 
+// -url:https://www.copart.com/ -url:chrome-extension://gfhcppdamigjkficnjnhmnljljhagaha/content.js -url:https://www.copart.com/wro/startup_bundle-b3e237deb012d74ef7eb4b383ecda89e.js

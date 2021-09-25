@@ -4,7 +4,7 @@
 async function downloadImages() {
     // Called when the page action button is clicked. Retrieves local storage
     // values and hands them to the correct function to handle.
-    console.log("Downloading images.");
+    console.log("Fetching images.");
     copartDownloadImages();
     iaaiDownloadImages();
 };
@@ -28,20 +28,19 @@ browser.runtime.onMessage.addListener( (message, sender) => {
 async function copartDownloadImages() {
     // Checks active tabs for Copart lot pages, gathers data, including HD image
     // URLs, and sends a message with data.
+    console.log("copartDownloadImages beginning fetches")
     let copartTabs = await browser.tabs.query({active:true, url:"*://*.copart.com/lot/*"});
     for (tab of copartTabs) {
         let ymm = tab.title.match(/^(.*) for Sale/i)[1];
         let lotNumber = tab.url.match(/copart\.com\/lot\/(\d*)\//)[1];
         let hdUrls = await copartFetchLotData(lotNumber)
-        console.log(tab)
         browser.tabs.sendMessage(
             tab.id,
-            {
-                type: "copart",
-                values: [{ ymm:ymm,
-                           lotNumber:lotNumber,
-                           hdUrls:hdUrls }]
-        });
+            { type: "copart",
+              values: [{ ymm:ymm,
+                         lotNumber:lotNumber,
+                         hdUrls:hdUrls }] }
+        );
     };
 }
 async function copartFetchLotData(lotNumber) {
