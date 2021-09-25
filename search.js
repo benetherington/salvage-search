@@ -26,19 +26,18 @@ async function openSalvagePages(vinInput) {
 };
 
 function openCopart (vinInput) {
-        payload = "".concat(
-            "document.querySelector(\'input[data-uname=homeFreeFormSearch]\').value = \'", vinInput, "\';",
-            "document.querySelector(\'input[data-uname=homeFreeFormSearch]\').dispatchEvent(new CompositionEvent(\'compositionend\'));",
-            "document.querySelector(\'button[data-uname=homepageHeadersearchsubmit]\').click();"
-        );
-    chrome.tabs.create({url: "https://www.copart.com/"}, function (tab) {
-        console.log('tabs.create');
+    payload = "".concat(
+        "document.querySelector(\'input[data-uname=homeFreeFormSearch]\').value = \'", vinInput, "\';",
+        "document.querySelector(\'input[data-uname=homeFreeFormSearch]\').dispatchEvent(new CompositionEvent(\'compositionend\'));",
+        "document.querySelector(\'button[data-uname=homepageHeadersearchsubmit]\').click();"
+    );
+    browser.tabs.create({url: "https://www.copart.com/"}, function (tab) {
         browser.tabs.executeScript(tab.id, {code: payload});
     });
   };
 
 function openIaai (vinInput) {
-    chrome.tabs.create({
+    browser.tabs.create({
         "url": "https://www.iaai.com/VehicleSearch/SearchDetails?Keyword="+vinInput
     });
 };
