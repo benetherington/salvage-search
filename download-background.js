@@ -41,7 +41,7 @@ async function copartDownloadImages() {
     let copartTabs = await browser.tabs.query({active:true, url:"*://*.copart.com/lot/*"});
     for (tab of copartTabs) {
         let ymm = tab.title.match(/^(.*) for Sale/i)[1];
-        let lotNumber = tab.url.match(/copart\.com\/lot\/(\d*)\//)[1];
+        let lotNumber = tab.url.match(/copart\.com\/lot\/(\d*)/)[1];
         let hdUrls = await copartFetchLotData(lotNumber)
         browser.tabs.sendMessage(
             tab.id,
