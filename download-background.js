@@ -99,7 +99,6 @@ async function iaaiTrimImage(canvas, img) {
     return Promise.resolve(canvas.toDataURL())
 };
 async function iaaiStoreImages(imageArray) {
-    console.log("iaaiStoreImages invoked")
     // we'll await storage set operations... they can take a while
     var largePromises = []
     for (const [idx, image] of imageArray.entries()) {
@@ -115,29 +114,30 @@ async function iaaiStoreImages(imageArray) {
         );
     };
     await Promise.all(largePromises)
-    console.log("iaaiStoreImages complete")
 }
 
 // INITIATOR
 async function iaaiDownloadImages() {
     console.log("iaaiDownloadImages beginning fetches")
     // find IAAI tabs
-    let iaaiTabs = await browser.tabs.query({active:true, url:"*://*.iaai.com/vehicledetails/*"});
+    let iaaiTabs = await browser.tabs.query({active:true, url:["*://*.iaai.com/Vehicledetails?*", "*://*.iaai.com/vehicledetails/*"]});
     // TOOD: send error feedback
-    await browser.runtime.sendMessage({
-        type: "feedback",
-        values: [{ action: "download-started", tabs:iaaiTabs.length }]
-    });
-    for (iaaiTab of iaaiTabs) { await iaaiTabDownload(iaaiTab); }
+    if (iaaiTabs.length) {
+        await browser.runtime.sendMessage({
+            type: "feedback",
+            values: [{ action: "download-started", tabs:iaaiTabs.length }]
+        });
+    }
+    for (iaaiTab of iaaiTabs) {
+        await iaaiTabDownload(iaaiTab);
+    }
 }
 async function iaaiTabDownload(iaaiTab) {
-    // Configure progress bar. We want to be at 50% after processing images (ie
-    // at the end of this function), so we want to set the max to double the
-    // number of increments we'll do.
-    console.log(`Requesting info from tab #${iaaiTab.id}`)
+    console.log(`Requesting info from iaai tab #${iaaiTab.id}`)
     imageKeys = await browser.tabs.sendMessage(
         iaaiTab.id, {type: "iaai", values:["scrape-images"]}
-    ).catch((error)=>{ console.log(error) });
+    ).catch((error)=>{ abortDownload("There was an error communicating with the page.") });
+    if (!imageKeys) { abortDownload("There was an error, and images could not be found.") }
     // TODO: send error feedback
     await browser.runtime.sendMessage({
         type: "feedback",
@@ -149,7 +149,6 @@ async function iaaiTabDownload(iaaiTab) {
     var processedImages = [];
     await Promise.all(
         imageKeys.map( async key => {
-            console.log(key)
             var imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" + key + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
             await fetch(imageUrl)
                 .then(r => r.blob())

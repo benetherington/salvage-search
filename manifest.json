@@ -11,14 +11,10 @@
     "128": "icons/SS-128.png"
   },
   "permissions": [
-    "storage",
-    "unlimitedStorage",
+    "storage", "unlimitedStorage",
     "clipboardRead",
-    "activeTab",
-    "tabs",
-    "*://www.copart.com/lot/*",
-    "*://www.iaai.com/*",
-    "https://anvis.iaai.com/deepzoom*",
+    "tabs", "activeTab",
+    "*://*.iaai.com/*", "https://*.anvis.iaai.com/deepzoom*",
     "webRequest", "webRequestBlocking"
   ],
   "background": {
@@ -35,7 +31,7 @@
       "js": ["browser-polyfill.js", "download-copart.js"]
     },
     {
-      "matches": ["*://*.iaai.com/vehicledetails/*"],
+      "matches": ["*://*.iaai.com/vehicledetails/*", "*://*.iaai.com/Vehicledetails?*"],
       "js": ["browser-polyfill.js", "download-iaai.js"]
     }
   ],
