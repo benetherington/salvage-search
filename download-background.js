@@ -17,6 +17,15 @@ browser.runtime.onMessage.addListener( (message, sender) => {
     }
     return false;
 });
+function abortDownload(error=null) {
+    browser.runtime.sendMessage({
+        type: "feedback-error",
+        values: [{
+            action: "abort-download",
+            display: error
+        }]
+    })
+}
 
 /*------*\
   COPART  
