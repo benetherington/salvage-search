@@ -117,3 +117,62 @@ input:focus {
     opacity: 0.5;
     box-shadow: 0px 0px 2px 1px grey;
 }
+
+/* TOOLBAR */
+.toolbar {
+    width: 300px;
+    display: block flex;
+    justify-content: right;
+}
+.toolbar > .button {
+    box-shadow: none;
+    height: 0.3em;
+    width:  0.3em;
+    margin: 1% 1%;
+}
+.gear-fill {
+    background-image: url("/icons/gear-fill.svg");
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: center;
+}
+.arrow-left {
+    background-image: url("/icons/arrow-left.svg");
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: center;
+    justify-self: left;
+}
+.button.hidden {
+    padding: 0;
+    margin: 0;
+    visibility: hidden;
+    height: 0;
+    width: 0;
+}
+
+
+/* ------ PAGES ------ */
+body {
+    width: 310px;
+}
+.slider {
+    width: 310px;
+    height: auto;
+    overflow-x: clip;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+}
+.slider-holder {
+    width: 200%;
+}
+.slider-page {
+    float: left;
+    width: 300px;
+    padding: 0 5px;
+}
+/* MAIN */
+#button-search {         background-color: #61A690; }
+#button-search:hover {   background-color: #8BACA9; }
+#button-download {       background-color: #61A690; }
+#button-download:hover { background-color: #8BACA9; }

@@ -7,19 +7,41 @@
         <script src="/browser-polyfill.js"></script>
         <script src="actions.js"></script>
     </head>
-      <body>
+    <body>
+<!-- STATIC TOOLBAR -->
+        <div class="toolbar">
+            <div id="button-main" class="button arrow-left hidden"></div>
+            <div id="button-settings" class="button gear-fill"></div>
+        </div>
+        <div class="slider" id="slider"><div class="slider-holder">
 
-        <div id="popup-content">
-            <div class="grouped">
-                <p>Search for a VIN:</p>
-                <input type="text" id="input-vin" size="17"><br>
-                <div id= "input-search" class="button action-search disabled">Search</div>
+
+ 
+<!-- MAIN PAGE -->
+            <div class="slider-page" id="main">
+                <div class="grouped">
+                    <!-- <p>Search for a VIN:</p> -->
+                    <input type="text" id="input-vin" class="input-big" size="17" placeholder="VIN"><br>
+                    <div id= "button-search" class="button disabled">Search</div>
+                </div>
+                <div id="button-download" class="button ungrouped disabled">Download Images</div>
+                <div id="error-area">
+                    <div id="error-drawer" class="hidden">
+                        <p>That VIN doesn't look right...</p>
+                    </div>
+                </div>
             </div>
+
+
+
+<!-- SETTINGS PAGE -->
+            <div class="slider-page" id="settings">
             <div id="input-download" class="button action-download ungrouped disabled">Download Images</div>
         </div>
-        <div id="error-content" class="hidden">
-            <p>That VIN doesn't look right...</p>
-        </div>
+            </div>
+
+        </div></div>
+
 
     </body>
 </html>
