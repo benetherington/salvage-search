@@ -1,4 +1,102 @@
-/* VALIDATION AND FEEDBACK */
+/*---------------------------*\
+  ------ SLIDING PAGES ------  
+\*---------------------------*/
+
+body {
+    width: 310px;
+}
+.slider {
+    width: 310px;
+    height: auto;
+    overflow-x: clip;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+}
+.slider-holder {
+    width: 200%;
+}
+.slider-page {
+    float: left;
+    width: 300px;
+    padding: 0 5px;
+}
+.slider-page:not(.active) {
+    height: 10px;
+}
+
+/*----------------------------------*\
+  ------ SHARED BETWEEN PAGES ------  
+\*----------------------------------*/
+.grouped {
+    margin: 2% auto 6%;
+    padding: 4%;
+    /* border-radius: 5px; */
+    box-shadow: 0px 3px 5px 0px grey;
+}
+.ungrouped {
+    margin: 3% auto;
+    padding: 4px;
+}
+.button {
+    margin: 3% auto;
+    padding: 4px;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: 500;
+    color: #ffffff;
+    box-shadow: 0px 1px 3px 0px grey;
+    cursor: pointer;
+}
+.disabled, .disabled:hover {
+    color:            #666666 !important;
+    background-color: inherit !important;
+    pointer-events: none;
+    opacity: 0.5;
+    box-shadow: 0px 0px 2px 1px grey;
+}
+
+
+/*---------------------*\
+  ------ TOOLBAR ------  
+\*---------------------*/
+.toolbar {
+    width: 300px;
+    display: block flex;
+    justify-content: right;
+}
+.toolbar > .button {
+    box-shadow: none;
+    height: 0.3em;
+    width:  0.3em;
+    margin: 1% 1%;
+}
+.gear-fill {
+    background-image: url("/icons/gear-fill.svg");
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: center;
+}
+.arrow-left {
+    background-image: url("/icons/arrow-left.svg");
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: center;
+    justify-self: left;
+}
+.button.hidden {
+    padding: 0;
+    margin: 0;
+    visibility: hidden;
+    height: 0;
+    width: 0;
+}
+
+
+
+/*-----------------------*\
+  ------ MAIN PAGE ------  
+\*-----------------------*/
+/* user feedback */
 #error-area {
     overflow: hidden;
 }
@@ -83,52 +181,17 @@ input:focus {
     background-color: #d5f3ff;
 }
 
-/* STRUCTURE */
-.grouped {
-    margin: 2% auto 6%;
-    padding: 4%;
-    /* border-radius: 5px; */
-    box-shadow: 0px 3px 5px 0px grey;
-}
-.ungrouped {
-    margin: 3% auto;
-    padding: 4px;
-}
-ul.toggle-list {
-    list-style: none;
-    padding-left: 1em;
-}
-.toggle-list li {
-    background: no-repeat top left 5px;
-    padding-left: 25px;
-}
-li.toggle{
-    background-image: url("/icons/toggle2-on.svg");
-    fill: red;
-}
-li.toggle.toggle-false{
-    background-image: url("/icons/toggle2-off.svg");
-}
 /* BUTTONS */
-.button {
-    margin: 3% auto;
-    padding: 4px;
-    text-align: center;
-    font-size: 1.8em;
-    font-weight: 500;
-    color: #ffffff;
-    box-shadow: 0px 1px 3px 0px grey;
-    cursor: pointer;
-}
-.disabled, .disabled:hover {
-    color:            #666666 !important;
-    background-color: inherit !important;
-    pointer-events: none;
-    opacity: 0.5;
-    box-shadow: 0px 0px 2px 1px grey;
-}
+#button-search {         background-color: #61A690; }
+#button-search:hover {   background-color: #8BACA9; }
+#button-download {       background-color: #61A690; }
+#button-download:hover { background-color: #8BACA9; }
 
-/* SETTINGS */
+
+
+/*---------------------------*\
+  ------ SETTINGS PAGE ------  
+\*---------------------------*/
 .settings-grid {
     display: grid;
     grid-template-columns: auto 100fr;
@@ -162,9 +225,6 @@ li.toggle.toggle-false{
 .tiny {
     font-size: smaller;
 }
-
-
-
 /*      Lovely toggle button stolen from:         */
 /* https://codepen.io/Mr_Rahul_Tiwari/pen/ZEWMZNV */
 .toggle-cover {
@@ -247,69 +307,3 @@ li.toggle.toggle-false{
 .checkbox:not(:checked) ~ .layer {
     background-color: #fcebeb;
 }
-
-
-/* TOOLBAR */
-.toolbar {
-    width: 300px;
-    display: block flex;
-    justify-content: right;
-}
-.toolbar > .button {
-    box-shadow: none;
-    height: 0.3em;
-    width:  0.3em;
-    margin: 1% 1%;
-}
-.gear-fill {
-    background-image: url("/icons/gear-fill.svg");
-    background-repeat: no-repeat;
-    background-size: 100%;
-    background-position: center;
-}
-.arrow-left {
-    background-image: url("/icons/arrow-left.svg");
-    background-repeat: no-repeat;
-    background-size: 100%;
-    background-position: center;
-    justify-self: left;
-}
-.button.hidden {
-    padding: 0;
-    margin: 0;
-    visibility: hidden;
-    height: 0;
-    width: 0;
-}
-
-
-/* ------ PAGES ------ */
-body {
-    width: 310px;
-}
-.slider {
-    width: 310px;
-    height: auto;
-    overflow-x: clip;
-    overflow-y: hidden;
-    scroll-behavior: smooth;
-}
-.slider-holder {
-    width: 200%;
-}
-.slider-page {
-    float: left;
-    width: 300px;
-    padding: 0 5px;
-}
-.slider-page:not(.active) {
-    height: 10px;
-}
-/* MAIN */
-#button-search {         background-color: #61A690; }
-#button-search:hover {   background-color: #8BACA9; }
-#button-download {       background-color: #61A690; }
-#button-download:hover { background-color: #8BACA9; }
-/* SETTINGS */
-#button-settings-save {       background-color: #61A690; }
-#button-settings-save:hover { background-color: #8BACA9; }
