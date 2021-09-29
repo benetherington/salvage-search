@@ -160,7 +160,6 @@ var preferences  = new class {
         this.row52Check =  document.querySelector(".settings-grid input#row52")
     }
     async fetchStoredSettings() {
-        console.log("fetchStoredSettings")
         let storage = await browser.storage.local.get("settings")
         let settings = storage.settings || DEFAULT_SETTINGS
 
@@ -168,7 +167,6 @@ var preferences  = new class {
         this.iaaiCheck.checked   = settings.searchIaai
         this.row52Check.checked  = settings.searchRow52
         // re-store settings in case defaults were used
-        console.log(settings)
         this.setStoredSettings()
     }
     setElementCallbacks() {
@@ -177,14 +175,11 @@ var preferences  = new class {
         }
     }
     async setStoredSettings(event=null) {
-        console.log("setStoredSettings")
         let storage = await browser.storage.local.get("settings")
         let settings = storage.settings || DEFAULT_SETTINGS
         settings.searchCopart = this.copartCheck.checked
         settings.searchIaai   = this.iaaiCheck.checked
         settings.searchRow52  = this.row52Check.checked
-        console.log(`UI: ${this.copartCheck.checked}, ${this.iaaiCheck.checked}, ${this.row52Check.checked}`)
-        console.log(settings)
         browser.storage.local.set({settings})
     }
 }
