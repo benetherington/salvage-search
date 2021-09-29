@@ -27,25 +27,56 @@ async function openSalvagePages(vinInput) {
 
 };
 
-function openCopart (vinInput) {
-    payload = "".concat(
-        "document.querySelector(\'input[data-uname=homeFreeFormSearch]\').value = \'", vinInput, "\';",
-        "document.querySelector(\'input[data-uname=homeFreeFormSearch]\').dispatchEvent(new CompositionEvent(\'compositionend\'));",
-        "document.querySelector(\'button[data-uname=homepageHeadersearchsubmit]\').click();"
-    );
-    browser.tabs.create({url: "https://www.copart.com/"}, function (tab) {
-        browser.tabs.executeScript(tab.id, {code: payload});
-    });
-  };
+async function openCopart (vinInput) {
+    try {
+        // perform query for VIN
+        let searchUrl = "https://www.copart.com/public/lots/vin/search";
+        let payload = {
+            "filter": {
+                "MISC": [
+                    `ps_vin_number:${vinInput}`,
+                    "sold_flag:false"
+        ]}};
+        let response = await fetch(
+            searchUrl,
+            {
+                method: "POST",
+                headers: {
+                    "User-Agent": window.navigator.userAgent,
+                    "Accept": "application/json, text/plain, */*",
+                    "Content-Type": "application/json;charset=utf-8"
+                },
+                body: JSON.stringify(payload)
+            }
+        )
+        if (!response.ok) {throw `fetch failed with status code: ${response.status}`;}
+
+        // parse response
+        let jsn = await response.json()
+        if (!jsn.data.hasOwnProperty("results")) {throw "failed with no results property";}
+
+        // open result tab
+        if (jsn.data.results.content.length) {
+            for (let vehicle of jsn.data.results.content) {
+                let lotUrl = `https://www.copart.com/lot/${vehicle.lotNumberStr}`;
+                browser.tabs.create({url: lotUrl})
+            }
+        } else {throw "query returned no results";}
+    } catch (error) {
+        console.log(error)
+        console.log("resorting to fallback url")
+        let failureUrl = "https://www.copart.com/lotSearchResults/?free=true&query="+vinInput;
+        browser.tabs.create({url: failureUrl})
+    }
+}
 
 function openIaai (vinInput) {
-    browser.tabs.create({
-        "url": "https://www.iaai.com/VehicleSearch/SearchDetails?Keyword="+vinInput
-    });
+    let searchUrl = "https://www.iaai.com/VehicleSearch/SearchDetails?Keyword="+vinInput
+    browser.tabs.create({url: searchUrl});
 };
 
 function openRow52 (vinInput) {
-        var url = 'https://row52.com/Search/?YMMorVin=VIN&Year=&'+
+    var searchUrl = 'https://row52.com/Search/?YMMorVin=VIN&Year=&'+
         'V1='   + vinInput[0] +
         '&V2='  + vinInput[1] +
         '&V3='  + vinInput[2] +
@@ -64,7 +95,7 @@ function openRow52 (vinInput) {
         '&V16=' + vinInput[15] +
         '&V17=' + vinInput[16] +
         '&ZipCode=&Page=1&ModelId=&MakeId=&LocationId=&IsVin=true&Distance=50';
-    browser.tabs.create({"url": url});
+    browser.tabs.create({url: searchUrl});
 };
 
 console.log("search loaded!")
