@@ -40,16 +40,29 @@ document.addEventListener("click", (event) =>{
                 action: "download" }]}
         );
     } else if (event.target.id === "button-settings"){
+        // update pages active status
+        document.querySelectorAll(".slider-page").forEach(el=>{el.classList.remove("active")})
+        document.getElementById("settings").classList.add("active")
+        // scroll the page
         document.getElementById("slider").scrollLeft = 310
+        // update toolbar
         document.getElementById("button-settings").classList.add("hidden")
         document.getElementById("button-main").classList.remove("hidden")
     } else if (event.target.id === "button-main"){
+        // update pages active status
+        document.querySelectorAll(".slider-page").forEach(el=>{el.classList.remove("active")})
+        document.getElementById("main").classList.add("active")
+        // scroll the page
         document.getElementById("slider").scrollLeft = 0
+        // update toolbar
         document.getElementById("button-main").classList.add("hidden")
         document.getElementById("button-settings").classList.remove("hidden")
     };
 });
 
+/*-------------*\
+  SETUP ON LOAD  
+\*-------------*/
 window.onload = () => {
     // validate VIN and enable/disable search button
     let inputVin = document.getElementById('input-vin')
@@ -61,7 +74,11 @@ window.onload = () => {
             inputSearch.classList.add('disabled')
         }
     });
+    // load preferences from storage and pre-set elements
     preferences.prepare()
+    // set version display
+    let versionNumber = browser.runtime.getManifest().version
+    document.querySelector("#version").textContent = 'v' + versionNumber;
 }
 window.onfocus = async () => {
     // auto-fill VIN if clipboard matches
@@ -71,6 +88,8 @@ window.onfocus = async () => {
         document.getElementById('button-search').classList.remove('disabled')
     }
 }
+
+
 /*--------*\
   FEEDBACK  
 \*--------*/

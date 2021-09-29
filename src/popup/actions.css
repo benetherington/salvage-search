@@ -159,6 +159,10 @@ li.toggle.toggle-false{
 .settings-label {
     grid-column: 2;
 }
+.tiny {
+    font-size: smaller;
+}
+
 
 
 /*      Lovely toggle button stolen from:         */
@@ -297,6 +301,9 @@ body {
     float: left;
     width: 300px;
     padding: 0 5px;
+}
+.slider-page:not(.active) {
+    height: 10px;
 }
 /* MAIN */
 #button-search {         background-color: #61A690; }
