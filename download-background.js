@@ -43,14 +43,25 @@ async function copartDownloadImages() {
         let ymm = tab.title.match(/^(.*) for Sale/i)[1];
         let lotNumber = tab.url.match(/copart\.com\/lot\/(\d*)/)[1];
         let hdUrls = await copartFetchLotData(lotNumber)
-        browser.tabs.sendMessage(
-            tab.id,
-            { type: "copart",
-              values: [{ ymm:ymm,
-                         lotNumber:lotNumber,
-                         hdUrls:hdUrls }] }
-        );
-    };
+        // When clicking on a Copart lot details page from the home page or
+        // search results, the URL is updated, but a navigation event does not
+        // occur. This means that until that details page is refreshed, our
+        // content script will not be injected. Catch this by injecting the
+        // script if the message fails to find a recipient.
+        messager = function() {
+            return browser.tabs.sendMessage(
+                tab.id,
+                { type: "copart",
+                values: [{ ymm:ymm,
+                    lotNumber:lotNumber,
+                    hdUrls:hdUrls }] }
+                    )
+        };
+        messager().then(null, async ()=>{
+            await browser.tabs.executeScript(tab.id, {file:"/download-copart.js"});
+            messager();
+        });
+    }
 }
 async function copartFetchLotData(lotNumber) {
     jsn = await fetch(`https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`)
