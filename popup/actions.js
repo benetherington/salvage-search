@@ -6,7 +6,7 @@ const VINREGEX = RegExp("^[A-HJ-NPR-Z0-9]{3}[A-HJ-NPR-Z0-9]{5}[0-9X][A-HJ-NPR-Z0
 // MOUSE CLICKS
 document.addEventListener("click", (event) =>{
     // check which element was clicked
-    if (event.target.classList.contains('action-search')) {
+    if (event.target.id === 'button-search') {
         // SEARCH BUTTON
         vinInput = document.getElementById("input-vin");
         if (VINREGEX.test(vinInput.value)) {
@@ -19,7 +19,7 @@ document.addEventListener("click", (event) =>{
             );
         } else {
             // that VIN looks bad, and somehow you were still able to click the button.
-            errorMessage = document.querySelector("#error-content")
+            errorMessage = document.querySelector("#popup-error")
             vinField = document.getElementById("input-vin")
             // unhide error message
             errorMessage.classList.remove("hidden");
@@ -32,21 +32,28 @@ document.addEventListener("click", (event) =>{
                 vinField.classList.remove("error-attention");
             }, 4*1000)
         };
-    } else if (event.target.classList.contains('action-download')) {
+    } else if (event.target.id === 'button-download') {
         // DOWNLOAD BUTTON
         browser.runtime.sendMessage(
             { type: "popup-action",
             values: [{
                 action: "download" }]}
         );
+    } else if (event.target.id === "button-settings"){
+        document.getElementById("slider").scrollLeft = 310
+        document.getElementById("button-settings").classList.add("hidden")
+        document.getElementById("button-main").classList.remove("hidden")
+    } else if (event.target.id === "button-main"){
+        document.getElementById("slider").scrollLeft = 0
+        document.getElementById("button-main").classList.add("hidden")
+        document.getElementById("button-settings").classList.remove("hidden")
     };
 });
 
-// VIN TEXT ENTRY
 window.onload = () => {
     // validate VIN and enable/disable search button
     let inputVin = document.getElementById('input-vin')
-    let inputSearch = document.getElementById('input-search')
+    let inputSearch = document.getElementById('button-search')
     inputVin.addEventListener('input', (event)=>{
         if (VINREGEX.test(inputVin.value)) {
             inputSearch.classList.remove('disabled')
@@ -54,14 +61,14 @@ window.onload = () => {
             inputSearch.classList.add('disabled')
         }
     });
+    preferences.prepare()
 }
-// VIN AUTO-FILL
 window.onfocus = async () => {
     // auto-fill VIN if clipboard matches
     let clipboardContents = await navigator.clipboard.readText() // TODO: to request access, we need to load actions.html in a new tab
     if (VINREGEX.test(clipboardContents)) {
         document.getElementById('input-vin').value = clipboardContents
-        document.getElementById('input-search').classList.remove('disabled')
+        document.getElementById('button-search').classList.remove('disabled')
     }
 }
 /*--------*\
@@ -111,7 +118,7 @@ downloadButton = new class {
         }
     }
     update(status=null) {
-        let button = document.getElementById("input-download")
+        let button = document.getElementById("button-download")
         this.status = status || this.status
         switch (this.status) {
             case "disabled":
@@ -127,6 +134,60 @@ downloadButton = new class {
     }
 }
 
+
+/*--------*\
+  SETTINGS
+\*--------*/
+const DEFAULT_SETTINGS = {
+    searchCopart: true,
+    searchIaai: true,
+    searchRow52: true
+}
+var preferences  = new class {
+    constructor() {
+        this.copartCheck = null
+        this.iaaiCheck = null
+        this.row52Check = null
+    }
+    async prepare() {
+        this.getElements()
+        this.fetchStoredSettings()
+        this.setElementCallbacks()
+    }
+    getElements() {
+        this.copartCheck = document.querySelector(".settings-grid input#copart")
+        this.iaaiCheck =   document.querySelector(".settings-grid input#iaai")
+        this.row52Check =  document.querySelector(".settings-grid input#row52")
+    }
+    async fetchStoredSettings() {
+        console.log("fetchStoredSettings")
+        let storage = await browser.storage.local.get("settings")
+        let settings = storage.settings || DEFAULT_SETTINGS
+
+        this.copartCheck.checked = settings.searchCopart
+        this.iaaiCheck.checked   = settings.searchIaai
+        this.row52Check.checked  = settings.searchRow52
+        // re-store settings in case defaults were used
+        console.log(settings)
+        this.setStoredSettings()
+    }
+    setElementCallbacks() {
+        for (let element of [this.copartCheck, this.iaaiCheck, this.row52Check]) {
+            element.addEventListener("change", this.setStoredSettings.bind(this))
+        }
+    }
+    async setStoredSettings(event=null) {
+        console.log("setStoredSettings")
+        let storage = await browser.storage.local.get("settings")
+        let settings = storage.settings || DEFAULT_SETTINGS
+        settings.searchCopart = this.copartCheck.checked
+        settings.searchIaai   = this.iaaiCheck.checked
+        settings.searchRow52  = this.row52Check.checked
+        console.log(`UI: ${this.copartCheck.checked}, ${this.iaaiCheck.checked}, ${this.row52Check.checked}`)
+        console.log(settings)
+        browser.storage.local.set({settings})
+    }
+}
 console.log("popup action loaded!")
 
 
