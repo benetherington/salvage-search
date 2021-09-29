@@ -1,8 +1,14 @@
 /* VALIDATION AND FEEDBACK */
-.hidden {
-    display: none;
+#error-area {
+    overflow: hidden;
 }
-
+#error-drawer {
+    transition: height 0.5s;
+    height: 28px;
+}
+div.hidden {
+    height: 0 !important;
+}
 .error-attention {
     animation-name: shakehead;
     animation-duration: 250ms;
@@ -16,7 +22,6 @@
     80%  {transform: translate( 3px, 0px);}
     100% {transform: translate( 0px, 0px);}
 }
-
 .feedback-download {
     pointer-events: none;
     font-weight: 700;
@@ -40,9 +45,7 @@
 
 /* TEXT ELEMENTS */
 body {
-    /* background-color: #680c0c; */
     font-family: 'Roboto', sans-serif;
-    width: 22em;
 }
 p {
     font-size: 1.5em;
@@ -64,8 +67,12 @@ input {
     background-color: #dbdbdb;
 
     /* sizing */
+    margin-top: 3%;
     box-sizing: border-box;
     width: 100%
+}
+input::placeholder{
+    color: #666666;
 }
 input:hover{
     background-color: #c4d7e0;
@@ -76,11 +83,10 @@ input:focus {
     background-color: #d5f3ff;
 }
 
-
 /* STRUCTURE */
 .grouped {
-    margin: 4% auto 6%;
-    padding: 1% 4%;
+    margin: 2% auto 6%;
+    padding: 4%;
     /* border-radius: 5px; */
     box-shadow: 0px 3px 5px 0px grey;
 }
