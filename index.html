@@ -6,38 +6,57 @@
   </head>
 
   <body>
-    <img src="icons/SS-100.bmp">
-    <h1>Salvage Search v2.0</h1>
+    <img src="src/icons/SS-100.bmp">
+    <h1>Salvage Search v2</h1>
 
     <p>Salvage Search is a browser plugin that makes it easy to search inventory websites for vehicles and download high-def images. Select your browser below to install it.</p>
 
+    <strong>FIREFOX</strong>
+    <ul>
+      <ui>
+        <a href="http://benetherington.com/salvage-search/releases/salvage_search-2.1-fx.xpi">Firefox v2.2</a>
+      </ui>
+    </ul>
+    <strong>CHROME</strong>
+    <ul>
+      <ui>
+        <u>Chrome v2.2</u> -- <i>currently in review by Google, available soon.</i>
+      </ui>
+    </ul>
+    <br><br>
+
+
+    <h2>HOW TO USE</h2>
     <p>This plugin adds an extension to your toolbar, and should be fairly self-explanatory:</p>
     <img src="images/toolbar-popup.jpg">
     <p>Type a VIN in the text box to enable the <b>SEARCH button</b>. Search result tabs will open all at once. IAAI's website has decided it no longer searches by VIN, but maybe that will change in the future.</p>
     <p>A future update will improve the performance of the search function (salvage websites are constantly changing). Future updates will also add additional salvage yards and a preferences page to allow you to pick which yards are in your area.</p>
     <p>The second button, the <b>DOWNLOAD IMAGES button</b>, only enables on Copart and IAAI listing pages. The button won't enable on a search results page!
     <p>Copart loads very quickly, but IAAI will take a little longer, and a progress bar will be displayed. If you click away from the popup while downloading IAAI images, the download will be canceled.</p>
+    <p>You can also click the <b>GEAR BUTTON</b> to edit your settings. v2.2 allows you to change your settings, but doesn't put them into effect. v2.3 will include updated search performance, and will actually respect your settings.</p>
     <br>
-    <p>I'll freely admit I coded this in a weekend, and sometimes it might not work. If that happens, try refreshing the page and giving it another go. If it still doesn't work, send me the listing page you're trying to download from and I'll see what I can do.</p>
-    <p>IAAI also provides panoramic interior photos and exterior walkarounds. They won't be downloaded by this extension, but a future update should include them.</p>
+    <p>I'll freely admit I coded the bulk of this over a weekend. I've worked out a lot of bugs, but everyone uses their computer differently, and something might break. If that happens, try refreshing the page and giving it another go. If it still doesn't work, send me the listing page you're trying to download from and I'll see what I can do.</p>
     <br><br>
-
-    <strong>FIREFOX</strong>
+    
+    <h2>REQUIRED PERMISSIONS</h2>
+    <p>When you install the extension, it will ask for permissions. Here's what it's doing with them:</p>
     <ul>
-      <ui>
-        <a href="http://benetherington.com/salvage-search/releases/salvage_search-2.1-fx.xpi">Firefox v2.1</a>
-      </ui>
-    </ul>
-    <strong>CHROME</strong>
-    <ul>
-      <ui>
-        <a href="https://chrome.google.com/webstore/detail/salvage-search/okbjgjdpehblohdlmocliddhkhpkikoh">Chrome v2.0</a>
-      </ui>
+      <li>Access data on copart.com: Allows the extension to see which Copart listing you have open to know what images to fetch, and to open image tabs directly behind it.</li>
+      <li>Access data on iaai.com: Allows the extension to see which IAAI listing you have open, to grab image IDs from the listing, and then to download images after processing.</li>
+      <li>Access data on avis.aai.com: Allows the extension to get high resolution images, which are accessed from a different domain.</li>
+      <li>Get data from the clipboard: Allows the extension to pre-fill the VIN search field if you've already copied a VIN.</li>
+      <li>Access browser tabs: Unused. This is a remnant from a previous version that didn't request permission to access data on specific domains. This will be removed in v2.3.</li>
     </ul>
 
-    <br>
-    <br>
-    <hr>
+    <h2>PLANNED FEATURES</h2>
+    <ul>
+      <li>Improve search reliability on Copart</li>
+      <li>Filter IAAI search results by ZIP and sanitized VIN</li>
+      <li>Download IAAI's panoramic interior photos and exterior walkarounds</li>
+      <li>Speed up IAAI image processing time (it takes forever to assure good images, need to better characterize openSeaDragon's behavior first)</li>
+      <li>Present image previews and download a zip of only the selected images</li>
+    </ul>
+    <br><br><br><br><hr>
     <p><a href="https://www.github.com/benetherington/salvage-search">Source code and licensing</a></p>
   </body>
 
