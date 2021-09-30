@@ -19,7 +19,7 @@ async function openSalvagePages(vinInput) {
         openCopart(vinInput);
     };
     if (settings.searchIaai) {
-        openIaai(vinInput);
+        openIaai(vinInput, settings.zipCode);
     };
     if (settings.searchRow52) {
         openRow52(vinInput);
@@ -79,7 +79,7 @@ async function openCopart (vinInput) {
   IAAI  
 \*----*/
 vinDecoderUrl = vin=>`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${vin}?format=json`;
-async function openIaai(vinInput) {
+async function openIaai(vinInput, zipCode) {
     // The big oof. Because IAAI no longer allows VIN searches without a buyer
     // account, the most helpful thing we can do is do a YMM search. First, the
     // VIN is decoded using NHTSA's API, then the make and model are selected
@@ -114,7 +114,7 @@ async function openIaai(vinInput) {
     let iaModelIds = await iaaiMatchModel(iaMakeId, ymm);
     // construct and POST a new search request
     let searchUrl = "https://iaai.com/AdvancedSearch/GetSearchResults";
-    let searchParams = iaaiSearchParams(ymm.year, iaMakeId, iaModelIds, "60647");
+    let searchParams = iaaiSearchParams(ymm.year, iaMakeId, iaModelIds, zipCode);
     let headers = { "User-Agent": window.navigator.userAgent,
                     "Accept": "*/*",
                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" };
