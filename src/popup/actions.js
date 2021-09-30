@@ -76,6 +76,15 @@ window.onload = () => {
     });
     // load preferences from storage and pre-set elements
     preferences.prepare()
+    // enable/disable the ZIP field
+    document.querySelector("input#iaai").addEventListener("change", (event)=>{
+        if (event.target.checked) {
+            document.querySelector("input#zip").classList.remove("disabled")
+        } else {
+            document.querySelector("input#zip").classList.add("disabled")
+        }
+    })
+    
     // set version display
     let versionNumber = browser.runtime.getManifest().version
     document.querySelector("#version").textContent = 'v' + versionNumber;
@@ -160,12 +169,14 @@ downloadButton = new class {
 const DEFAULT_SETTINGS = {
     searchCopart: true,
     searchIaai: true,
-    searchRow52: true
+    searchRow52: true,
+    zipCode: ""
 }
 var preferences  = new class {
     constructor() {
         this.copartCheck = null
         this.iaaiCheck = null
+        this.zipText = null
         this.row52Check = null
     }
     async prepare() {
@@ -176,6 +187,7 @@ var preferences  = new class {
     getElements() {
         this.copartCheck = document.querySelector(".settings-grid input#copart")
         this.iaaiCheck =   document.querySelector(".settings-grid input#iaai")
+        this.zipText =     document.querySelector(".settings-grid input#zip")
         this.row52Check =  document.querySelector(".settings-grid input#row52")
     }
     async fetchStoredSettings() {
@@ -184,21 +196,23 @@ var preferences  = new class {
 
         this.copartCheck.checked = settings.searchCopart
         this.iaaiCheck.checked   = settings.searchIaai
+        this.zipText.value       = settings.zipCode
         this.row52Check.checked  = settings.searchRow52
         // re-store settings in case defaults were used
         this.setStoredSettings()
     }
     setElementCallbacks() {
-        for (let element of [this.copartCheck, this.iaaiCheck, this.row52Check]) {
+        for (let element of [this.copartCheck, this.iaaiCheck, this.zipText, this.row52Check]) {
             element.addEventListener("change", this.setStoredSettings.bind(this))
         }
     }
     async setStoredSettings(event=null) {
-        let storage = await browser.storage.local.get("settings")
-        let settings = storage.settings || DEFAULT_SETTINGS
-        settings.searchCopart = this.copartCheck.checked
-        settings.searchIaai   = this.iaaiCheck.checked
-        settings.searchRow52  = this.row52Check.checked
+        let storage = await browser.storage.local.get("settings");
+        let settings = storage.settings || DEFAULT_SETTINGS;
+        settings.searchCopart = this.copartCheck.checked;
+        settings.searchIaai   = this.iaaiCheck.checked;
+        settings.zipCode      = this.zipText.value;
+        settings.searchRow52  = this.row52Check.checked;
         browser.storage.local.set({settings})
     }
 }
