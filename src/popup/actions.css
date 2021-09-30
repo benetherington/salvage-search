@@ -48,8 +48,8 @@ body {
     cursor: pointer;
 }
 .disabled, .disabled:hover {
-    color:            #666666 !important;
-    background-color: inherit !important;
+    color:            #666666;
+    background-color: inherit;
     pointer-events: none;
     opacity: 0.5;
     box-shadow: 0px 0px 2px 1px grey;
@@ -154,20 +154,23 @@ input {
     /* clear Chrome injected style */
     outline: none;
     border: none;
-
     /* styling */
-    text-transform: uppercase;
-    padding: 0.4em 0.2em 0em 0.2em;
-    font-size: 2em;
     border-top-left-radius: 2px;
     border-top-right-radius: 2px;
     border-bottom: 2px solid #223945;
     background-color: #dbdbdb;
-
+    padding: 0.4em 0.2em 0em 0.2em;
     /* sizing */
-    margin-top: 3%;
     box-sizing: border-box;
     width: 100%
+}
+.input-big {
+    /* styling */
+    text-transform: uppercase;
+    font-size: 2em;
+}
+.input-small {
+    font-size: 1em;
 }
 input::placeholder{
     color: #666666;
@@ -179,6 +182,11 @@ input:focus {
     border: none;
     border-bottom: 2px solid #32728C;
     background-color: #d5f3ff;
+}
+input.disabled, input.disabled:hover {
+    border: none;
+    box-shadow: none;
+    background-color:  #e8e8e8;;
 }
 
 /* BUTTONS */
