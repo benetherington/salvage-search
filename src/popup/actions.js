@@ -122,7 +122,78 @@ function feedbackHandler(feedback) {
             downloadButton.update("enabled")
         break; case "download-abort": // feedback.display
             downloadButton.update("disabled")
+        break; case "feedback-message":
+            addFeedbackMessage(feedback)
     }
+}
+
+(async ()=>{
+    // restore feedbackMessages
+    storage = await browser.storage.local.get();
+    Object.entries(storage).forEach( ([key, value])=>{
+        if (  value.hasOwnProperty("type")
+           && value.type==="feedback-message" ) {
+            browser.storage.local.remove(key)
+            addFeedbackMessage(value);
+        }
+    })
+})()
+var addFeedbackMessage = (rawFeedback)=>{
+    // PROCESS
+    let feedback = {};
+    // make sure there's a message
+    if (rawFeedback.message) {
+        // unpack with defaults
+        let {
+            message,
+            duration = 5*1000,
+            closeable = true,
+            displayAs = "status"
+        } = rawFeedback;
+        // set processed values
+        feedback.message   = message;
+        feedback.duration  = duration;
+        feedback.closeable = closeable;
+        feedback.displayAs      = displayAs;
+        feedback.createdAt = performance.now().toString();
+    } else {console.log("empty message");return;}
+
+    // CREATE ELEMENT
+    let notification = document.createElement("div");
+    notification.classList.add("notification")
+    notification.classList.add(feedback.displayAs)
+    notification.innerText = feedback.message;
+    // add it to the page
+    let drawer = document.querySelector("#notification-drawer");
+    drawer.appendChild(notification)
+    // PERSIST
+    if (feedback.duration === -1) {
+        // copy object and add type property
+        feedbackToStore = Object.assign(feedback, {type:"feedback-message"});
+        // pack it for storage with a programmatic key
+        storable = {};
+        // time should be pretty unique
+        storable[feedback.createdAt] = feedbackToStore;
+        browser.storage.local.set(storable);
+    }
+
+    // PREPARE FOR THE END
+    closeUp = ()=>{
+        console.log("closing")
+        console.log(feedback)
+        // remove this feedback object from persistance
+        browser.storage.local.remove(feedback.createdAt)
+        // remove from drawer
+        notification.remove()
+        // close drawer
+        if (drawer.childElementCount===0) {drawer.classList.add("hidden")}
+    }
+    // set removal conditions
+    if (feedback.duration !== -1) {setTimeout(closeUp, feedback.duration)}
+    if (feedback.closeable)       {notification.addEventListener("click", closeUp)}
+
+    // show the drawer
+    drawer.classList.remove("hidden")
 }
 
 downloadButton = new class {
