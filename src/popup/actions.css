@@ -3,7 +3,10 @@
 \*---------------------------*/
 
 body {
+    margin: 0;
     width: 310px;
+    overflow-x: clip;
+    font-family: 'Roboto', sans-serif;
 }
 .slider {
     width: 310px;
@@ -25,34 +28,51 @@ body {
 }
 
 /*----------------------------------*\
-  ------ SHARED BETWEEN PAGES ------  
+------ SHARED BETWEEN PAGES ------  
 \*----------------------------------*/
 .grouped {
-    margin: 2% auto 6%;
-    padding: 4%;
-    /* border-radius: 5px; */
-    box-shadow: 0px 3px 5px 0px grey;
+    margin: 1%;
+    padding: 0 2% 2%; /* pad the bottom and sides. >* gets top margin for equal vertical spacing */
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+.grouped > * {
+    margin-top: 2%; /* margin top doesn't overlap .grouped padding */
 }
 .ungrouped {
-    margin: 3% auto;
-    padding: 4px;
+    margin: 3%; /* match width of .grouped content */
+}
+.hidden {
+    display: none;
 }
 .button {
-    margin: 3% auto;
     padding: 4px;
     text-align: center;
     font-size: 1.8em;
     font-weight: 500;
     color: #ffffff;
-    box-shadow: 0px 1px 3px 0px grey;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     cursor: pointer;
 }
-.disabled, .disabled:hover {
+.button.disabled, .button.disabled:hover {
     color:            #666666;
     background-color: inherit;
     pointer-events: none;
     opacity: 0.5;
     box-shadow: 0px 0px 2px 1px grey;
+}
+.error-attention {
+    animation-name: shakehead;
+    animation-duration: 250ms;
+}
+@keyframes shakehead {
+    0%   {transform: translate( 0px, 0px);}
+    10%  {transform: translate( 3px, 0px);}
+    30%  {transform: translate(-3px, 0px);}
+    50%  {transform: translate( 3px, 0px);}
+    70%  {transform: translate(-3px, 0px);}
+    80%  {transform: translate( 3px, 0px);}
+    100% {transform: translate( 0px, 0px);}
 }
 
 
@@ -83,13 +103,6 @@ body {
     background-position: center;
     justify-self: left;
 }
-.button.hidden {
-    padding: 0;
-    margin: 0;
-    visibility: hidden;
-    height: 0;
-    width: 0;
-}
 
 
 
@@ -97,39 +110,16 @@ body {
   ------ MAIN PAGE ------  
 \*-----------------------*/
 /* user feedback */
-#error-area {
-    overflow: hidden;
-}
-#error-drawer {
-    transition: height 0.5s;
-    height: 28px;
-}
-div.hidden {
-    height: 0 !important;
-}
-.error-attention {
-    animation-name: shakehead;
-    animation-duration: 250ms;
-}
-@keyframes shakehead {
-    0%   {transform: translate( 0px, 0px);}
-    10%  {transform: translate( 3px, 0px);}
-    30%  {transform: translate(-3px, 0px);}
-    50%  {transform: translate( 3px, 0px);}
-    70%  {transform: translate(-3px, 0px);}
-    80%  {transform: translate( 3px, 0px);}
-    100% {transform: translate( 0px, 0px);}
-}
 .feedback-download {
     pointer-events: none;
     font-weight: 700;
     background-image: repeating-linear-gradient(-45deg, 
-                                    #223945 10px 30px, /* 223945 */
-                                    #32728C 30px 50px, /* 32728C */
-                                    #508a77 50px 70px, /* 61A690 */
-                                    #bdbdb8 70px 90px, /* EFEFE7 */
-                                    #bb5c53 90px 110px /* F0786D */
-    );
+                        #223945 10px 30px, /* 223945 */
+                        #32728C 30px 50px, /* 32728C */
+                        #508a77 50px 70px, /* 61A690 */
+                        #bdbdb8 70px 90px, /* EFEFE7 */
+                        #bb5c53 90px 110px /* F0786D */
+                    );
     background-size: 295% 300%;
     animation-name: backgroundsweep;
     animation-timing-function: linear;
@@ -142,14 +132,11 @@ div.hidden {
 }
 
 /* TEXT ELEMENTS */
-body {
-    font-family: 'Roboto', sans-serif;
-}
-p {
+/* p {
     font-size: 1.5em;
     margin-block-start: 0.5em;
     margin-block-end:   0.5em;
-}
+} */
 input {
     /* clear Chrome injected style */
     outline: none;
@@ -314,4 +301,53 @@ input.disabled, input.disabled:hover {
 }
 .checkbox:not(:checked) ~ .layer {
     background-color: #fcebeb;
+}
+
+
+
+
+
+
+/*----------------------------*\
+  ------ MESSAGE DRAWER ------  
+\*----------------------------*/
+.drawer {
+    background-color: #ececec;
+
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 0 3% 2%;
+}
+.drawer::before {
+    /* fill the width of the viewport */
+    display: block;
+    position: relative;
+    left: -10%;
+    width: 120%;
+    height: 1px;
+    content: "";
+    /* add a below-us drop shadow */
+    margin-bottom: 5%;
+    box-shadow: 0 1px 9px 1px black;
+}
+.drawer > * {
+    /* space between elements */
+    margin-top: 2%;
+    width: 100%;
+}
+.notification {
+    box-sizing: border-box;
+    padding: 1% 2%;
+    text-align: center;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+.notification.error {
+    background-color: #f0aea8;
+}
+.notification.status {
+    background-color: #ffffbc;
+}
+.notification.success {
+    background-color: #73e0bc;
 }
