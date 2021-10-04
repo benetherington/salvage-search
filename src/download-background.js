@@ -143,7 +143,7 @@ async function iaaiStoreImages(imageArray) {
 async function iaaiDownloadImages() {
     console.log("iaaiDownloadImages beginning fetches")
     // find IAAI tabs
-    let iaaiTabs = await browser.tabs.query({active:true, url:["*://*.iaai.com/Vehicledetails?*", "*://*.iaai.com/vehicledetails/*"]});
+    let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
     // TOOD: send error feedback
     if (iaaiTabs.length) {
         await browser.runtime.sendMessage({
