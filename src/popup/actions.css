@@ -1,15 +1,19 @@
+:root {
+    --popup-width: 310px
+}
+
+
 /*---------------------------*\
   ------ SLIDING PAGES ------  
 \*---------------------------*/
-
 body {
     margin: 0;
-    width: 310px;
+    width: var(--popup-width);
     overflow-x: clip;
     font-family: 'Roboto', sans-serif;
 }
 .slider {
-    width: 310px;
+    width: var(--popup-width);
     height: auto;
     overflow-x: clip;
     overflow-y: hidden;
@@ -20,7 +24,7 @@ body {
 }
 .slider-page {
     float: left;
-    width: 300px;
+    width: calc(var(--popup-width) - 10px);
     padding: 0 5px;
 }
 .slider-page:not(.active) {
@@ -80,7 +84,7 @@ body {
   ------ TOOLBAR ------  
 \*---------------------*/
 .toolbar {
-    width: 300px;
+    width: calc(var(--popup-width) - 10px);
     display: block flex;
     justify-content: right;
 }
