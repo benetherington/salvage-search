@@ -2,7 +2,8 @@
   "description": "Searches salvage sites for a VIN and automates image downloads.",
   "manifest_version": 2,
   "name": "Salvage Search",
-  "version": "2.2",
+  "version": "2.3.1",
+  "version_name": "2.3 beta 1",
   "homepage_url": "https://benetherington.com/salvage-search/",
   "browser_specific_settings": {
     "gecko": {"update_url": "https://benetherington.com/salbage-search/updates.json"}
