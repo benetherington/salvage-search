@@ -24,6 +24,9 @@ browser.runtime.onMessage.addListener( (message) => {
     if (message.type == 'copart') {
         console.log("That's a copart message!")
         let hdUrls = message.values.map(value=>{return value.hdUrls}).flat()
+        for (value of message.values) {
+            sendNotification(`Copart: found ${value.hdUrls.length} images for lot #${value.lotNumber}`, {displayAs: "success"})
+        }
         clickDragDownload(hdUrls);
         return Promise.resolve('done');
     };

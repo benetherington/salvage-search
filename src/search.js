@@ -5,7 +5,7 @@ async function openSalvagePages(vinInput) {
     // test the clipboard text out of an abundance of caution since we need to do code injection for Copart.
     vinInput = encodeURIComponent(vinInput).replace(/^\s+|\s+$/g, '');
     if (!VINREGEX.test(vinInput)) {
-        console.log("Heyyyy, how did this bad input get through?")
+        sendNotification("That VIN doesn't look right...", {displayAs: "error"})
         return;
     };
     if (settings.searchCopart) {
@@ -46,22 +46,24 @@ async function openCopart (vinInput) {
                 body: JSON.stringify(payload)
             }
         )
-        if (!response.ok) {throw `fetch failed with status code: ${response.status}`;}
+        if (!response.ok) {throw `something went wrong on their end: ${response.status} error.`;}
 
         // parse response
         let jsn = await response.json()
-        if (!jsn.data.hasOwnProperty("results")) {throw "failed with no results property";}
+        if (!jsn.data.hasOwnProperty("results")) {throw "something went wrong on their end...";}
 
         // open result tab
         if (jsn.data.results.content.length) {
             for (let vehicle of jsn.data.results.content) {
                 let lotUrl = `https://www.copart.com/lot/${vehicle.lotNumberStr}`;
+                sendNotification(`Copart: your vehicle is lot #${vehicle.lotNumberStr}!`, {displayAs:"success"})
                 browser.tabs.create({url: lotUrl})
             }
         } else {throw "query returned no results";}
     } catch (error) {
         console.log(error)
         console.log("resorting to fallback url")
+        sendNotification(`Copart: ${error}.`, {displayAs: "error"})
         let failureUrl = "https://www.copart.com/lotSearchResults/?free=true&query="+vinInput;
         browser.tabs.create({url: failureUrl})
     }
@@ -97,11 +99,13 @@ async function openIaai(vinInput, zipCode) {
     )
     // decode VIN, make "clean" versions of make and model
     let vPicJson = await fetch(vinDecoderUrl(vinInput)).then(resp=>resp.json());
+    let vPicYmm = vPicJson.Results[0]
     const ymm = {
-        year: vPicJson.Results[0].ModelYear,
-        make: vPicJson.Results[0].Make.toLowerCase().replaceAll(/\W/g, ""),
-        model: vPicJson.Results[0].Model.toLowerCase().replaceAll(/\W/g, "")
+        year: vPicYmm.ModelYear,
+        make: vPicYmm.Make.toLowerCase().replaceAll(/\W/g, ""),
+        model: vPicYmm.Model.toLowerCase().replaceAll(/\W/g, "")
     };
+    sendNotification(`Decoded VIN as: ${ymm.year} ${vPicYmm.Make} ${vPicYmm.Model}.`)
     console.log(`decoded: ${JSON.stringify(ymm)}`)
     let iaMakeId = await iaaiMatchMake(ymm);
     let iaModelIds = await iaaiMatchModel(iaMakeId, ymm);
@@ -133,7 +137,8 @@ async function iaaiMatchMake(ymm) {
         }
     }
     // return best fit
-    console.log(`selected ${selectedMake.make} with a score of ${selectedMake.lev}`)
+    console.log(`IAAI: Selected ${selectedMake.make} with a score of ${selectedMake.lev}`)
+    sendNotification(`Searching IAAI for ${selectedMake.make}.`)
     return selectedMake.iaId
 }
 async function iaaiMatchModel(makeId, ymm) {
@@ -145,6 +150,7 @@ async function iaaiMatchModel(makeId, ymm) {
         // "clean"
         let cleanIaModel = iaModel.toLowerCase().replaceAll(/\W/g, "");
         // compare
+        // TODO add 0
         if (cleanIaModel.includes(ymm.model)) {var score=1.5;}
         else                                  {var score=levenshtein(cleanIaModel, ymm.model);}
         iaModelFits.push({
@@ -167,6 +173,7 @@ async function iaaiMatchModel(makeId, ymm) {
     }
     // return selected models
     console.log(`selected: ${selectedModels.map(m=>m.model+" at "+m.score).join(", ")}`)
+    sendNotification(`Searching IAAI for ${selectedModels.map(m=>m.model.replaceAll(/^ *| *$/g, "")).join(", ")}.`)
     return selectedModels.map(m=>m.iaId);
 }
 async function iaaiFetchModels(makeId) {
