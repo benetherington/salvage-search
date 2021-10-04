@@ -291,8 +291,8 @@ window.addEventListener("load", async ()=>{
     preferences.fetchStoredSettings()
     preferences.setElementCallbacks()
     // set version display
-    let versionNumber = browser.runtime.getManifest().version
-    document.querySelector("#version").textContent = 'v' + versionNumber;
+    let versionName = browser.runtime.getManifest().version_name
+    document.querySelector("#version").textContent = 'v' + versionName;
 })
 
 console.log("popup action loaded!")
