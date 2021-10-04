@@ -1,7 +1,34 @@
-/*----------------*\
-  USER INTERACTION  
-\*----------------*/
-// MOUSE CLICKS
+/*-------*\
+  TOOLBAR  
+\*-------*/
+// handle clicks
+document.addEventListener("click", (event) =>{
+    if (event.target.id === "button-settings"){
+        // update pages active status
+        document.querySelectorAll(".slider-page").forEach(el=>{el.classList.remove("active")})
+        document.getElementById("settings").classList.add("active")
+        // scroll the page
+        document.getElementById("slider").scrollLeft = 310
+        // update toolbar
+        document.getElementById("button-settings").classList.add("hidden")
+        document.getElementById("button-main").classList.remove("hidden")
+    } else if (event.target.id === "button-main"){
+        // update pages active status
+        document.querySelectorAll(".slider-page").forEach(el=>{el.classList.remove("active")})
+        document.getElementById("main").classList.add("active")
+        // scroll the page
+        document.getElementById("slider").scrollLeft = 0
+        // update toolbar
+        document.getElementById("button-main").classList.add("hidden")
+        document.getElementById("button-settings").classList.remove("hidden")
+    };
+});
+
+
+/*---------*\
+  MAIN PAGE  
+\*---------*/
+// handle clicks
 document.addEventListener("click", (event) =>{
     // check which element was clicked
     if (event.target.id === 'button-search') {
@@ -37,32 +64,11 @@ document.addEventListener("click", (event) =>{
             values: [{
                 action: "download" }]}
         );
-    } else if (event.target.id === "button-settings"){
-        // update pages active status
-        document.querySelectorAll(".slider-page").forEach(el=>{el.classList.remove("active")})
-        document.getElementById("settings").classList.add("active")
-        // scroll the page
-        document.getElementById("slider").scrollLeft = 310
-        // update toolbar
-        document.getElementById("button-settings").classList.add("hidden")
-        document.getElementById("button-main").classList.remove("hidden")
-    } else if (event.target.id === "button-main"){
-        // update pages active status
-        document.querySelectorAll(".slider-page").forEach(el=>{el.classList.remove("active")})
-        document.getElementById("main").classList.add("active")
-        // scroll the page
-        document.getElementById("slider").scrollLeft = 0
-        // update toolbar
-        document.getElementById("button-main").classList.add("hidden")
-        document.getElementById("button-settings").classList.remove("hidden")
-    };
-});
-
-/*-------------*\
-  SETUP ON LOAD  
-\*-------------*/
-window.onload = () => {
-    // validate VIN and enable/disable search button
+    }
+})
+// set up enable/disable/validate mechanics
+window.addEventListener("load", () => {
+    // validate VIN
     let inputVin = document.getElementById('input-vin')
     let inputSearch = document.getElementById('button-search')
     inputVin.addEventListener('input', (event)=>{
@@ -72,72 +78,56 @@ window.onload = () => {
             inputSearch.classList.add('disabled')
         }
     });
-    // load preferences from storage and pre-set elements
-    preferences.prepare()
+
     // enable/disable the ZIP field
     document.querySelector("input#iaai").addEventListener("change", (event)=>{
+        let inputZip = document.querySelector("input#zip")
         if (event.target.checked) {
-            document.querySelector("input#zip").classList.remove("disabled")
+            inputZip.classList.remove("disabled")
         } else {
-            document.querySelector("input#zip").classList.add("disabled")
+            inputZip.classList.add("disabled")
         }
     })
-    
-    // set version display
-    let versionNumber = browser.runtime.getManifest().version
-    document.querySelector("#version").textContent = 'v' + versionNumber;
-}
-window.onfocus = async () => {
-    // auto-fill VIN if clipboard matches
+})
+// auto-fill VIN field
+window.addEventListener("focus", async () => {
     let clipboardContents = await navigator.clipboard.readText() // TODO: to request access, we need to load actions.html in a new tab
     if (VINREGEX.test(clipboardContents)) {
         document.getElementById('input-vin').value = clipboardContents
         document.getElementById('button-search').classList.remove('disabled')
     }
-}
+})
 
 
 /*--------*\
   FEEDBACK  
 \*--------*/
+// message handler
 browser.runtime.onMessage.addListener((message)=>{
     if (message.type === "feedback") {
         for (value of message.values) {
-            feedbackHandler(value)
+            switch (value.action) {
+                case "download-started": // value.tabs
+                    dlFeedback.update("downloading"); break;
+                case "download-tab":
+                    dlFeedback.progressStart(value.images); break;
+                case "tab-increment":
+                    dlFeedback.increment(); break;
+                case "download-finished":
+                    dlFeedback.update("enabled"); break;
+                case "download-abort":
+                    addFeedbackMessage(value.display)
+                    dlFeedback.update("disabled"); break;
+                case "feedback-message":
+                    addFeedbackMessage(value)
+            }
         }
         return Promise.resolve('done');
     };
     return false;
 });
-function feedbackHandler(feedback) {
-    switch (feedback.action) {
-        case "download-started": // feedback.tabs
-            dlFeedback.update("downloading"); break;
-        case "download-tab":
-            dlFeedback.progressStart(feedback.images); break;
-        case "tab-increment":
-            dlFeedback.increment(); break;
-        case "download-finished":
-            dlFeedback.update("enabled"); break;
-        case "download-abort":
-            addFeedbackMessage(feedback.display)
-            dlFeedback.update("disabled"); break;
-        case "feedback-message":
-            addFeedbackMessage(feedback)
-    }
-}
 
-(async ()=>{
-    // restore feedbackMessages
-    storage = await browser.storage.local.get();
-    Object.entries(storage).forEach( ([key, value])=>{
-        if (  value.hasOwnProperty("type")
-           && value.type==="feedback-message" ) {
-            browser.storage.local.remove(key)
-            addFeedbackMessage(value);
-        }
-    })
-})()
+// feedback notification
 var addFeedbackMessage = (rawFeedback)=>{
     // PROCESS
     let feedback = {};
@@ -194,16 +184,28 @@ var addFeedbackMessage = (rawFeedback)=>{
     drawer.classList.remove("hidden")
 }
 
-dlFeedback = {
+// restore persisted notifications
+window.addEventListener("load", async ()=>{
+    storage = await browser.storage.local.get();
+    Object.entries(storage).forEach( ([key, value])=>{
+        if (  value.hasOwnProperty("type")
+           && value.type==="feedback-message" ) {
+            browser.storage.local.remove(key)
+            addFeedbackMessage(value);
+        }
+    })
+})
+
+// download button/progress bar
+var dlFeedback = {
     status: 'disabled',
     total: 0,
     progress: 0, 
     lookForSalvageTabs: async ()=>{
         let salvageTabs = await browser.tabs.query(
             {active: true,
-                url: ["*://*.iaai.com/vehicledetails/*",
-                      "*://*.iaai.com/Vehicledetails?*",
-                      "*://*.copart.com/lot/*"]}
+             url: ["*://*.iaai.com/*ehicle*etails*", // i miss blobs
+                   "*://*.copart.com/lot/*"]}
         )
         if (salvageTabs.length) {
             browser.runtime.sendMessage("found a tab!")
@@ -241,55 +243,56 @@ window.addEventListener("load", () => {
     dlFeedback.lookForSalvageTabs()
 })
 
-
-/*--------*\
-  SETTINGS
-\*--------*/
-var preferences  = new class {
-    constructor() {
-        this.copartCheck = null
-        this.iaaiCheck = null
-        this.zipText = null
-        this.row52Check = null
-    }
-    async prepare() {
-        this.getElements()
-        this.fetchStoredSettings()
-        this.setElementCallbacks()
-    }
-    getElements() {
-        this.copartCheck = document.querySelector(".settings-grid input#copart")
-        this.iaaiCheck =   document.querySelector(".settings-grid input#iaai")
-        this.zipText =     document.querySelector(".settings-grid input#zip")
-        this.row52Check =  document.querySelector(".settings-grid input#row52")
-    }
-    async fetchStoredSettings() {
+/*----------------*\
+  PREFERENCES PAGE  
+\*----------------*/
+var preferences = {
+    copartCheck: null,
+    iaaiCheck: null,
+    zipText: null,
+    row52Check: null,
+    fetchStoredSettings: async ()=>{
         let storage = await browser.storage.local.get("settings")
         let settings = storage.settings || DEFAULT_SETTINGS // defined in shared-assets.js
-
-        this.copartCheck.checked = settings.searchCopart
-        this.iaaiCheck.checked   = settings.searchIaai
-        this.zipText.value       = settings.zipCode
-        this.row52Check.checked  = settings.searchRow52
+        
+        preferences.copartCheck.checked = settings.searchCopart
+        preferences.iaaiCheck.checked   = settings.searchIaai
+        preferences.zipText.value       = settings.zipCode
+        preferences.row52Check.checked  = settings.searchRow52
         // re-store settings in case defaults were used
-        this.setStoredSettings()
-    }
-    setElementCallbacks() {
-        for (let element of [this.copartCheck, this.iaaiCheck, this.zipText, this.row52Check]) {
-            element.addEventListener("change", this.setStoredSettings.bind(this))
-        }
-    }
-    async setStoredSettings(event=null) {
+        preferences.setStoredSettings()
+    },
+    setElementCallbacks: ()=>{
+        [ preferences.copartCheck,
+          preferences.iaaiCheck,
+          preferences.zipText,
+          preferences.row52Check ]
+        .forEach(element=>{
+            element.addEventListener("change", preferences.setStoredSettings)
+        })
+    },
+    setStoredSettings: async (event=null)=>{
         let storage = await browser.storage.local.get("settings");
         let settings = storage.settings || DEFAULT_SETTINGS;
-        settings.searchCopart = this.copartCheck.checked;
-        settings.searchIaai   = this.iaaiCheck.checked;
-        settings.zipCode      = this.zipText.value;
-        settings.searchRow52  = this.row52Check.checked;
+        settings.searchCopart = preferences.copartCheck.checked;
+        settings.searchIaai   = preferences.iaaiCheck.checked;
+        settings.zipCode      = preferences.zipText.value;
+        settings.searchRow52  = preferences.row52Check.checked;
         browser.storage.local.set({settings})
     }
 }
+window.addEventListener("load", async ()=>{
+    // store UI elements
+    preferences.copartCheck = document.querySelector(".settings-grid input#copart")
+    preferences.iaaiCheck =   document.querySelector(".settings-grid input#iaai")
+    preferences.zipText =     document.querySelector(".settings-grid input#zip")
+    preferences.row52Check =  document.querySelector(".settings-grid input#row52")
+    // load and display stored preferences
+    preferences.fetchStoredSettings()
+    preferences.setElementCallbacks()
+    // set version display
+    let versionNumber = browser.runtime.getManifest().version
+    document.querySelector("#version").textContent = 'v' + versionNumber;
+})
 
 console.log("popup action loaded!")
-
-
