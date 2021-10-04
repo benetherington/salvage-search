@@ -160,9 +160,9 @@ async function iaaiMatchModel(makeId, ymm) {
         })
     }
     // pick a fit strategy
-    let perfectFits = iaModelFits.filter(m=>m.score===0);
-    let excellentFits = iaModelFits.filter(m=>m.score<2);
-    if (perfectFits.length>2)        {var selectedModels=perfectFits;}              // don't go with perfect fits unless there are three or more
+    let perfectFits = iaModelFits.filter(m=>m.score<2);
+    let excellentFits = iaModelFits.filter(m=>m.score<3);
+    if (perfectFits.length>1)        {var selectedModels=perfectFits;}              // don't go with perfect fits unless there are three or more
     else if (excellentFits.length>0) {var selectedModels=excellentFits;}            // go with reasonable fits if we have any
     else {                                                                          // getting desparate...
         iaModelFits.sort((a, b) => a.score-b.score)                                 // sort fits best to worst
