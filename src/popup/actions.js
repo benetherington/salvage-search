@@ -1,5 +1,3 @@
-const VINREGEX = RegExp("^[A-HJ-NPR-Z0-9]{3}[A-HJ-NPR-Z0-9]{5}[0-9X][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9]{6}$", "i");
-
 /*----------------*\
   USER INTERACTION  
 \*----------------*/
@@ -13,7 +11,7 @@ document.addEventListener("click", (event) =>{
             // that VIN looks good, let's run a search
             browser.runtime.sendMessage(
                 { type: "popup-action",
-                values: [{
+                  values: [{
                     action: "search",
                     vin: vinInput.value }]}
             );
