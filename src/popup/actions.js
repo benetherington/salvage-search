@@ -112,15 +112,17 @@ browser.runtime.onMessage.addListener((message)=>{
 function feedbackHandler(feedback) {
     switch (feedback.action) {
         case "download-started": // feedback.tabs
-            downloadButton.update("downloading")
-        // break; case "download-tab": // feedback.images
-        // break; case "tab-increment":
-        // break; case "download-nearly-finished":
-        break; case "download-finished":
-            downloadButton.update("enabled")
-        break; case "download-abort": // feedback.display
-            downloadButton.update("disabled")
-        break; case "feedback-message":
+            dlFeedback.update("downloading"); break;
+        case "download-tab":
+            dlFeedback.progressStart(feedback.images); break;
+        case "tab-increment":
+            dlFeedback.increment(); break;
+        case "download-finished":
+            dlFeedback.update("enabled"); break;
+        case "download-abort":
+            addFeedbackMessage(feedback.display)
+            dlFeedback.update("disabled"); break;
+        case "feedback-message":
             addFeedbackMessage(feedback)
     }
 }
@@ -177,8 +179,6 @@ var addFeedbackMessage = (rawFeedback)=>{
 
     // PREPARE FOR THE END
     closeUp = ()=>{
-        console.log("closing")
-        console.log(feedback)
         // remove this feedback object from persistance
         browser.storage.local.remove(feedback.createdAt)
         // remove from drawer
@@ -194,13 +194,11 @@ var addFeedbackMessage = (rawFeedback)=>{
     drawer.classList.remove("hidden")
 }
 
-downloadButton = new class {
-    constructor() {
-        this.status = 'disabled'
-        this.lookForSalvageTabs()
-    }
-    async lookForSalvageTabs() {
-        console.log("looking for salvage tabs")
+dlFeedback = {
+    status: 'disabled',
+    total: 0,
+    progress: 0, 
+    lookForSalvageTabs: async ()=>{
         let salvageTabs = await browser.tabs.query(
             {active: true,
                 url: ["*://*.iaai.com/vehicledetails/*",
@@ -209,38 +207,44 @@ downloadButton = new class {
         )
         if (salvageTabs.length) {
             browser.runtime.sendMessage("found a tab!")
-            this.update("enabled")
+            dlFeedback.update("enabled")
         } else {
-            this.update("disabled")
+            dlFeedback.update("disabled")
         }
-    }
-    update(status=null) {
-        let button = document.getElementById("button-download")
-        this.status = status || this.status
-        switch (this.status) {
+    },
+    update: (status=null) => {
+        dlFeedback.status = status || dlFeedback.status
+        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig
+        switch (dlFeedback.status) {
+            // case "enabled": default w/ no additional classes
             case "disabled":
-                button.classList.add("disabled");
-                button.classList.remove("feedback-download");
-            break; case "enabled":
-                button.classList.remove("disabled");
-                button.classList.remove("feedback-download");
+                dlFeedback.el.classList.add("disabled");
             break; case "downloading":
-                button.classList.remove("disabled");
-                button.classList.add("feedback-download");
+                dlFeedback.el.classList.add("feedback-download");
+            break; case "progress":
+                dlFeedback.el.classList.add("feedback-progress")
+                dlFeedback.el.style.setProperty(
+                    "--progress-percentage",
+                    `${dlFeedback.progress/dlFeedback.total*100}%`
+                )
         }
-    }
+    },
+    progressStart: (total) => {
+        dlFeedback.total = total;
+        dlFeedback.progress = 0;
+        dlFeedback.update("progress")
+    },
+    increment: ()=>{++dlFeedback.progress; dlFeedback.update()}
 }
+window.addEventListener("load", () => {
+    dlFeedback.el = document.querySelector("#button-download");
+    dlFeedback.lookForSalvageTabs()
+})
 
 
 /*--------*\
   SETTINGS
 \*--------*/
-const DEFAULT_SETTINGS = {
-    searchCopart: true,
-    searchIaai: true,
-    searchRow52: true,
-    zipCode: ""
-}
 var preferences  = new class {
     constructor() {
         this.copartCheck = null
@@ -261,7 +265,7 @@ var preferences  = new class {
     }
     async fetchStoredSettings() {
         let storage = await browser.storage.local.get("settings")
-        let settings = storage.settings || DEFAULT_SETTINGS
+        let settings = storage.settings || DEFAULT_SETTINGS // defined in shared-assets.js
 
         this.copartCheck.checked = settings.searchCopart
         this.iaaiCheck.checked   = settings.searchIaai
@@ -285,6 +289,7 @@ var preferences  = new class {
         browser.storage.local.set({settings})
     }
 }
+
 console.log("popup action loaded!")
 
 

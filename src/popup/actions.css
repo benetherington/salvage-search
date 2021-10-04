@@ -110,7 +110,8 @@ body {
   ------ MAIN PAGE ------  
 \*-----------------------*/
 /* user feedback */
-.feedback-download {
+.feedback-download, .feedback-progress {
+    position: relative;
     pointer-events: none;
     font-weight: 700;
     background-image: repeating-linear-gradient(-45deg, 
@@ -125,10 +126,25 @@ body {
     animation-timing-function: linear;
     animation-duration: 30s;
     animation-iteration-count: infinite;
+    --progress-percentage: 50%;
 }
 @keyframes backgroundsweep {
     from { background-position: 0% center; }
     to   { background-position: 300% center; }
+}
+.feedback-progress::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    content: "";
+    background-image: linear-gradient(90deg, #FFF0 0 50%, #FFF6 50% 100%);
+    background-size: 200%;
+    background-attachment: fixed;
+    background-position: center right var(--progress-percentage);
+    transition: background-position 1s;
 }
 
 /* TEXT ELEMENTS */
@@ -181,7 +197,6 @@ input.disabled, input.disabled:hover {
 #button-search:hover {   background-color: #8BACA9; }
 #button-download {       background-color: #61A690; }
 #button-download:hover { background-color: #8BACA9; }
-
 
 
 /*---------------------------*\
