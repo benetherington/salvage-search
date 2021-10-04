@@ -58,10 +58,19 @@ async function copartDownloadImages() {
     }
 }
 async function copartFetchLotData(lotNumber) {
-    jsn = await fetch(`https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`)
+    let jsn = await fetch(`https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`)
         .then(r=>r.json())
-    return jsn.data.imagesList.HIGH_RESOLUTION_IMAGE
+    try {
+        if (jsn.data.imagesList.hasOwnProperty("HIGH_RESOLUTION_IMAGE")) {
+            return jsn.data.imagesList.HIGH_RESOLUTION_IMAGE
             .map( image => {return image.url} )
+        } else { throw "no images found"}
+    } catch (error) {
+        if (error instanceof TypeError) {
+            messageText = "server error fetching images"
+        } else { messageText = error }
+        sendNotification(`Copart: ${messageText} for lot #${lotNumber}`, {displayAs: "error"})
+    }
 };
 
 /*----*\
