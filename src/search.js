@@ -118,7 +118,8 @@ async function openIaai(vinInput, zipCode) {
     searchResults = await fetch(searchUrl, {method:"POST", headers:headers, body:searchParams})
                             .then(resp=>resp.text());
     // send results to tab
-    executing.then(browser.tabs.sendMessage(tab.id, {html:searchResults} )) // TODO: display notification if page hasn't loaded yet
+    await executing;
+    browser.tabs.sendMessage( tab.id, {html:searchResults} ) // TODO: display notification if page hasn't loaded yet
 }
 async function iaaiMatchMake(ymm) {
     // get stored names/IDs (pre-cleaned)
