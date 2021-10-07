@@ -1237,7 +1237,7 @@
             "struck": {
                 "displayName": "S TRUCK",
                 "id": "1006287",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "2doorcoupe": {
                 "displayName": "2 DOOR COUPE",
@@ -1247,7 +1247,7 @@
             "2500": {
                 "displayName": "2500",
                 "id": "1005558",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "4doorsedan": {
                 "displayName": "4 DOOR SEDAN",
@@ -1302,27 +1302,27 @@
             "ck1500": {
                 "displayName": "C/K 1500",
                 "id": "1005729",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "ck2500": {
                 "displayName": "C/K 2500",
                 "id": "1005730",
-                "aliases": ["ck2500crewcab"]
+                "aliases": ["pickup", "ck2500crewcab"]
             },
             "ck2500crewcab": {
                 "displayName": "C/K 2500 CREW CAB",
                 "id": "1005731",
-                "aliases": ["ck2500"]
+                "aliases": ["pickup", "ck2500"]
             },
             "ck3500": {
                 "displayName": "C/K 3500",
                 "id": "1005732",
-                "aliases": ["ck3500crewcab"]
+                "aliases": ["pickup", "ck3500crewcab"]
             },
             "ck3500crewcab": {
                 "displayName": "C/K 3500 CREW CAB",
                 "id": "1005733",
-                "aliases": ["ck3500"]
+                "aliases": ["pickup", "ck3500"]
             },
             "c10": {
                 "displayName": "C10",
@@ -1408,7 +1408,7 @@
             "cityexpress": {
                 "displayName": "CITY EXPRESS",
                 "id": "1005753",
-                "aliases": ["chevycargovan", "cityexpresscargovan"]
+                "aliases": ["chevycargovan", "cityexpresscargovan", "uplandercargovan", "uplander"]
             },
             "cityexpresscargovan": {
                 "displayName": "CITY EXPRESS CARGO VAN",
@@ -1518,7 +1518,7 @@
             "geoprizm": {
                 "displayName": "GEO PRIZM",
                 "id": "1005970",
-                "aliases": []
+                "aliases": [["geo", "prizm"]]
             },
             "geosprint": {
                 "displayName": "GEO SPRINT",
@@ -1563,22 +1563,22 @@
             "k10": {
                 "displayName": "K10",
                 "id": "1000794",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "k1500": {
                 "displayName": "K1500",
                 "id": "1000795",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "k20": {
                 "displayName": "K20",
                 "id": "1000797",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "k2500": {
                 "displayName": "K2500",
                 "id": "1000798",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "lumina": {
                 "displayName": "LUMINA",
@@ -1653,12 +1653,16 @@
             "pickup": {
                 "displayName": "PICKUP",
                 "id": "1006201",
-                "aliases": []
+                "aliases": ["struck", "2500", "ck1500", "ck2500", "ck2500crewcab", "ck3500", "ck3500crewcab", "k10",
+                    "k1500", "k20", "k2500", "s10", "silverado", "silverado1500", "silverado1500classic", "silverado1500crewcab",
+                    "silverado1500hybrid", "silverado1500hd", "silverado2500", "silverado2500crewcab", "silverado2500hd",
+                    "silverado2500hdbuilt", "silverado2500hdclassic", "silverado3500", "silverado3500classic", "silverado3500hd",
+                    "silveradoss", "ss", "ssr", "truck"]
             },
             "prizm": {
                 "displayName": "PRIZM",
                 "id": "1001040",
-                "aliases": []
+                "aliases": [["geo", "prizm"]]
             },
             "r10": {
                 "displayName": "R10",
@@ -1678,82 +1682,82 @@
             "s10": {
                 "displayName": "S10",
                 "id": "1001160",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "silverado": {
                 "displayName": "SILVERADO",
                 "id": "1001241",
-                "aliases": []
+                "aliases": ["pickup", "silverado1500", "silverado1500classic", "silverado1500crewcab", "silverado1500hybrid", "silverado1500hd"]
             },
             "silverado1500": {
                 "displayName": "SILVERADO 1500",
                 "id": "1006347",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado1500classic", "silverado1500crewcab", "silverado1500hybrid", "silverado1500hd"]
             },
             "silverado1500classic": {
                 "displayName": "SILVERADO 1500 CLASSIC",
                 "id": "1006348",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado1500", "silverado1500crewcab", "silverado1500hybrid", "silverado1500hd"]
             },
             "silverado1500crewcab": {
                 "displayName": "SILVERADO 1500 CREW CAB",
                 "id": "1006349",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado1500", "silverado1500classic", "silverado1500hybrid", "silverado1500hd"]
             },
             "silverado1500hybrid": {
                 "displayName": "SILVERADO 1500 HYBRID",
                 "id": "1006350",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado1500", "silverado1500classic", "silverado1500crewcab", "silverado1500hd"]
             },
             "silverado1500hd": {
                 "displayName": "SILVERADO 1500HD",
                 "id": "1006352",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado1500", "silverado1500classic", "silverado1500crewcab", "silverado1500hybrid"]
             },
             "silverado2500": {
                 "displayName": "SILVERADO 2500",
                 "id": "1006354",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado2500crewcab", "silverado2500hd", "silverado2500hdbuilt", "silverado2500hdclassic"]
             },
             "silverado2500crewcab": {
                 "displayName": "SILVERADO 2500 CREW CAB",
                 "id": "1006355",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado2500", "silverado2500hd", "silverado2500hdbuilt", "silverado2500hdclassic"]
             },
             "silverado2500hd": {
                 "displayName": "SILVERADO 2500HD",
                 "id": "1006356",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado2500", "silverado2500crewcab", "silverado2500hdbuilt", "silverado2500hdclassic"]
             },
             "silverado2500hdbuilt": {
                 "displayName": "SILVERADO 2500HD BUILT",
                 "id": "1006357",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado2500", "silverado2500crewcab", "silverado2500hd", "silverado2500hdclassic"]
             },
             "silverado2500hdclassic": {
                 "displayName": "SILVERADO 2500HD CLASSIC",
                 "id": "1006358",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado2500", "silverado2500crewcab", "silverado2500hd", "silverado2500hdbuilt"]
             },
             "silverado3500": {
                 "displayName": "SILVERADO 3500",
                 "id": "1006359",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado3500classic", "silverado3500hd"]
             },
             "silverado3500classic": {
                 "displayName": "SILVERADO 3500 CLASSIC",
                 "id": "1006360",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado3500", "silverado3500hd"]
             },
             "silverado3500hd": {
                 "displayName": "SILVERADO 3500HD",
                 "id": "1006361",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silverado3500", "silverado3500classic"]
             },
             "silveradoss": {
                 "displayName": "SILVERADO SS",
                 "id": "1006364",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "ss"]
             },
             "sonic": {
                 "displayName": "SONIC",
@@ -1763,12 +1767,12 @@
             "spark": {
                 "displayName": "SPARK",
                 "id": "1001286",
-                "aliases": []
+                "aliases": ["spark"]
             },
             "sparkev": {
                 "displayName": "SPARK EV",
                 "id": "1001287",
-                "aliases": []
+                "aliases": ["sparkev"]
             },
             "sportvanvan": {
                 "displayName": "SPORTVAN / VAN",
@@ -1778,12 +1782,12 @@
             "ss": {
                 "displayName": "SS",
                 "id": "1001313",
-                "aliases": []
+                "aliases": ["pickup", "silverado", "silveradoss"]
             },
             "ssr": {
                 "displayName": "SSR",
                 "id": "1001314",
-                "aliases": []
+                "aliases": ["pickup"]
             },
             "suburban": {
                 "displayName": "SUBURBAN",
@@ -1793,27 +1797,27 @@
             "tahoe": {
                 "displayName": "TAHOE",
                 "id": "1006420",
-                "aliases": []
+                "aliases": ["tahoec1500", "tahoehybrid", "tahoek1500", "tahoepolice"]
             },
             "tahoec1500": {
                 "displayName": "Tahoe C1500",
                 "id": "1001351",
-                "aliases": []
+                "aliases": ["tahoe", "tahoehybrid", "tahoek1500", "tahoepolice"]
             },
             "tahoehybrid": {
                 "displayName": "TAHOE HYBRID",
                 "id": "1006421",
-                "aliases": []
+                "aliases": ["tahoe", "tahoec1500", "tahoek1500", "tahoepolice"]
             },
             "tahoek1500": {
                 "displayName": "Tahoe K1500",
                 "id": "1001352",
-                "aliases": []
+                "aliases": ["tahoe", "tahoec1500", "tahoehybrid", "tahoepolice"]
             },
             "tahoepolice": {
                 "displayName": "TAHOE POLICE",
                 "id": "1006422",
-                "aliases": []
+                "aliases": ["tahoe", "tahoec1500", "tahoehybrid", "tahoek1500"]
             },
             "tracker": {
                 "displayName": "TRACKER",
@@ -1838,17 +1842,21 @@
             "truck": {
                 "displayName": "TRUCK",
                 "id": "573",
-                "aliases": []
+                "aliases": ["struck", "2500", "ck1500", "ck2500", "ck2500crewcab", "ck3500", "ck3500crewcab", "k10",
+                    "k1500", "k20", "k2500", "s10", "silverado", "silverado1500", "silverado1500classic", "silverado1500crewcab",
+                    "silverado1500hybrid", "silverado1500hd", "silverado2500", "silverado2500crewcab", "silverado2500hd",
+                    "silverado2500hdbuilt", "silverado2500hdclassic", "silverado3500", "silverado3500classic", "silverado3500hd",
+                    "silveradoss", "ss", "ssr"]
             },
             "uplander": {
                 "displayName": "UPLANDER",
                 "id": "1001411",
-                "aliases": []
+                "aliases": ["chevycargovan", "uplandercargovan"]
             },
             "uplandercargovan": {
                 "displayName": "UPLANDER CARGO VAN",
                 "id": "1006465",
-                "aliases": []
+                "aliases": ["chevycargovan", "uplander"]
             },
             "v10": {
                 "displayName": "V10",
@@ -1884,17 +1892,17 @@
             "300": {
                 "displayName": "300",
                 "id": "1000042",
-                "aliases": []
+                "aliases": ["300c", "300m"]
             },
             "300c": {
                 "displayName": "300C",
                 "id": "1005566",
-                "aliases": []
+                "aliases": ["300", "300m"]
             },
             "300m": {
                 "displayName": "300M",
                 "id": "1000045",
-                "aliases": []
+                "aliases": ["300", "300c"]
             },
             "aspen": {
                 "displayName": "ASPEN",
@@ -1954,47 +1962,47 @@
             "ptcruiser": {
                 "displayName": "PT CRUISER",
                 "id": "1001052",
-                "aliases": []
+                "aliases": ["ptcruiserclassic"]
             },
             "ptcruiserclassic": {
                 "displayName": "PT CRUISER CLASSIC",
                 "id": "1006219",
-                "aliases": []
+                "aliases": ["ptcruiser"]
             },
             "sebring": {
                 "displayName": "SEBRING",
                 "id": "1001217",
-                "aliases": []
+                "aliases": ["sebringconv", "sebringcpe", "sebringsdn"]
             },
             "sebringconv": {
                 "displayName": "SEBRING CONV",
                 "id": "1006319",
-                "aliases": []
+                "aliases": ["sebring", "sebringcpe", "sebringsdn"]
             },
             "sebringcpe": {
                 "displayName": "SEBRING CPE",
                 "id": "1006320",
-                "aliases": []
+                "aliases": ["sebring", "sebringconv", "sebringsdn"]
             },
             "sebringsdn": {
                 "displayName": "SEBRING SDN",
                 "id": "1006321",
-                "aliases": []
+                "aliases": ["sebring", "sebringconv", "sebringcpe"]
             },
             "towncountry": {
                 "displayName": "TOWN & COUNTRY",
                 "id": "1001375",
-                "aliases": []
+                "aliases": ["towncountrylwb", "towncountryswb"]
             },
             "towncountrylwb": {
                 "displayName": "TOWN & COUNTRY LWB",
                 "id": "1006434",
-                "aliases": []
+                "aliases": ["towncountry", "towncountryswb"]
             },
             "towncountryswb": {
                 "displayName": "TOWN & COUNTRY SWB",
                 "id": "1006435",
-                "aliases": []
+                "aliases": ["towncountry", "towncountrylwb"]
             },
             "voyager": {
                 "displayName": "VOYAGER",
@@ -2088,7 +2096,7 @@
             "sprinter": {
                 "displayName": "Sprinter",
                 "id": "1001305",
-                "aliases": []
+                "aliases": [["mercedes", "sprinter"]]
             }
         }
     },
@@ -2119,12 +2127,12 @@
             "caravan": {
                 "displayName": "CARAVAN",
                 "id": "1000374",
-                "aliases": []
+                "aliases": ["van", "caravancv"]
             },
             "caravancv": {
                 "displayName": "CARAVAN C/V",
                 "id": "1005745",
-                "aliases": []
+                "aliases": ["van", "caravan"]
             },
             "challenger": {
                 "displayName": "CHALLENGER",
@@ -2144,17 +2152,17 @@
             "dseries": {
                 "displayName": "D-SERIES",
                 "id": "1005832",
-                "aliases": []
+                "aliases": ["d50"]
             },
             "d50": {
                 "displayName": "D50",
                 "id": "1000504",
-                "aliases": []
+                "aliases": ["dseries"]
             },
             "dakota": {
                 "displayName": "DAKOTA",
                 "id": "1000505",
-                "aliases": []
+                "aliases": ["pickup", "truck"]
             },
             "dart": {
                 "displayName": "DART",
@@ -2189,12 +2197,12 @@
             "grandcaravan": {
                 "displayName": "GRAND CARAVAN",
                 "id": "1007419",
-                "aliases": []
+                "aliases": ["van", "grandcaravancv"]
             },
             "grandcaravancv": {
                 "displayName": "GRAND CARAVAN C/V",
                 "id": "1005996",
-                "aliases": []
+                "aliases": ["van", "grandcaravan"]
             },
             "intrepid": {
                 "displayName": "INTREPID",
@@ -2204,7 +2212,7 @@
             "journey": {
                 "displayName": "JOURNEY",
                 "id": "1000790",
-                "aliases": []
+                "aliases": ["van"]
             },
             "lancer": {
                 "displayName": "LANCER",
@@ -2234,47 +2242,47 @@
             "pickup": {
                 "displayName": "PICKUP",
                 "id": "1007428",
-                "aliases": []
+                "aliases": ["dakota", "ram1500", "ram2500", "ram3500", "ram50", "rambr2500", "rambr2500chassiscab", "ramsrt10", "ramcharger", "wseries", "w150"]
             },
             "ram1500": {
                 "displayName": "RAM 1500",
                 "id": "1006240",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramtruck"]
             },
             "ram2500": {
                 "displayName": "RAM 2500",
                 "id": "1006241",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramtruck", "rambr2500", "rambr2500chassiscab"]
             },
             "ram3500": {
                 "displayName": "RAM 3500",
                 "id": "1006242",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramtruck"]
             },
             "ram50": {
                 "displayName": "RAM 50",
                 "id": "1001102",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramtruck"]
             },
             "rambr2500": {
                 "displayName": "RAM BR2500",
                 "id": "1006245",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramtruck", "ram2500", "rambr2500chassiscab"]
             },
             "rambr2500chassiscab": {
                 "displayName": "RAM BR2500 CHASSIS CAB",
                 "id": "1006246",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramtruck", "ram2500"]
             },
             "ramsrt10": {
                 "displayName": "RAM SRT10",
                 "id": "1006248",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramtruck"]
             },
             "ramtruck": {
                 "displayName": "Ram Truck",
                 "id": "1001103",
-                "aliases": []
+                "aliases": ["pickup", "ram1500", "ram2500", "rambr2500", "ram50", "rambr2500", "ramsrt10", "rambr2500chassiscab"]
             },
             "ramvan": {
                 "displayName": "RAM VAN",
@@ -2289,7 +2297,7 @@
             "ramcharger": {
                 "displayName": "RAMCHARGER",
                 "id": "1001106",
-                "aliases": []
+                "aliases": ["pickup", "truck"]
             },
             "royal": {
                 "displayName": "ROYAL",
@@ -2309,12 +2317,12 @@
             "sprinter": {
                 "displayName": "SPRINTER",
                 "id": "1001306",
-                "aliases": []
+                "aliases": ["van", "sprinterwagon"]
             },
             "sprinterwagon": {
                 "displayName": "SPRINTER WAGON",
                 "id": "1006393",
-                "aliases": []
+                "aliases": ["van", "sprinter"]
             },
             "srtviper": {
                 "displayName": "SRT VIPER",
@@ -2329,17 +2337,17 @@
             "stratus": {
                 "displayName": "STRATUS",
                 "id": "1001326",
-                "aliases": []
+                "aliases": ["stratuscpe", "stratussdn"]
             },
             "stratuscpe": {
                 "displayName": "STRATUS CPE",
                 "id": "1006404",
-                "aliases": []
+                "aliases": ["stratus", "stratussdn"]
             },
             "stratussdn": {
                 "displayName": "STRATUS SDN",
                 "id": "1006405",
-                "aliases": []
+                "aliases": ["stratus", "stratuscpe"]
             },
             "truck": {
                 "displayName": "TRUCK",
@@ -2359,17 +2367,17 @@
             "wseries": {
                 "displayName": "W-SERIES",
                 "id": "1006492",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramwagon", "w150", "w200"]
             },
             "w150": {
                 "displayName": "W150",
                 "id": "1001468",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramwagon", "wseries", "w200"]
             },
             "w200": {
                 "displayName": "W200",
                 "id": "1001469",
-                "aliases": []
+                "aliases": ["pickup", "truck", "ramwagon", "wseries", "w150"]
             }
         }
     },
@@ -2390,7 +2398,7 @@
         }
     },
     "ferrari": {
-        "skipModel": false,
+        "skipModel": true,
         "id": "1000025",
         "models": {
             "308": {
@@ -2452,42 +2460,42 @@
             "124spider": {
                 "displayName": "124 SPIDER",
                 "id": "1005543",
-                "aliases": []
+                "aliases": ["spider"]
             },
             "500": {
                 "displayName": "500",
                 "id": "1000120",
-                "aliases": []
+                "aliases": ["500abarth", "500c", "500e", "500ebatteryelectric", "500l", "500x"]
             },
             "500abarth": {
                 "displayName": "500 ABARTH",
                 "id": "1005601",
-                "aliases": []
+                "aliases": ["500", "500c", "500e", "500ebatteryelectric", "500l", "500x"]
             },
             "500c": {
                 "displayName": "500C",
                 "id": "1005602",
-                "aliases": []
+                "aliases": ["500", "500abarth", "500e", "500ebatteryelectric", "500l", "500x"]
             },
             "500e": {
                 "displayName": "500E",
                 "id": "1005603",
-                "aliases": []
+                "aliases": ["500", "500abarth", "500c", "500ebatteryelectric", "500l", "500x"]
             },
             "500ebatteryelectric": {
                 "displayName": "500E BATTERY ELECTRIC",
                 "id": "1005604",
-                "aliases": []
+                "aliases": ["500", "500abarth", "500c", "500e", "500l", "500x"]
             },
             "500l": {
                 "displayName": "500L",
                 "id": "1000124",
-                "aliases": []
+                "aliases": ["500", "500abarth", "500c", "500e", "500ebatteryelectric", "500x"]
             },
             "500x": {
                 "displayName": "500X",
                 "id": "1005605",
-                "aliases": []
+                "aliases": ["500", "500abarth", "500c", "500e", "500ebatteryelectric", "500l"]
             },
             "600": {
                 "displayName": "600",
@@ -2502,12 +2510,12 @@
             "spider": {
                 "displayName": "SPIDER",
                 "id": "873",
-                "aliases": []
+                "aliases": ["124spider"]
             }
         }
     },
     "fisker": {
-        "skipModel": false,
+        "skipModel": true,
         "id": "1000027",
         "models": {
             "karma": {
@@ -2524,12 +2532,12 @@
             "aerostar": {
                 "displayName": "AEROSTAR",
                 "id": "1000247",
-                "aliases": []
+                "aliases": ["fordvan", "aerostarwagon"]
             },
             "aerostarwagon": {
                 "displayName": "AEROSTAR WAGON",
                 "id": "1005684",
-                "aliases": []
+                "aliases": ["fordvan", "aerostar"]
             },
             "aspire": {
                 "displayName": "ASPIRE",
@@ -2539,37 +2547,37 @@
             "bronco": {
                 "displayName": "BRONCO",
                 "id": "1000317",
-                "aliases": []
+                "aliases": ["broncoii"]
             },
             "broncoii": {
                 "displayName": "BRONCO II",
                 "id": "1000318",
-                "aliases": []
+                "aliases": ["bronco"]
             },
             "cmax": {
                 "displayName": "C-MAX",
                 "id": "1005725",
-                "aliases": []
+                "aliases": ["cmaxenergi", "cmaxhybrid"]
             },
             "cmaxenergi": {
                 "displayName": "C-MAX ENERGI",
                 "id": "1005726",
-                "aliases": []
+                "aliases": ["cmax", "cmaxhybrid"]
             },
             "cmaxhybrid": {
                 "displayName": "C-MAX HYBRID",
                 "id": "1005727",
-                "aliases": []
+                "aliases": ["cmax", "cmaxenergi"]
             },
             "clubwagon": {
                 "displayName": "CLUB WAGON",
                 "id": "1000431",
-                "aliases": []
+                "aliases": ["fordvan", "clubwagonsuper"]
             },
             "clubwagonsuper": {
                 "displayName": "Club Wagon Super",
                 "id": "1000432",
-                "aliases": []
+                "aliases": ["fordvan", "clubwagon"]
             },
             "contour": {
                 "displayName": "CONTOUR",
@@ -2594,37 +2602,37 @@
             "e100vans": {
                 "displayName": "E100 VANS",
                 "id": "904",
-                "aliases": []
+                "aliases": ["fordvan"]
             },
             "econoline": {
                 "displayName": "ECONOLINE",
                 "id": "1005859",
-                "aliases": []
+                "aliases": ["fordvan", "econolinecargovan", "econolinecommercial", "econolinevan", "econolinewagon"]
             },
             "econolinecargovan": {
                 "displayName": "ECONOLINE CARGO VAN",
                 "id": "1005860",
-                "aliases": []
+                "aliases": ["fordvan", "econoline", "econolinecommercial", "econolinevan", "econolinewagon"]
             },
             "econolinecommercial": {
                 "displayName": "ECONOLINE COMMERCIAL",
                 "id": "1005861",
-                "aliases": []
+                "aliases": ["fordvan", "econoline", "econolinecargovan", "econolinevan", "econolinewagon"]
             },
             "econolinevan": {
                 "displayName": "Econoline Van",
                 "id": "1000555",
-                "aliases": []
+                "aliases": ["fordvan", "econoline", "econolinecargovan", "econolinecommercial", "econolinewagon"]
             },
             "econolinewagon": {
                 "displayName": "ECONOLINE WAGON",
                 "id": "1000557",
-                "aliases": []
+                "aliases": ["fordvan", "econoline", "econolinecargovan", "econolinecommercial", "econolinevan"]
             },
             "ecosport": {
                 "displayName": "ECOSPORT",
                 "id": "1000559",
-                "aliases": []
+                "aliases": ["fordvan"]
             },
             "edge": {
                 "displayName": "EDGE",
@@ -2649,87 +2657,119 @@
             "expedition": {
                 "displayName": "EXPEDITION",
                 "id": "1000612",
-                "aliases": []
+                "aliases": ["expeditionel", "expeditionmax"]
             },
             "expeditionel": {
                 "displayName": "EXPEDITION EL",
                 "id": "1005888",
-                "aliases": []
+                "aliases": ["expedition", "expeditionmax"]
             },
             "expeditionmax": {
                 "displayName": "EXPEDITION MAX",
                 "id": "1005889",
-                "aliases": []
+                "aliases": ["expedition", "expeditionel"]
             },
             "explorer": {
                 "displayName": "EXPLORER",
                 "id": "1000613",
-                "aliases": []
+                "aliases": ["explorersport", "explorersporttrac"]
             },
             "explorersport": {
                 "displayName": "EXPLORER SPORT",
                 "id": "1005890",
-                "aliases": []
+                "aliases": ["explorer","explorersporttrac"]
             },
             "explorersporttrac": {
                 "displayName": "EXPLORER SPORT TRAC",
                 "id": "1005891",
-                "aliases": []
-            },
-            "f150": {
-                "displayName": "F150",
-                "id": "1000621",
-                "aliases": []
-            },
-            "f150heritage": {
-                "displayName": "F-150 HERITAGE",
-                "id": "1005901",
-                "aliases": []
-            },
-            "f150supercrew": {
-                "displayName": "F-150 SUPERCREW",
-                "id": "1005903",
-                "aliases": []
-            },
-            "f250": {
-                "displayName": "F250",
-                "id": "1000622",
-                "aliases": []
-            },
-            "f250hd": {
-                "displayName": "F-250 HD",
-                "id": "1005905",
-                "aliases": []
-            },
-            "f250hdcrewcab": {
-                "displayName": "F-250 HD CREW CAB",
-                "id": "1005906",
-                "aliases": []
-            },
-            "f350": {
-                "displayName": "F350",
-                "id": "1000624",
-                "aliases": []
-            },
-            "f350crewcab": {
-                "displayName": "F-350 CREW CAB",
-                "id": "1005909",
-                "aliases": []
+                "aliases": ["explorer", "explorersport"]
             },
             "f100": {
                 "displayName": "F100",
                 "id": "1000619",
-                "aliases": []
+                "aliases": ["pickup", "truck"]
+            },
+            "f150": {
+                "displayName": "F150",
+                "id": "1000621",
+                "aliases": ["pickup", "truck", "f150heritage", "f150supercrew"]
+            },
+            "f150heritage": {
+                "displayName": "F-150 HERITAGE",
+                "id": "1005901",
+                "aliases": ["pickup", "truck", "f100", "f150", "f150supercrew"]
+            },
+            "f150supercrew": {
+                "displayName": "F-150 SUPERCREW",
+                "id": "1005903",
+                "aliases": ["pickup", "truck", "f100", "f150", "f150heritage"]
+            },
+            "f250": {
+                "displayName": "F250",
+                "id": "1000622",
+                "aliases": ["pickup", "truck", "superduty", "f250hd", "f250hdcrewcab", "f250superduty", "superdutyf250", "superdutyf250srw"]
+            },
+            "f250hd": {
+                "displayName": "F-250 HD",
+                "id": "1005905",
+                "aliases": ["pickup", "truck", "superduty", "f250", "f250hdcrewcab", "f250superduty", "superdutyf250", "superdutyf250srw"]
+            },
+            "f250hdcrewcab": {
+                "displayName": "F-250 HD CREW CAB",
+                "id": "1005906",
+                "aliases": ["pickup", "truck", "superduty", "f250", "f250hd", "f250superduty", "superdutyf250", "superdutyf250srw"]
             },
             "f250superduty": {
                 "displayName": "F250 Super Duty",
                 "id": "1000623",
-                "aliases": []
+                "aliases": ["pickup", "truck", "superduty", "f250", "f250hd", "f250hdcrewcab", "superdutyf250", "superdutyf250srw"]
+            },
+            "superdutyf250": {
+                "displayName": "SUPER DUTY F-250",
+                "id": "1006408",
+                "aliases": ["pickup", "truck", "superduty", "f250", "f250hd", "f250hdcrewcab", "f250superduty", "superdutyf250srw"]
+            },
+            "superdutyf250srw": {
+                "displayName": "SUPER DUTY F-250 SRW",
+                "id": "1006409",
+                "aliases": ["pickup", "truck", "superduty", "f250", "f250hd", "f250hdcrewcab", "f250superduty", "superdutyf250"]
+            },
+            "f350": {
+                "displayName": "F350",
+                "id": "1000624",
+                "aliases": ["pickup", "truck", "superduty", "f350crewcab", "f350superduty", "superdutyf350srw"]
+            },
+            "f350crewcab": {
+                "displayName": "F-350 CREW CAB",
+                "id": "1005909",
+                "aliases": ["pickup", "truck", "superduty", "f350", "f350superduty", "superdutyf350srw"]
             },
             "f350superduty": {
                 "displayName": "F350 Super Duty",
                 "id": "1000625",
-                "aliases": []
+                "aliases": ["pickup", "truck", "superduty", "f350", "f350crewcab", "superdutyf350srw"]
+            },
+            "superdutyf350srw": {
+                "displayName": "SUPER DUTY F-350 SRW",
+                "id": "1006410",
+                "aliases": ["pickup", "truck", "superduty", "f350", "f350crewcab", "f350superduty"]
+            },
+            "superduty": {
+                "displayName": "SUPERDUTY",
+                "id": "980",
+                "aliases": ["f250", "f250hd", "f250hdcrewcab", "f250superduty", "superdutyf250", "superdutyf250srw", "f350", "f350crewcab", "f350superduty", "superdutyf350srw"]
+            },
+            "pickup": {
+                "displayName": "PICKUP",
+                "id": "1007429",
+                "aliases": ["f100", "f150", "f150heritage", "f150supercrew", "f250", "f250hd", "f250hdcrewcab", "f250superduty",
+                    "superdutyf250", "superdutyf250", "f350", "f350crewcab", "f350superduty", "superdutyf350"]
+            },
+            "truck": {
+                "displayName": "TRUCK",
+                "id": "990",
+                "aliases": ["f100", "f150", "f150heritage", "f150supercrew", "f250", "f250hd", "f250hdcrewcab", "f250superduty",
+                    "superdutyf250", "superdutyf250", "f350", "f350crewcab", "f350superduty", "superdutyf350"]
             },
             "fairlane": {
                 "displayName": "FAIRLANE",
@@ -2769,22 +2809,22 @@
             "focus": {
                 "displayName": "FOCUS",
                 "id": "1000654",
-                "aliases": []
+                "aliases": ["focuselectric"]
             },
             "focuselectric": {
                 "displayName": "FOCUS ELECTRIC",
                 "id": "1005931",
-                "aliases": []
+                "aliases": ["focus"]
             },
             "freestar": {
                 "displayName": "FREESTAR",
                 "id": "1000664",
-                "aliases": []
+                "aliases": ["fordvan", "freestarwagon"]
             },
             "freestarwagon": {
                 "displayName": "FREESTAR WAGON",
                 "id": "1005940",
-                "aliases": []
+                "aliases": ["fordvan", "freestar"]
             },
             "freestyle": {
                 "displayName": "FREESTYLE",
@@ -2794,17 +2834,17 @@
             "fusion": {
                 "displayName": "FUSION",
                 "id": "1000668",
-                "aliases": []
+                "aliases": ["fusionenergi", "fusionhybrid"]
             },
             "fusionenergi": {
                 "displayName": "FUSION ENERGI",
                 "id": "1005943",
-                "aliases": []
+                "aliases": ["fusion", "fusionhybrid"]
             },
             "fusionhybrid": {
                 "displayName": "FUSION HYBRID",
                 "id": "1005944",
-                "aliases": []
+                "aliases": ["fusion", "fusionenergi"]
             },
             "galaxie": {
                 "displayName": "GALAXIE",
@@ -2836,20 +2876,20 @@
                 "id": "1000955",
                 "aliases": []
             },
-            "pickup": {
-                "displayName": "PICKUP",
-                "id": "1007429",
-                "aliases": []
-            },
             "policeinterceptor": {
                 "displayName": "POLICE INTERCEPTOR",
                 "id": "1006204",
-                "aliases": []
+                "aliases": ["policeinterceptorsedan", "sedanpoliceinterceptor"]
             },
             "policeinterceptorsedan": {
                 "displayName": "POLICE INTERCEPTOR SEDAN",
                 "id": "1006205",
-                "aliases": []
+                "aliases": ["policeinterceptor", "sedanpoliceinterceptor"]
+            },
+            "sedanpoliceinterceptor": {
+                "displayName": "SEDAN POLICE INTERCEPTOR",
+                "id": "1006322",
+                "aliases": ["policeinterceptor", "policeinterceptorsedan"]
             },
             "probe": {
                 "displayName": "PROBE",
@@ -2866,40 +2906,15 @@
                 "id": "1001111",
                 "aliases": []
             },
-            "sedanpoliceinterceptor": {
-                "displayName": "SEDAN POLICE INTERCEPTOR",
-                "id": "1006322",
-                "aliases": []
-            },
-            "superdutyf250": {
-                "displayName": "SUPER DUTY F-250",
-                "id": "1006408",
-                "aliases": []
-            },
-            "superdutyf250srw": {
-                "displayName": "SUPER DUTY F-250 SRW",
-                "id": "1006409",
-                "aliases": []
-            },
-            "superdutyf350srw": {
-                "displayName": "SUPER DUTY F-350 SRW",
-                "id": "1006410",
-                "aliases": []
-            },
-            "superduty": {
-                "displayName": "SUPERDUTY",
-                "id": "980",
-                "aliases": []
-            },
             "taurus": {
                 "displayName": "TAURUS",
                 "id": "1001354",
-                "aliases": []
+                "aliases": ["taurusx"]
             },
             "taurusx": {
                 "displayName": "TAURUS X",
                 "id": "1001355",
-                "aliases": []
+                "aliases": ["taurus"]
             },
             "tempo": {
                 "displayName": "TEMPO",
@@ -2919,57 +2934,52 @@
             "transit": {
                 "displayName": "TRANSIT",
                 "id": "1001388",
-                "aliases": []
+                "aliases": ["fordvan", "transit", "transitcargovan", "transitchassis", "transitchassiscab", "transitconnect", "transitconnectvan", "transitconnectwagon"]
             },
             "transitcargovan": {
                 "displayName": "TRANSIT CARGO VAN",
                 "id": "1006441",
-                "aliases": []
+                "aliases": ["fordvan", "transit", "transitcargovan", "transitchassis", "transitchassiscab", "transitconnect", "transitconnectvan", "transitconnectwagon"]
             },
             "transitchassis": {
                 "displayName": "TRANSIT CHASSIS",
                 "id": "1006442",
-                "aliases": []
+                "aliases": ["fordvan", "transit", "transitcargovan", "transitchassis", "transitchassiscab", "transitconnect", "transitconnectvan", "transitconnectwagon"]
             },
             "transitchassiscab": {
                 "displayName": "TRANSIT CHASSIS CAB",
                 "id": "1006443",
-                "aliases": []
+                "aliases": ["fordvan", "transit", "transitcargovan", "transitchassis", "transitchassiscab", "transitconnect", "transitconnectvan", "transitconnectwagon"]
             },
             "transitconnect": {
                 "displayName": "TRANSIT CONNECT",
                 "id": "1001390",
-                "aliases": []
+                "aliases": ["fordvan", "transit", "transitcargovan", "transitchassis", "transitchassiscab", "transitconnect", "transitconnectvan", "transitconnectwagon"]
             },
             "transitconnectvan": {
                 "displayName": "TRANSIT CONNECT VAN",
                 "id": "1006446",
-                "aliases": []
+                "aliases": ["fordvan", "transit", "transitcargovan", "transitchassis", "transitchassiscab", "transitconnect", "transitconnectvan", "transitconnectwagon"]
             },
             "transitconnectwagon": {
                 "displayName": "TRANSIT CONNECT WAGON",
                 "id": "1006447",
-                "aliases": []
+                "aliases": ["fordvan", "transit", "transitcargovan", "transitchassis", "transitchassiscab", "transitconnect", "transitconnectvan", "transitconnectwagon"]
             },
             "transitpassengerwagon": {
                 "displayName": "TRANSIT PASSENGER WAGON",
                 "id": "1006448",
-                "aliases": []
+                "aliases": ["fordvan", "transitvan", "transitwagon"]
             },
             "transitvan": {
                 "displayName": "TRANSIT VAN",
                 "id": "1006449",
-                "aliases": []
+                "aliases": ["fordvan", "transitpassengerwagon", "transitwagon"]
             },
             "transitwagon": {
                 "displayName": "TRANSIT WAGON",
                 "id": "1006450",
-                "aliases": []
-            },
-            "truck": {
-                "displayName": "TRUCK",
-                "id": "990",
-                "aliases": []
+                "aliases": ["fordvan", "transitpassengerwagon", "transitvan"]
             },
             "utilitypolice": {
                 "displayName": "UTILITY POLICE",
@@ -2979,22 +2989,25 @@
             "van": {
                 "displayName": "VAN",
                 "id": "1007457",
-                "aliases": []
+                "aliases": ["aerostar", "aerostarwagon", "clubwagon", "clubwagonsuper", "e100vans", "econoline", "econolinecargovan",
+                    "econolinecommercial", "econolinevan", "econolinewagon", "ecosport", "freestar", "freestarwagon", "transit",
+                    "transitcargovan", "transitchassis", "transitchassiscab", "transitconnect", "transitconnectvan", "transitconnectwagon",
+                    "transitpassengerwagon", "transitvan", "transitwagon", "windstar", "windstarcargovan", "windstarwagon"]
             },
             "windstar": {
                 "displayName": "WINDSTAR",
                 "id": "1001478",
-                "aliases": []
+                "aliases": ["fordvan", "windstarcargovan", "windstarwagon"]
             },
             "windstarcargovan": {
                 "displayName": "WINDSTAR CARGO VAN",
                 "id": "1006494",
-                "aliases": []
+                "aliases": ["fordvan", "windstar", "windstarwagon"]
             },
             "windstarwagon": {
                 "displayName": "WINDSTAR WAGON",
                 "id": "1006495",
-                "aliases": []
+                "aliases": ["fordvan", "windstar", "windstarcargovan"]
             },
             "zx2": {
                 "displayName": "ZX2",
@@ -3035,7 +3048,7 @@
         }
     },
     "genesis": {
-        "skipModel": false,
+        "skipModel": true,
         "id": "1000161",
         "models": {
             "g80": {
@@ -3062,7 +3075,7 @@
             "prizm": {
                 "displayName": "PRIZM",
                 "id": "1001041",
-                "aliases": []
+                "aliases": [["chevrolet", "prizm"], ["chevrolet", "geoprizm"]]
             },
             "storm": {
                 "displayName": "STORM",
@@ -3120,12 +3133,12 @@
             "acadia": {
                 "displayName": "ACADIA",
                 "id": "1000236",
-                "aliases": []
+                "aliases": ["acadialimited"]
             },
             "acadialimited": {
                 "displayName": "ACADIA LIMITED",
                 "id": "1005673",
-                "aliases": []
+                "aliases": ["acadia"]
             },
             "c1500": {
                 "displayName": "C1500",
@@ -3142,12 +3155,12 @@
                 "id": "1000369",
                 "aliases": []
             },
-            "classicsierra2500": {
+            "classicsierra2500": {                      #####
                 "displayName": "CLASSIC SIERRA 2500",
                 "id": "1005776",
                 "aliases": []
             },
-            "classicsierra3500": {
+            "classicsierra3500": {                      #####
                 "displayName": "CLASSIC SIERRA 3500",
                 "id": "1005777",
                 "aliases": []
@@ -3160,22 +3173,22 @@
             "envoy": {
                 "displayName": "ENVOY",
                 "id": "1000580",
-                "aliases": []
+                "aliases": ["envoyxl", "envoyxuv", "envoyjimmy"]
             },
             "envoyxl": {
                 "displayName": "ENVOY XL",
                 "id": "1005870",
-                "aliases": []
+                "aliases": ["envoy", "envoyxuv", "envoyjimmy"]
             },
             "envoyxuv": {
                 "displayName": "ENVOY XUV",
                 "id": "1005871",
-                "aliases": []
+                "aliases": ["envoy", "envoyxl", "envoyjimmy"]
             },
             "envoyjimmy": {
                 "displayName": "ENVOY/JIMMY",
                 "id": "1005872",
-                "aliases": []
+                "aliases": ["envoy", "envoyxl", "envoyxuv", "jimmy", "jimmyenvoy", "pickup", "struck", "s15", "s15jimmy"]
             },
             "forwardcontrolchassis": {
                 "displayName": "FORWARD CONTROL CHASSIS",
@@ -3190,12 +3203,12 @@
             "jimmy": {
                 "displayName": "JIMMY",
                 "id": "1000785",
-                "aliases": []
+                "aliases": ["jimmyenvoy", "envoyjimmy", "pickup", "struck", "s15", "s15jimmy"]
             },
             "jimmyenvoy": {
                 "displayName": "JIMMY / ENVOY",
                 "id": "1006078",
-                "aliases": []
+                "aliases": ["envoy", "envoyxl", "envoyxuv", "jimmy", "envoyjimmy", "pickup", "struck", "s15", "s15jimmy"]
             },
             "k1500": {
                 "displayName": "K1500",
@@ -3205,19 +3218,19 @@
             "newsierra": {
                 "displayName": "NEW SIERRA",
                 "id": "1006166",
-                "aliases": []
+                "aliases": ["newsierra1500", "newsierra2500"]
             },
             "newsierra1500": {
                 "displayName": "NEW SIERRA 1500",
                 "id": "1006167",
-                "aliases": []
+                "aliases": ["newsierra"]
             },
             "newsierra2500": {
                 "displayName": "NEW SIERRA 2500",
                 "id": "1006168",
-                "aliases": []
+                "aliases": ["newsierra"]
             },
-            "pickup": {
+            "pickup": {                 ######
                 "displayName": "PICKUP",
                 "id": "1007430",
                 "aliases": []
@@ -3230,152 +3243,154 @@
             "rallywagon": {
                 "displayName": "RALLY WAGON",
                 "id": "1001099",
-                "aliases": []
+                "aliases": ["rallywagonvan"]
             },
             "rallywagonvan": {
                 "displayName": "RALLY WAGON / VAN",
                 "id": "1006239",
-                "aliases": []
+                "aliases": ["rallywagon"]
             },
             "struck": {
                 "displayName": "S TRUCK",
                 "id": "1007439",
-                "aliases": []
+                "aliases": ["pickup", "s15", "s15jimmy", "jimmy", "jimmyenvoy", "envoyjimmy"]
             },
             "s15": {
                 "displayName": "S15",
                 "id": "1006291",
-                "aliases": []
+                "aliases": ["pickup", "struck", "s15jimmy", "jimmy", "jimmyenvoy", "envoyjimmy"]
             },
             "s15jimmy": {
                 "displayName": "S15Jimmy",
                 "id": "1001161",
-                "aliases": []
+                "aliases": ["pickup", "struck", "s15", "jimmy", "jimmyenvoy", "envoyjimmy"]
             },
             "safari": {
                 "displayName": "SAFARI",
                 "id": "1001192",
-                "aliases": []
+                "aliases": ["safaricargovan", "safaripassenger"]
             },
             "safaricargovan": {
                 "displayName": "SAFARI CARGO VAN",
                 "id": "1006300",
-                "aliases": []
+                "aliases": ["safari", "safaripassenger"]
             },
             "safaripassenger": {
                 "displayName": "SAFARI PASSENGER",
                 "id": "1006301",
-                "aliases": []
+                "aliases": ["safari", "safaricargovan"]
             },
             "savana": {
                 "displayName": "SAVANA",
                 "id": "1001201",
-                "aliases": []
+                "aliases": ["savanacargovan", "savanacutaway", "savanapassenger"]
             },
             "savanacargovan": {
                 "displayName": "SAVANA CARGO VAN",
                 "id": "1006303",
-                "aliases": []
+                "aliases": ["savana", "savanacutaway", "savanapassenger"]
             },
             "savanacutaway": {
                 "displayName": "SAVANA CUTAWAY",
                 "id": "1006304",
-                "aliases": []
+                "aliases": ["savana", "savanacargovan", "savanapassenger"]
             },
             "savanapassenger": {
                 "displayName": "SAVANA PASSENGER",
                 "id": "1006305",
-                "aliases": []
+                "aliases": ["savana", "savanacargovan", "savanacutaway"]
             },
             "sierra": {
                 "displayName": "SIERRA",
                 "id": "1001233",
-                "aliases": []
+                "aliases": ["sierra1500", "sierra1500classic", "sierra1500crewcab", "sierra1500hybrid", "sierra1500hd",
+                    "sierra1500hdclassic", "sierra2500", "sierra2500crewcab", "sierra2500hd", "sierra2500hdclassic", "sierra3500",
+                    "sierra3500classic", "sierra3500crewcab", "sierra3500hd", "sierraclassic1500", "sierradenali", "sierradenaliclassic"]
             },
             "sierra1500": {
                 "displayName": "SIERRA 1500",
                 "id": "1006329",
-                "aliases": []
+                "aliases": ["sierra", "sierra1500classic", "sierra1500crewcab", "sierra1500hybrid", "sierra1500hd", "sierra1500hdclassic"]
             },
             "sierra1500classic": {
                 "displayName": "SIERRA 1500 CLASSIC",
                 "id": "1006330",
-                "aliases": []
+                "aliases": ["sierra", "sierra1500", "sierra1500crewcab", "sierra1500hybrid", "sierra1500hd", "sierra1500hdclassic"]
             },
             "sierra1500crewcab": {
                 "displayName": "SIERRA 1500 CREW CAB",
                 "id": "1006331",
-                "aliases": []
+                "aliases": ["sierra", "sierra1500", "sierra1500classic", "sierra1500hybrid", "sierra1500hd", "sierra1500hdclassic"]
             },
             "sierra1500hybrid": {
                 "displayName": "SIERRA 1500 HYBRID",
                 "id": "1006332",
-                "aliases": []
+                "aliases": ["sierra", "sierra1500", "sierra1500classic", "sierra1500crewcab", "sierra1500hd", "sierra1500hdclassic"]
             },
             "sierra1500hd": {
                 "displayName": "SIERRA 1500HD",
                 "id": "1006334",
-                "aliases": []
+                "aliases": ["sierra", "sierra1500", "sierra1500classic", "sierra1500crewcab", "sierra1500hybrid", "sierra1500hdclassic"]
             },
             "sierra1500hdclassic": {
                 "displayName": "SIERRA 1500HD CLASSIC",
                 "id": "1006335",
-                "aliases": []
+                "aliases": ["sierra", "sierra1500", "sierra1500classic", "sierra1500crewcab", "sierra1500hybrid", "sierra1500hd"]
             },
             "sierra2500": {
                 "displayName": "SIERRA 2500",
                 "id": "1006336",
-                "aliases": []
+                "aliases": ["sierra", "sierra2500crewcab", "sierra2500hd", "sierra2500hdclassic"]
             },
             "sierra2500crewcab": {
                 "displayName": "SIERRA 2500 CREW CAB",
                 "id": "1006337",
-                "aliases": []
+                "aliases": ["sierra", "sierra2500", "sierra2500hd", "sierra2500hdclassic"]
             },
             "sierra2500hd": {
                 "displayName": "SIERRA 2500HD",
                 "id": "1006338",
-                "aliases": []
+                "aliases": ["sierra", "sierra2500", "sierra2500crewcab", "sierra2500hdclassic"]
             },
             "sierra2500hdclassic": {
                 "displayName": "SIERRA 2500HD CLASSIC",
                 "id": "1006339",
-                "aliases": []
+                "aliases": ["sierra", "sierra2500", "sierra2500crewcab", "sierra2500hd"]
             },
             "sierra3500": {
                 "displayName": "SIERRA 3500",
                 "id": "1006340",
-                "aliases": []
+                "aliases": ["sierra", "sierra3500classic", "sierra3500crewcab", "sierra3500hd"]
             },
             "sierra3500classic": {
                 "displayName": "SIERRA 3500 CLASSIC",
                 "id": "1006341",
-                "aliases": []
+                "aliases": ["sierra", "sierra3500", "sierra3500crewcab", "sierra3500hd"]
             },
             "sierra3500crewcab": {
                 "displayName": "SIERRA 3500 CREW CAB",
                 "id": "1006342",
-                "aliases": []
+                "aliases": ["sierra", "sierra3500", "sierra3500classic", "sierra3500hd"]
             },
             "sierra3500hd": {
                 "displayName": "SIERRA 3500HD",
                 "id": "1006343",
-                "aliases": []
+                "aliases": ["sierra", "sierra3500", "sierra3500classic", "sierra3500crewcab"]
             },
             "sierraclassic1500": {
                 "displayName": "SIERRA CLASSIC 1500",
                 "id": "1006344",
-                "aliases": []
+                "aliases": ["sierra"]
             },
             "sierradenali": {
                 "displayName": "SIERRA DENALI",
                 "id": "1006345",
-                "aliases": []
+                "aliases": ["sierra", "sierradenaliclassic"]
             },
             "sierradenaliclassic": {
                 "displayName": "SIERRA DENALI CLASSIC",
                 "id": "1006346",
-                "aliases": []
+                "aliases": ["sierra", "sierradenali"]
             },
             "sonoma": {
                 "displayName": "SONOMA",
@@ -3405,27 +3420,27 @@
             "yukon": {
                 "displayName": "YUKON",
                 "id": "1001532",
-                "aliases": []
+                "aliases": ["yukondenali", "yukonhybrid", "yukonxl", "yukonxldenali"]
             },
             "yukondenali": {
                 "displayName": "YUKON DENALI",
                 "id": "1006530",
-                "aliases": []
+                "aliases": ["yukon", "yukonhybrid", "yukonxl", "yukonxldenali"]
             },
             "yukonhybrid": {
                 "displayName": "YUKON HYBRID",
                 "id": "1006531",
-                "aliases": []
+                "aliases": ["yukon", "yukondenali", "yukonxl", "yukonxldenali"]
             },
             "yukonxl": {
                 "displayName": "YUKON XL",
                 "id": "1006532",
-                "aliases": []
+                "aliases": ["yukon", "yukondenali", "yukonhybrid", "yukonxldenali"]
             },
             "yukonxldenali": {
                 "displayName": "YUKON XL DENALI",
                 "id": "1006533",
-                "aliases": []
+                "aliases": ["yukon", "yukondenali", "yukonhybrid", "yukonxl"]
             }
         }
     },
