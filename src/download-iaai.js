@@ -18,7 +18,7 @@ browser.runtime.onMessage.addListener( (message) => {
         console.log("iaai downloading from storage");
         downloadFromStorage()
         return Promise.resolve('done');
-        };
+    };
     return false;
 });
 
@@ -41,7 +41,10 @@ async function downloadFromStorage() {
     // Update loadingBar. Start at 50%. Max will be twice the number of images
     // we have to handle, so that we hit 100% after iterating once for each
     // image.
-    await browser.runtime.sendMessage({ type: "feedback", values: [{ action: "download-nearly-finished" }] })
+    await browser.runtime.sendMessage({ type: "feedback", values: [
+        { action: "tab-increment" },
+        { action: "feedback-message", message:"IAAI: processing complete. Preparing for download."}
+    ] })
     storage = await browser.storage.local.get() // TODO: pass in storage keys from background
     // go over each value in storage, looking for large images
     for ( [key, value] of Object.entries(storage) ) {

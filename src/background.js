@@ -26,23 +26,6 @@ to pass along.
 
 \*---------------------------------------------------------------------------*/
 
-
-
-/*---------------*\
-  EVENT LISTENERS
-\*---------------*/
-
-// intercept image URL requests from Copart
-// browser.webRequest.onBeforeRequest.addListener(
-//     copartHdImgRequestListener,
-//     {urls: ["https://www.copart.com/public/data/lotdetails/solr/lotImages/*/USA"]},
-//     ["blocking"]
-// );
-
-
-// button actions
-// browser.browserAction.onClicked.addListener(openSalvagePages);
-
 browser.runtime.onMessage.addListener( (message)=>{
     if (message.type === "popup-action") {
         for (value of message.values) {

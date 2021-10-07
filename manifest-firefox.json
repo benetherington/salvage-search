@@ -2,7 +2,8 @@
   "description": "Searches salvage sites for a VIN and automates image downloads.",
   "manifest_version": 2,
   "name": "Salvage Search",
-  "version": "2.2",
+  "version": "2.3.2",
+  "version_name": "2.3 beta 2",
   "homepage_url": "https://benetherington.com/salvage-search/",
   "browser_specific_settings": {
     "gecko": {"update_url": "https://benetherington.com/salbage-search/updates.json"}
@@ -23,6 +24,9 @@
   "background": {
     "scripts": [
       "browser-polyfill.js",
+      "levenshtein.js",
+      "shared-assets.js",
+      "iaaiSearchParams.js",
       "search.js",
       "download-background.js",
       "background.js"
@@ -30,12 +34,14 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.copart.com/lot/*"],
-      "js": ["browser-polyfill.js", "download-copart.js"]
+      "matches": ["*://*.copart.com/*"],
+      "include_globs": ["*/lot/*"],
+      "js": ["browser-polyfill.js", "shared-assets.js", "download-copart.js"]
     },
     {
-      "matches": ["*://*.iaai.com/vehicledetails/*", "*://*.iaai.com/Vehicledetails?*"],
-      "js": ["browser-polyfill.js", "download-iaai.js"]
+      "matches": ["*://*.iaai.com/*"],
+      "include_globs": ["*/?ehicle?etails*"],
+      "js": ["browser-polyfill.js","shared-assets.js", "download-iaai.js"]
     }
   ],
   "browser_action": {

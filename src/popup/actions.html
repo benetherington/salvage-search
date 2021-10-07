@@ -5,7 +5,8 @@
         <meta charset="utf-8">
         <link rel="stylesheet" href="actions.css"/>
         <script src="/browser-polyfill.js"></script>
-        <script src="actions.js"></script>
+        <script src="/shared-assets.js"></script>
+        <script src="/popup/actions.js"></script>
     </head>
     <body>
 <!-- STATIC TOOLBAR -->
@@ -16,25 +17,20 @@
 
 
 
-        <!-- SLIDING PAGES -->
+<!-- SLIDING PAGES -->
         <div class="slider" id="slider"><div class="slider-holder">
 
-<!-- MAIN PAGE -->
+        <!-- MAIN PAGE -->
             <div class="slider-page active" id="main">
                 <div class="grouped">
                     <!-- <p>Search for a VIN:</p> -->
                     <input type="text" id="input-vin" class="input-big" size="17" placeholder="VIN"><br>
                     <div id= "button-search" class="button disabled">Search</div>
                 </div>
-                <div id="button-download" class="button ungrouped disabled">Download Images</div>
-                <div id="error-area">
-                    <div id="error-drawer" class="hidden">
-                        <p>That VIN doesn't look right...</p>
-                    </div>
-                </div>
+                <div id="button-download" data-style-orig="button ungrouped" class="button ungrouped disabled">Download Images</div>
             </div>
 
-<!-- SETTINGS PAGE -->
+        <!-- SETTINGS PAGE -->
             <div class="slider-page" id="settings">
                 <div class="settings-grid grouped">
                     <div class="settings-title">Salvage search:</div>
@@ -57,6 +53,9 @@
                     </div></div>
                     <div class="settings-label">IAAI.com</div>
 
+                    <input type="text" id="zip" class="input-small" size="5" maxlength="5">
+                    <div class="settings-label">IAAI ZIP</div>
+
                     <div class="toggle-cover"><div class="toggle">
                         <input type="checkbox" class="checkbox" id="row52">
                         <div class="knobs">
@@ -72,6 +71,10 @@
 
 <!-- END SLIDING PAGES -->
         </div></div>
+
+<!-- STATIC notification BAR -->
+        <div id="notification-drawer" class="drawer hidden">
+        </div>
 
 
     </body>
