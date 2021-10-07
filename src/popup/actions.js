@@ -33,7 +33,7 @@ document.addEventListener("click", (event) =>{
     // check which element was clicked
     if (event.target.id === 'button-search') {
         // SEARCH BUTTON
-        vinInput = document.getElementById("input-vin");
+        let vinInput = document.getElementById("input-vin");
         if (VINREGEX.test(vinInput.value)) {
             // that VIN looks good, let's run a search
             browser.runtime.sendMessage(
@@ -92,8 +92,8 @@ window.addEventListener("load", () => {
 // auto-fill VIN field
 window.addEventListener("focus", async () => {
     let clipboardContents = await navigator.clipboard.readText() // TODO: to request access, we need to load actions.html in a new tab
-    if (VINREGEX.test(clipboardContents)) {
-        document.getElementById('input-vin').value = clipboardContents
+    if (VINREGEX.test(clipboardContents.trim())) {
+        document.getElementById('input-vin').value = clipboardContents.trim()
         document.getElementById('button-search').classList.remove('disabled')
     }
 })
