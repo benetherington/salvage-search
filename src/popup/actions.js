@@ -119,7 +119,13 @@ browser.runtime.onMessage.addListener((message)=>{
                     addFeedbackMessage(value.display)
                     dlFeedback.update("disabled"); break;
                 case "feedback-message":
-                    addFeedbackMessage(value)
+                    addFeedbackMessage(value); break;
+                case "search-start":
+                    console.log("search-start"); break;
+                case "search-increment":
+                    console.log("search-increment"); break;
+                case "search-end":
+                    console.log("search-end"); break;
             }
         }
         return Promise.resolve('done');
