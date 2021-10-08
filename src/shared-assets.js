@@ -2,8 +2,9 @@ const VINREGEX = RegExp("^[A-HJ-NPR-Z0-9]{3}[A-HJ-NPR-Z0-9]{5}[0-9X][A-HJ-NPR-Z0
 const DEFAULT_SETTINGS = {
     searchCopart: true,
     searchIaai: true,
-    zipCode: "",
-    searchRow52: true
+    searchRow52: true,
+    fallbackZipCode: "",
+    openFallbacks: false
 }
 const sendNotification = (message, options={}) => {
     // quick feedback notification creation with error catching
