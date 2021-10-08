@@ -91,7 +91,9 @@ window.addEventListener("load", () => {
 })
 // auto-fill VIN field
 window.addEventListener("focus", async () => {
-    let clipboardContents = await navigator.clipboard.readText() // TODO: to request access, we need to load actions.html in a new tab
+    let clipboardContents = await navigator.clipboard.readText();
+    // TODO: this fails on Chrome?
+    // TODO: to request access, we need to load actions.html in a new tab
     if (VINREGEX.test(clipboardContents.trim())) {
         document.getElementById('input-vin').value = clipboardContents.trim()
         document.getElementById('button-search').classList.remove('disabled')
