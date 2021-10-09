@@ -23,7 +23,6 @@
         <!-- MAIN PAGE -->
             <div class="slider-page active" id="main">
                 <div class="grouped">
-                    <!-- <p>Search for a VIN:</p> -->
                     <input type="text" id="input-vin" class="input-big" size="17" placeholder="VIN"><br>
                     <div id= "button-search" class="button disabled">Search</div>
                 </div>
@@ -53,9 +52,6 @@
                     </div></div>
                     <div class="settings-label">IAAI.com</div>
 
-                    <input type="text" id="zip" class="input-small" size="5" maxlength="5">
-                    <div class="settings-label">IAAI ZIP (depricated!)</div>
-
                     <div class="toggle-cover"><div class="toggle">
                         <input type="checkbox" class="checkbox" id="row52">
                         <div class="knobs">
@@ -64,9 +60,21 @@
                         <div class="layer"></div>
                     </div></div>
                     <div class="settings-label">Row52.com</div>
-                
-                </div>
-                <p class="tiny" id="version">vX.X</p>
+
+                    <input type="text" id="zip" class="input-small" size="5" maxlength="5">
+                    <div class="settings-label">ZIP for fallback searches</div>
+                    
+                    <div class="toggle-cover"><div class="toggle">
+                        <input type="checkbox" class="checkbox" id="fallback">
+                        <div class="knobs">
+                            <span></span>
+                        </div>
+                        <div class="layer"></div>
+                    </div></div>
+                        <div class="settings-label">
+                            Fallback to searches
+                            </div>
+                <p class="tiny ungrouped" id="version">vX.X</p>
             </div>
 
 <!-- END SLIDING PAGES -->

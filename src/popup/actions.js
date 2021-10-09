@@ -71,23 +71,13 @@ window.addEventListener("load", () => {
     // validate VIN
     let inputVin = document.getElementById('input-vin')
     let inputSearch = document.getElementById('button-search')
-    inputVin.addEventListener('input', (event)=>{
+    inputVin.addEventListener('input', ()=>{
         if (VINREGEX.test(inputVin.value)) {
             inputSearch.classList.remove('disabled')
         } else {
             inputSearch.classList.add('disabled')
         }
     });
-
-    // enable/disable the ZIP field
-    document.querySelector("input#iaai").addEventListener("change", (event)=>{
-        let inputZip = document.querySelector("input#zip")
-        if (event.target.checked) {
-            inputZip.classList.remove("disabled")
-        } else {
-            inputZip.classList.add("disabled")
-        }
-    })
 })
 // auto-fill VIN field
 window.addEventListener("focus", async () => {
@@ -251,52 +241,67 @@ window.addEventListener("load", () => {
     dlFeedback.lookForSalvageTabs()
 })
 
+
 /*----------------*\
   PREFERENCES PAGE  
 \*----------------*/
 var preferences = {
-    copartCheck: null,
-    iaaiCheck: null,
-    zipText: null,
-    row52Check: null,
+    copartCheckEl: undefined,
+    iaaiCheckEl: undefined,
+    row52CheckEl: undefined,
+    zipTextEl: undefined,
+    fallbackCheckEl: undefined,
     fetchStoredSettings: async ()=>{
         let storage = await browser.storage.local.get("settings")
         let settings = storage.settings || DEFAULT_SETTINGS // defined in shared-assets.js
-        
-        preferences.copartCheck.checked = settings.searchCopart
-        preferences.iaaiCheck.checked   = settings.searchIaai
-        preferences.zipText.value       = settings.zipCode
-        preferences.row52Check.checked  = settings.searchRow52
+
+        preferences.copartCheckEl.checked   = settings.searchCopart;
+        preferences.iaaiCheckEl.checked     = settings.searchIaai;
+        preferences.row52CheckEl.checked    = settings.searchRow52;
+        preferences.zipTextEl.value         = settings.fallbackZipCode;
+        preferences.fallbackCheckEl.checked = settings.openFallbacks;
+        console.log(`fetch sees checked: ${ preferences.fallbackCheckEl.checked}`)
         // re-store settings in case defaults were used
         preferences.setStoredSettings()
     },
     setElementCallbacks: ()=>{
-        [ preferences.copartCheck,
-          preferences.iaaiCheck,
-          preferences.zipText,
-          preferences.row52Check ]
+        [ preferences.copartCheckEl,
+          preferences.iaaiCheckEl,
+          preferences.row52CheckEl,
+          preferences.zipTextEl,
+          preferences.fallbackCheckEl ]
         .forEach(element=>{
             element.addEventListener("change", preferences.setStoredSettings)
         })
+        let enableZip = ()=>{
+            if (preferences.fallbackCheckEl.checked) {
+                preferences.zipTextEl.classList.remove("disabled")
+            } else {
+                preferences.zipTextEl.classList.add("disabled")
+            }
+        };
+        enableZip()
+        preferences.fallbackCheckEl.addEventListener("change", enableZip)
     },
     setStoredSettings: async (event=null)=>{
-        let storage = await browser.storage.local.get("settings");
-        let settings = storage.settings || DEFAULT_SETTINGS;
-        settings.searchCopart = preferences.copartCheck.checked;
-        settings.searchIaai   = preferences.iaaiCheck.checked;
-        settings.zipCode      = preferences.zipText.value;
-        settings.searchRow52  = preferences.row52Check.checked;
+        let settings = Object.assign(DEFAULT_SETTINGS);
+        settings.searchCopart    = preferences.copartCheckEl.checked;
+        settings.searchIaai      = preferences.iaaiCheckEl.checked;
+        settings.searchRow52     = preferences.row52CheckEl.checked;
+        settings.fallbackZipCode = preferences.zipTextEl.value;
+        settings.openFallbacks   = preferences.fallbackCheckEl.checked;
         browser.storage.local.set({settings})
     }
 }
 window.addEventListener("load", async ()=>{
     // store UI elements
-    preferences.copartCheck = document.querySelector(".settings-grid input#copart")
-    preferences.iaaiCheck =   document.querySelector(".settings-grid input#iaai")
-    preferences.zipText =     document.querySelector(".settings-grid input#zip")
-    preferences.row52Check =  document.querySelector(".settings-grid input#row52")
+    preferences.copartCheckEl   = document.querySelector(".settings-grid input#copart")
+    preferences.iaaiCheckEl     = document.querySelector(".settings-grid input#iaai")
+    preferences.row52CheckEl    = document.querySelector(".settings-grid input#row52")
+    preferences.zipTextEl       = document.querySelector(".settings-grid input#zip")
+    preferences.fallbackCheckEl = document.querySelector(".settings-grid input#fallback")
     // load and display stored preferences
-    preferences.fetchStoredSettings()
+    await preferences.fetchStoredSettings()
     preferences.setElementCallbacks()
     // set version display
     let versionName = browser.runtime.getManifest().version_name
