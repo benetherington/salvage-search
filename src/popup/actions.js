@@ -99,19 +99,18 @@ browser.runtime.onMessage.addListener((message)=>{
     if (message.type === "feedback") {
         for (value of message.values) {
             switch (value.action) {
-                case "download-started": // value.tabs
-                    dlFeedback.update("downloading"); break;
-                case "download-tab":
-                    dlFeedback.progressStart(value.images); break;
-                case "tab-increment":
-                    dlFeedback.increment(); break;
-                case "download-finished":
-                    dlFeedback.update("enabled"); break;
-                case "download-abort":
-                    addFeedbackMessage(value.display)
-                    dlFeedback.update("disabled"); break;
                 case "feedback-message":
                     addFeedbackMessage(value); break;
+
+                case "download-start":
+                    dlFeedback.progressStart(value.total); break;
+                case "download-increment":
+                    dlFeedback.increment(); break;
+                case "download-end":
+                    dlFeedback.update("enabled"); break;
+                case "download-abort":
+                    dlFeedback.update("disabled"); break;
+
                 case "search-start":
                     console.log("search-start"); break;
                 case "search-increment":
@@ -196,49 +195,51 @@ window.addEventListener("load", async ()=>{
 
 // download button/progress bar
 var dlFeedback = {
+    el: undefined,
     status: 'disabled',
     total: 0,
     progress: 0, 
-    lookForSalvageTabs: async ()=>{
-        let salvageTabs = await browser.tabs.query(
-            {active: true,
-             url: ["*://*.iaai.com/*ehicle*etails*", // i miss blobs
-                   "*://*.copart.com/lot/*"]}
-        )
-        if (salvageTabs.length) {
-            browser.runtime.sendMessage("found a tab!")
-            dlFeedback.update("enabled")
-        } else {
-            dlFeedback.update("disabled")
-        }
-    },
-    update: (status=null) => {
-        dlFeedback.status = status || dlFeedback.status
-        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig
-        switch (dlFeedback.status) {
-            // case "enabled": default w/ no additional classes
-            case "disabled":
-                dlFeedback.el.classList.add("disabled");
-            break; case "downloading":
-                dlFeedback.el.classList.add("feedback-download");
-            break; case "progress":
-                dlFeedback.el.classList.add("feedback-progress")
-                dlFeedback.el.style.setProperty(
-                    "--progress-percentage",
-                    `${dlFeedback.progress/dlFeedback.total*100}%`
-                )
-        }
-    },
-    progressStart: (total) => {
+    start: (total=0)=>{
+        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
+        dlFeedback.el.classList.add("feedback-download");
         dlFeedback.total = total;
-        dlFeedback.progress = 0;
-        dlFeedback.update("progress")
+        // If we got a total, set progress at zero. If not, set it at 1 so that
+        // we start full color, ie 100%
+        dlFeedback.progress = Number(total);
+        dlFeedback.update()
     },
-    increment: ()=>{++dlFeedback.progress; dlFeedback.update()}
+    increment: ()=>{
+        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig
+        dlFeedback.el.classList.add("feedback-progress")
+        ++dlFeedback.progress
+        dlFeedback.update()
+    },
+    update: ()=>{
+        dlFeedback.el.style.setProperty(
+            "--progress-percentage",
+            `${dlFeedback.progress/dlFeedback.total*100}%`
+        )
+    },
+    disable: ()=>{
+        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
+        dlFeedback.el.classList.add("disabled");
+        dlFeedback.total = dlFeedback.progress = 0;
+    },
 }
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
     dlFeedback.el = document.querySelector("#button-download");
-    dlFeedback.lookForSalvageTabs()
+    // look for salvage tabs to download from
+    let salvageTabs = await browser.tabs.query(
+        {active: true,
+        url: ["*://*.iaai.com/*ehicle*etails*", // i miss blobs
+        "*://*.copart.com/lot/*"]}
+    )
+    if (salvageTabs.length) {
+        browser.runtime.sendMessage("found a tab!")
+        dlFeedback.update("enabled")
+    } else {
+        dlFeedback.update("disabled")
+    }
 })
 
 
