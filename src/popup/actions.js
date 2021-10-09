@@ -197,15 +197,15 @@ window.addEventListener("load", async ()=>{
 var dlFeedback = {
     el: undefined,
     status: 'disabled',
-    total: 0,
-    progress: 0, 
-    start: (total=0)=>{
+    total: 1,
+    progress: 1, 
+    start: (total=null)=>{
         dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
         dlFeedback.el.classList.add("feedback-download");
-        dlFeedback.total = total;
+        dlFeedback.total = total || 1;
         // If we got a total, set progress at zero. If not, set it at 1 so that
         // we start full color, ie 100%
-        dlFeedback.progress = Number(total);
+        dlFeedback.progress = total?0:1;
         dlFeedback.update()
     },
     increment: ()=>{
@@ -223,7 +223,7 @@ var dlFeedback = {
     disable: ()=>{
         dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
         dlFeedback.el.classList.add("disabled");
-        dlFeedback.total = dlFeedback.progress = 0;
+        dlFeedback.total = dlFeedback.progress = 1;
     },
 }
 window.addEventListener("load", async () => {
