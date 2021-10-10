@@ -107,16 +107,16 @@ browser.runtime.onMessage.addListener((message)=>{
                 case "download-increment":
                     dlFeedback.increment(); break;
                 case "download-end":
-                    dlFeedback.update("enabled"); break;
+                    dlFeedback.enable(); break;
                 case "download-abort":
-                    dlFeedback.update("disabled"); break;
+                    dlFeedback.disable(); break;
 
                 case "search-start":
-                    console.log("search-start"); break;
+                    searchFeedback.start(value.total); break;
                 case "search-increment":
-                    console.log("search-increment"); break;
+                    searchFeedback.increment(); break;
                 case "search-end":
-                    console.log("search-end"); break;
+                    searchFeedback.enable(); break;
             }
         }
         return Promise.resolve('done');
@@ -180,7 +180,6 @@ var addFeedbackMessage = (rawFeedback)=>{
     // show the drawer
     drawer.classList.remove("hidden")
 }
-
 // restore persisted notifications
 window.addEventListener("load", async ()=>{
     storage = await browser.storage.local.get();
@@ -191,6 +190,47 @@ window.addEventListener("load", async ()=>{
             addFeedbackMessage(value);
         }
     })
+})
+
+
+// search button/progress bar
+var searchFeedback = {
+    el: undefined,
+    status: 'enabled',
+    total: 1,
+    progress: 1, 
+    start: (total=0)=>{
+        searchFeedback.el.className = searchFeedback.el.dataset.styleOrig;
+        searchFeedback.el.classList.add("feedback-download");
+        searchFeedback.total = total;
+        // If we got a total, set progress at zero. If not, set it at 1 so that
+        // we start full color, ie 100%
+        searchFeedback.progress = total?0:1;
+        searchFeedback.update()
+    },
+    increment: ()=>{
+        searchFeedback.el.className = searchFeedback.el.dataset.styleOrig
+        searchFeedback.el.classList.add("feedback-progress")
+        ++searchFeedback.progress
+        searchFeedback.update()
+    },
+    update: ()=>{
+        searchFeedback.el.style.setProperty(
+            "--progress-percentage",
+            `${searchFeedback.progress/searchFeedback.total*100}%`
+        )
+    },
+    enable: ()=>{
+        searchFeedback.el.className = searchFeedback.el.dataset.styleOrig;
+    },
+    disable: ()=>{
+        searchFeedback.el.className = searchFeedback.el.dataset.styleOrig;
+        searchFeedback.el.classList.add("disabled");
+        searchFeedback.total = searchFeedback.progress = 1;
+    },
+}
+window.addEventListener("load", () => {
+    searchFeedback.el = document.querySelector("#button-search");
 })
 
 // download button/progress bar
@@ -219,6 +259,9 @@ var dlFeedback = {
             "--progress-percentage",
             `${dlFeedback.progress/dlFeedback.total*100}%`
         )
+    },
+    enable: ()=>{
+        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
     },
     disable: ()=>{
         dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
