@@ -195,7 +195,6 @@ async function searchRow52(vinInput, fallbackZipCode) {
             let parser = new DOMParser();
             let vehiclePaths;
             let resultsNum;
-            let yardName;
             try { // parse the response HTML and catch any errors
                 let doc = parser.parseFromString(await response.text(), "text/html");
                 let resultCountElement = doc.querySelector("#results-header span")
@@ -203,10 +202,10 @@ async function searchRow52(vinInput, fallbackZipCode) {
                 vehiclePaths = Array.from( doc.querySelectorAll(".block-link").values() )
                                         .map(  el=>el.attributes.href.value );
                 resultsNum = /\d+/.exec(resultCountElement.innerText)[0]
-                yardName = yardNameElement.innerText.trim()
             } catch { throw "something looks wrong with this page, try searching by hand."}
             
             if (vehiclePaths.length) {
+                let yardName = yardNameElement.innerText.trim()
                 sendNotification( `this vehicle is at ${yardName}`, {displayAs: "success"} )
                 // We shouldn't have more than one listing, but never assume
                 // anything without documentation.
