@@ -118,14 +118,29 @@ function searchCopart(vinInput, fallbackZipCode) {
         } catch (error) {
             console.log(`Copart rejecting: ${error}`)
             sendNotification(`Copart: ${error}.`, {displayAs: "error"})
-            reject(()=>{
-                let failureUrl = "https://www.copart.com/lotSearchResults/?free=true&query="+vinInput;
-                browser.tabs.create({url: failureUrl, active: false})
-            })
-        } finally {incrementProgressbar()}
+            reject( fallbackCopart(vinInput, fallbackZipCode) )
+        } finally {incrementProgressbar(vinInput, fallbackZipCode)}
     })
 }
-
+function fallbackCopart(vinInput, fallbackZipCode) {
+    // https://
+    // www.copart.com/
+    // vehicleFinderSearch/?
+    // displayStr=
+    //     %5B0%20TO%20250000%5D,
+    //     %5B2011%20TO%202022%5D,
+    //     10101&
+    // searchStr=
+    //     %7BMISC:%5B%23VehicleTypeCode:VEHTYPE_V,
+    //     %23OdometerReading:%5B0%20TO%20250000%5D,
+    //     %23LotYear:%5B2011%20TO%202022%5D,
+    //     %257B!geofilt%2520pt%253D40.7085%252C-74.0037%2520sfield%253Dyard_location%2520d%253D50%257D%5D,
+    //     sortByZip:true,
+    //     buyerEnteredZip:10101,
+    //     milesAway:50%7D
+    let failureUrl = "https://www.copart.com/lotSearchResults/?free=true&query="+vinInput;
+    return() => { browser.tabs.create({url: failureUrl, active: false}) }
+}
 
 /*----*\
   IAAI  
@@ -157,12 +172,13 @@ async function searchIaai(vinInput, fallbackZipCode) {
         } catch (error) {
             console.log(`IAAI rejecting: ${error}`)
             sendNotification(`IAAI: ${error}`, {displayAs: "error"})
-            reject(()=>{
-                let failureUrl = "https://www.iaai.com/Search?Keyword="+vinInput;
-                browser.tabs.create({url:failureUrl, active:false})
-            })
+            reject( fallbackIaai(vinInput, fallbackZipCode) )
         } finally {incrementProgressbar()}
     })
+}
+function fallbackIaai(vinInput, fallbackZipCode) {
+    let failureUrl = "https://www.iaai.com/Search?Keyword="+vinInput;
+    return() => { browser.tabs.create({url: failureUrl, active: false}) }
 }
 
 /*-----*\
@@ -218,12 +234,13 @@ async function searchRow52(vinInput, fallbackZipCode) {
         } catch (error) {
             console.log(`Row52 rejecting: ${error}`)
             sendNotification(`Row52: ${error}`, {displayAs: "error"})
-            reject( ()=>{
-                browser.tabs.create({url: searchUrl, active: false})
-            })
+            reject( fallbackRow52(vinInput, fallbackZipCode) )
         } finally {incrementProgressbar()}
     })
 };
-
+function fallbackRow52(vinInput, fallbackZipCode) {
+    let failureUrl = "https://www.copart.com/lotSearchResults/?free=true&query="+vinInput;
+    return() => { browser.tabs.create({url: failureUrl, active: false}) }
+}
 
 console.log("search loaded!")
