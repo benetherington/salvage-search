@@ -296,44 +296,44 @@ var preferences = {
     zipTextEl: undefined,
     fallbackCheckEl: undefined,
     fetchStoredSettings: async ()=>{
-        let storage = await browser.storage.local.get("settings")
-        let settings = storage.settings || DEFAULT_SETTINGS // defined in shared-assets.js
-
+        let storage = await browser.storage.local.get("settings");
+        let settings = storage.settings || DEFAULT_SETTINGS; // defined in shared-assets.js
+        
         preferences.copartCheckEl.checked   = settings.searchCopart;
         preferences.iaaiCheckEl.checked     = settings.searchIaai;
         preferences.row52CheckEl.checked    = settings.searchRow52;
-        preferences.zipTextEl.value         = settings.fallbackZipCode;
-        preferences.fallbackCheckEl.checked = settings.openFallbacks;
-        console.log(`fetch sees checked: ${ preferences.fallbackCheckEl.checked}`)
+        // preferences.zipTextEl.value         = settings.fallbackZipCode;
+        // preferences.fallbackCheckEl.checked = settings.openFallbacks;
+
         // re-store settings in case defaults were used
         preferences.setStoredSettings()
     },
     setElementCallbacks: ()=>{
         [ preferences.copartCheckEl,
           preferences.iaaiCheckEl,
-          preferences.row52CheckEl,
-          preferences.zipTextEl,
-          preferences.fallbackCheckEl ]
+          preferences.row52CheckEl ]
+        //   preferences.zipTextEl,
+        //   preferences.fallbackCheckEl ]
         .forEach(element=>{
             element.addEventListener("change", preferences.setStoredSettings)
         })
-        let enableZip = ()=>{
-            if (preferences.fallbackCheckEl.checked) {
-                preferences.zipTextEl.classList.remove("disabled")
-            } else {
-                preferences.zipTextEl.classList.add("disabled")
-            }
-        };
-        enableZip()
-        preferences.fallbackCheckEl.addEventListener("change", enableZip)
+        // let enableZip = ()=>{
+        //     if (preferences.fallbackCheckEl.checked) {
+        //         preferences.zipTextEl.classList.remove("disabled")
+        //     } else {
+        //         preferences.zipTextEl.classList.add("disabled")
+        //     }
+        // };
+        // enableZip()
+        // preferences.fallbackCheckEl.addEventListener("change", enableZip)
     },
     setStoredSettings: async (event=null)=>{
         let settings = Object.assign(DEFAULT_SETTINGS);
         settings.searchCopart    = preferences.copartCheckEl.checked;
         settings.searchIaai      = preferences.iaaiCheckEl.checked;
         settings.searchRow52     = preferences.row52CheckEl.checked;
-        settings.fallbackZipCode = preferences.zipTextEl.value;
-        settings.openFallbacks   = preferences.fallbackCheckEl.checked;
+        // settings.fallbackZipCode = preferences.zipTextEl.value;
+        // settings.openFallbacks   = preferences.fallbackCheckEl.checked;
         browser.storage.local.set({settings})
     }
 }
@@ -342,8 +342,8 @@ window.addEventListener("load", async ()=>{
     preferences.copartCheckEl   = document.querySelector(".settings-grid input#copart")
     preferences.iaaiCheckEl     = document.querySelector(".settings-grid input#iaai")
     preferences.row52CheckEl    = document.querySelector(".settings-grid input#row52")
-    preferences.zipTextEl       = document.querySelector(".settings-grid input#zip")
-    preferences.fallbackCheckEl = document.querySelector(".settings-grid input#fallback")
+    // preferences.zipTextEl       = document.querySelector(".settings-grid input#zip")
+    // preferences.fallbackCheckEl = document.querySelector(".settings-grid input#fallback")
     // load and display stored preferences
     await preferences.fetchStoredSettings()
     preferences.setElementCallbacks()

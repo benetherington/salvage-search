@@ -1,6 +1,8 @@
 async function openSalvagePages(vinInput) {
-    let storage = await browser.storage.local.get("settings")
-    let settings = storage.settings || DEFAULT_SETTINGS
+    let storage = await browser.storage.local.get("settings");
+    let settings = storage.settings || DEFAULT_SETTINGS;
+    // Fallbacks will be enabled in a future version
+    settings.openFallbacks = false;
 
     // test the clipboard text out of an abundance of caution since we need to do code injection for Copart.
     vinInput = encodeURIComponent(vinInput).replace(/^\s+|\s+$/g, '');
