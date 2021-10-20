@@ -193,82 +193,55 @@ window.addEventListener("load", async ()=>{
 })
 
 
-// search button/progress bar
-var searchFeedback = {
-    el: undefined,
-    status: 'enabled',
-    total: 1,
-    progress: 1, 
-    start: (total=0)=>{
-        searchFeedback.el.className = searchFeedback.el.dataset.styleOrig;
-        searchFeedback.el.classList.add("feedback-download");
-        searchFeedback.total = total;
+class ProgressButton {
+    el = undefined;
+    status = "enabled";
+    total = 1;
+    progress = 1;
+    start(total=0) {
+        this.el.className = this.el.dataset.styleOrig;
+        this.el.classList.add("feedback-download");
+        this.total = total;
         // If we got a total, set progress at zero. If not, set it at 1 so that
         // we start full color, ie 100%
-        searchFeedback.progress = total?0:1;
-        searchFeedback.update()
-    },
-    increment: ()=>{
-        searchFeedback.el.className = searchFeedback.el.dataset.styleOrig
-        searchFeedback.el.classList.add("feedback-progress")
-        ++searchFeedback.progress
-        searchFeedback.update()
-    },
-    update: ()=>{
-        searchFeedback.el.style.setProperty(
+        this.progress = total?0:1;
+        this.update()
+        console.log("start")
+    }
+    increment() {
+        this.el.className = this.el.dataset.styleOrig
+        this.el.classList.add("feedback-progress")
+        ++this.progress
+        this.update()
+        console.log("increment")
+    }
+    update() {
+        this.el.style.setProperty(
             "--progress-percentage",
-            `${searchFeedback.progress/searchFeedback.total*100}%`
+            `${this.progress/this.total*100}%`
         )
-    },
-    enable: ()=>{
-        searchFeedback.el.className = searchFeedback.el.dataset.styleOrig;
-    },
-    disable: ()=>{
-        searchFeedback.el.className = searchFeedback.el.dataset.styleOrig;
-        searchFeedback.el.classList.add("disabled");
-        searchFeedback.total = searchFeedback.progress = 1;
-    },
+        console.log("update")
+    }
+    enable() {
+        this.el.className = this.el.dataset.styleOrig;
+        console.log("enable")
+    }
+    disable() {
+        this.el.className = this.el.dataset.styleOrig;
+        this.el.classList.add("disabled");
+        this.total = this.progress = 1;
+        console.log("disable")
+    }
 }
+// search button/progress bar
+let searchFeedback = new ProgressButton();
 window.addEventListener("load", () => {
     searchFeedback.el = document.querySelector("#button-search");
 })
 
 // download button/progress bar
-var dlFeedback = {
-    el: undefined,
-    status: 'disabled',
-    total: 1,
-    progress: 1, 
-    start: (total=null)=>{
-        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
-        dlFeedback.el.classList.add("feedback-download");
-        dlFeedback.total = total || 1;
-        // If we got a total, set progress at zero. If not, set it at 1 so that
-        // we start full color, ie 100%
-        dlFeedback.progress = total?0:1;
-        dlFeedback.update()
-    },
-    increment: ()=>{
-        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig
-        dlFeedback.el.classList.add("feedback-progress")
-        ++dlFeedback.progress
-        dlFeedback.update()
-    },
-    update: ()=>{
-        dlFeedback.el.style.setProperty(
-            "--progress-percentage",
-            `${dlFeedback.progress/dlFeedback.total*100}%`
-        )
-    },
-    enable: ()=>{
-        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
-    },
-    disable: ()=>{
-        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig;
-        dlFeedback.el.classList.add("disabled");
-        dlFeedback.total = dlFeedback.progress = 1;
-    },
-}
+let dlFeedback = new ProgressButton();
+dlFeedback.status = "disabled"
 window.addEventListener("load", async () => {
     dlFeedback.el = document.querySelector("#button-download");
     // look for salvage tabs to download from
