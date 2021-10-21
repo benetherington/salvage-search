@@ -28,6 +28,10 @@ browser.runtime.onMessage.addListener( (message) => {
             sendNotification(`Copart: found ${value.hdUrls.length} images for lot #${value.lotNumber}`, {displayAs: "success"})
         }
         clickDragDownload(hdUrls);
+        browser.runtime.sendMessage({
+            type: "feedback",
+            values: [{action: "download-end"}]
+        })
         return Promise.resolve('done');
     };
     return false
