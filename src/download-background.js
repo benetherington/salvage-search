@@ -8,6 +8,7 @@ async function downloadImages() {
     copartDownloadImages();
     iaaiDownloadImages();
 };
+console.log("downloadImages passed")
 // listen for messages from content code
 browser.runtime.onMessage.addListener( (message, sender) => {
     if (message.type == "iaai") {
@@ -17,7 +18,6 @@ browser.runtime.onMessage.addListener( (message, sender) => {
     }
     return false;
 });
-
 
 /*------*\
   COPART  
@@ -48,9 +48,9 @@ async function copartDownloadImages() {
                   values: [{ ymm:ymm,
                              lotNumber:lotNumber,
                              hdUrls:hdUrls }] }
-        )
+            )
         };
-        messager().then(null, async ()=>{
+        messager().then(null, async ()=>{ // messenger failed, load scripts and retry
             await browser.tabs.executeScript(tab.id, {file:"/shared-assets.js"});
             await browser.tabs.executeScript(tab.id, {file:"/download-copart.js"});
             messager();
@@ -169,8 +169,10 @@ async function iaaiTabDownload(iaaiTab) {
         // TODO: send error feedback
         await browser.runtime.sendMessage({
             type: "feedback",
-            values: [ { action: "download-tab", images: imageKeys.length+1 }, // we'll do one last chunk from content
-                    { action: "feedback-message", message: `IAAI: processing ${imageKeys.length} images.`}]
+            values: [
+                {action: "download-start", total: imageKeys.length+1}, // we'll do one last chunk from content
+                {action: "feedback-message", message: `IAAI: processing ${imageKeys.length} images.`}
+            ]
         });
         // go over each image and start trimming them down to size
         trimmedImages = []
@@ -178,14 +180,16 @@ async function iaaiTabDownload(iaaiTab) {
         let processedImages = [];
         await Promise.all(
             imageKeys.map( async key => {
-                var imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" + 
+                let imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" +
                     key + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
-                await fetch(imageUrl)
+                let bitmap = await fetch(imageUrl)
                     .then(r => r.blob())
                     .then(createImageBitmap)
-                    .then(img => iaaiTrimImage(canvas, img))
+                    .catch(reason=>console.log(reason))
+                await browser.runtime.sendMessage({type:'feedback', values:[{action: 'download-increment'}]})
+                iaaiTrimImage(canvas, bitmap)
                     .then(img => processedImages.push(img))
-                await browser.runtime.sendMessage({type:'feedback', values:[{action: 'tab-increment'}]})
+                    .catch(reason=>console.log(reason))
                 console.log(`${key} processed`)
             })
         );
@@ -193,11 +197,13 @@ async function iaaiTabDownload(iaaiTab) {
         await iaaiStoreImages(processedImages)
     } catch (error) {
         browser.runtime.sendMessage({
-            type: "feedback-error",
-            values: [{
-                action: "abort-download",
-                display: error
-            }]
+            type: "feedback",
+            values: [
+                {   action: "feedback-message",
+                    message: "IAAI: something went wrong while processing images.",
+                    displayAs: 'error'},
+                {action: "download-abort"}
+            ]
         })
         return;
     }
