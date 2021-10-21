@@ -34,6 +34,10 @@ async function openSalvagePages(vinInput) {
         searchPromises.push( searchRow52(vinInput, settings.fallbackZipCode) )
     };
 
+    // alert user if no searches were enabled
+    if (!searchPromises.length) {
+        sendNotification("No salvage yards enabled. Check the settings page.")
+    }
     // wait for searches to complete
     let results = await Promise.allSettled(searchPromises);
 
