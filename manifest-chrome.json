@@ -16,7 +16,8 @@
     "clipboardRead",
     "tabs",
     "*://*.copart.com/lot/*",
-    "*://*.iaai.com/*", "https://*.anvis.iaai.com/deepzoom*"
+    "*://*.iaai.com/*", "https://*.anvis.iaai.com/deepzoom*",
+    "*://*.row52.com/*"
   ],
   "background": {
     "scripts": [
