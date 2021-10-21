@@ -42,7 +42,7 @@ async function downloadFromStorage() {
     // we have to handle, so that we hit 100% after iterating once for each
     // image.
     await browser.runtime.sendMessage({ type: "feedback", values: [
-        { action: "tab-increment" },
+        { action: "download-increment" },
         { action: "feedback-message", message:"IAAI: processing complete. Preparing for download."}
     ] })
     storage = await browser.storage.local.get() // TODO: pass in storage keys from background
@@ -56,7 +56,7 @@ async function downloadFromStorage() {
             catch (err) {console.log(err)};
         };
     };
-    browser.runtime.sendMessage({ type: "feedback", values: [{ action: "download-finished" }] })
+    browser.runtime.sendMessage({ type: "feedback", values: [{ action: "download-end" }] })
 };
 async function downloadUri(uri, name) {
     // Opens a single URI in a new tab for click-drop downloading
