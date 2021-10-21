@@ -12,6 +12,7 @@ document.addEventListener("click", (event) =>{
         // update toolbar
         document.getElementById("button-settings").classList.add("hidden")
         document.getElementById("button-main").classList.remove("hidden")
+        event.stopPropagation()
     } else if (event.target.id === "button-main"){
         // update pages active status
         document.querySelectorAll(".slider-page").forEach(el=>{el.classList.remove("active")})
@@ -21,6 +22,7 @@ document.addEventListener("click", (event) =>{
         // update toolbar
         document.getElementById("button-main").classList.add("hidden")
         document.getElementById("button-settings").classList.remove("hidden")
+        event.stopPropagation()
     };
 });
 
@@ -28,59 +30,58 @@ document.addEventListener("click", (event) =>{
 /*---------*\
   MAIN PAGE  
 \*---------*/
-// handle clicks
-document.addEventListener("click", (event) =>{
-    // check which element was clicked
-    if (event.target.id === 'button-search') {
-        // SEARCH BUTTON
-        let vinInput = document.getElementById("input-vin");
-        if (VINREGEX.test(vinInput.value)) {
-            // that VIN looks good, let's run a search
-            browser.runtime.sendMessage(
-                { type: "popup-action",
-                  values: [{
-                    action: "search",
-                    vin: vinInput.value }]}
-            );
-        } else {
-            // that VIN looks bad, and somehow you were still able to click the button.
-            errorMessage = document.querySelector("#popup-error")
-            vinField = document.getElementById("input-vin")
-            // unhide error message
-            errorMessage.classList.remove("hidden");
-            // wiggle the text input
-            vinField.classList.remove("error-attention"); // in case it's already moving
-            vinField.classList.add("error-attention");
-            // hide the error message after 4 seconds
-            setTimeout( ()=>{
-                errorMessage.classList.add("hidden");
-                vinField.classList.remove("error-attention");
-            }, 4*1000)
-        };
-    } else if (event.target.id === 'button-download') {
-        // DOWNLOAD BUTTON
-        browser.runtime.sendMessage(
-            { type: "popup-action",
-            values: [{
-                action: "download" }]}
-        );
+class ProgressButton {
+    el = undefined;
+    status = "enabled";
+    total = 1;
+    progress = 1;
+    start(total=0) {
+        this.el.className = this.el.dataset.styleOrig;
+        this.el.classList.add("feedback-download");
+        this.total = total;
+        // If we got a total, set progress at zero. If not, set it at 1 so that
+        // we start full color, ie 100%
+        this.progress = total?0:1;
+        this.update()
     }
-})
-// set up enable/disable/validate mechanics
+    increment() {
+        this.el.className = this.el.dataset.styleOrig
+        this.el.classList.add("feedback-progress")
+        ++this.progress
+        this.update()
+    }
+    update() {
+        this.el.style.setProperty(
+            "--progress-percentage",
+            `${this.progress/this.total*100}%`
+        )
+    }
+    enable() {
+        this.el.className = this.el.dataset.styleOrig;
+    }
+    disable() {
+        this.el.className = this.el.dataset.styleOrig;
+        this.el.classList.add("disabled");
+        this.total = this.progress = 1;
+    }
+}
+
+// SEARCH //
+// VIN textbox
 window.addEventListener("load", () => {
     // validate VIN
     let inputVin = document.getElementById('input-vin')
     let inputSearch = document.getElementById('button-search')
     inputVin.addEventListener('input', ()=>{
         if (VINREGEX.test(inputVin.value)) {
-            inputSearch.classList.remove('disabled')
+            searchProgressButton.enable()
         } else {
-            inputSearch.classList.add('disabled')
+            searchProgressButton.disable()
         }
     });
 })
-// auto-fill VIN field
 window.addEventListener("focus", async () => {
+    // auto-fill
     let clipboardContents = await navigator.clipboard.readText();
     // TODO: this fails on Chrome?
     // TODO: to request access, we need to load actions.html in a new tab
@@ -89,7 +90,63 @@ window.addEventListener("focus", async () => {
         document.getElementById('button-search').classList.remove('disabled')
     }
 })
+// search ProgressButton
+let searchProgressButton = new ProgressButton();
+let onSearchClick = (event) => {
+    let vinInput = document.getElementById("input-vin");
+    if (VINREGEX.test(vinInput.value)) {
+        // that VIN looks good, let's run a search
+        browser.runtime.sendMessage(
+            { type: "popup-action",
+              values: [{
+                action: "search",
+                vin: vinInput.value }]}
+        );
+    } else {
+        // that VIN looks bad, and somehow you were still able to click the button.
+        // wiggle the text input
+        vinField = document.getElementById("input-vin")
+        vinField.classList.remove("error-attention"); // in case it's already moving
+        vinField.classList.add("error-attention");
+        // hide the error message after 4 seconds
+        addFeedbackMessage({message: "That VIN doesn't look right.", displayAs: "error"})
+    };
+    event.stopPropagation()
+};
+window.addEventListener("load", () => {
+    searchProgressButton.el = document.querySelector("#button-search");
+    searchProgressButton.el.addEventListener("click", onSearchClick)
+})
 
+// DOWNLOAD //
+// ProgressButton
+let dlProgressButton = new ProgressButton();
+dlProgressButton.status = "disabled"
+window.addEventListener("load", async () => {
+    dlProgressButton.el = document.querySelector("#button-download");
+    dlProgressButton.el.addEventListener("click", onDownloadClick)
+    // activate or deactivate download button
+    let salvageTabs = await browser.tabs.query(
+        {active: true,
+        url: ["*://*.iaai.com/*ehicle*etails*", // i miss blobs
+        "*://*.copart.com/lot/*"]}
+    );
+    if (salvageTabs.length) {
+        console.log("found a tab!")
+        dlProgressButton.enable()
+    } else {
+        dlProgressButton.disable()
+    }
+})
+let onDownloadClick = (event) =>{
+    dlProgressButton.start()
+    browser.runtime.sendMessage(
+        { type: "popup-action",
+            values: [{
+            action: "download" }]}
+    )
+    event.stopPropagation()
+};
 
 /*--------*\
   FEEDBACK  
@@ -100,23 +157,29 @@ browser.runtime.onMessage.addListener((message)=>{
         for (value of message.values) {
             switch (value.action) {
                 case "feedback-message":
-                    addFeedbackMessage(value); break;
-
+                    addFeedbackMessage(value)
+                    break;
                 case "download-start":
-                    dlFeedback.progressStart(value.total); break;
+                    dlProgressButton.start(value.total)
+                    break;
                 case "download-increment":
-                    dlFeedback.increment(); break;
+                    dlProgressButton.increment()
+                    break;
                 case "download-end":
-                    dlFeedback.enable(); break;
+                    dlProgressButton.enable()
+                    break;
                 case "download-abort":
-                    dlFeedback.disable(); break;
-
+                    dlProgressButton.disable()
+                    break;
                 case "search-start":
-                    searchFeedback.start(value.total); break;
+                    searchProgressButton.start(value.total)
+                    break;
                 case "search-increment":
-                    searchFeedback.increment(); break;
+                    searchProgressButton.increment()
+                    break;
                 case "search-end":
-                    searchFeedback.enable(); break;
+                    searchProgressButton.enable()
+                    break;
             }
         }
         return Promise.resolve('done');
@@ -124,7 +187,7 @@ browser.runtime.onMessage.addListener((message)=>{
     return false;
 });
 
-// feedback notification
+// drawer
 var addFeedbackMessage = (rawFeedback)=>{
     // PROCESS
     let feedback = {};
@@ -141,7 +204,7 @@ var addFeedbackMessage = (rawFeedback)=>{
         feedback.message   = message;
         feedback.duration  = duration;
         feedback.closeable = closeable;
-        feedback.displayAs      = displayAs;
+        feedback.displayAs = displayAs;
         feedback.createdAt = performance.now().toString();
     } else {console.log("empty message");return;}
 
@@ -161,7 +224,7 @@ var addFeedbackMessage = (rawFeedback)=>{
         storable = {};
         // time should be pretty unique
         storable[feedback.createdAt] = feedbackToStore;
-        browser.storage.local.set(storable);
+        browser.storage.local.set(storable)
     }
 
     // PREPARE FOR THE END
@@ -190,72 +253,6 @@ window.addEventListener("load", async ()=>{
             addFeedbackMessage(value);
         }
     })
-})
-
-
-class ProgressButton {
-    el = undefined;
-    status = "enabled";
-    total = 1;
-    progress = 1;
-    start(total=0) {
-        this.el.className = this.el.dataset.styleOrig;
-        this.el.classList.add("feedback-download");
-        this.total = total;
-        // If we got a total, set progress at zero. If not, set it at 1 so that
-        // we start full color, ie 100%
-        this.progress = total?0:1;
-        this.update()
-        console.log("start")
-    }
-    increment() {
-        this.el.className = this.el.dataset.styleOrig
-        this.el.classList.add("feedback-progress")
-        ++this.progress
-        this.update()
-        console.log("increment")
-    }
-    update() {
-        this.el.style.setProperty(
-            "--progress-percentage",
-            `${this.progress/this.total*100}%`
-        )
-        console.log("update")
-    }
-    enable() {
-        this.el.className = this.el.dataset.styleOrig;
-        console.log("enable")
-    }
-    disable() {
-        this.el.className = this.el.dataset.styleOrig;
-        this.el.classList.add("disabled");
-        this.total = this.progress = 1;
-        console.log("disable")
-    }
-}
-// search button/progress bar
-let searchFeedback = new ProgressButton();
-window.addEventListener("load", () => {
-    searchFeedback.el = document.querySelector("#button-search");
-})
-
-// download button/progress bar
-let dlFeedback = new ProgressButton();
-dlFeedback.status = "disabled"
-window.addEventListener("load", async () => {
-    dlFeedback.el = document.querySelector("#button-download");
-    // look for salvage tabs to download from
-    let salvageTabs = await browser.tabs.query(
-        {active: true,
-        url: ["*://*.iaai.com/*ehicle*etails*", // i miss blobs
-        "*://*.copart.com/lot/*"]}
-    )
-    if (salvageTabs.length) {
-        browser.runtime.sendMessage("found a tab!")
-        dlFeedback.update("enabled")
-    } else {
-        dlFeedback.update("disabled")
-    }
 })
 
 
