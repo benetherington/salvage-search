@@ -20,7 +20,8 @@
     "tabs",
     "*://*.copart.com/lot/*",
     "*://*.iaai.com/*", "https://*.anvis.iaai.com/deepzoom*",
-    "*://*.row52.com/*"
+    "*://*.row52.com/*",
+    "*://*poctra.com/*"
   ],
   "background": {
     "scripts": [
