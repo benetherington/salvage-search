@@ -115,7 +115,7 @@ function searchCopart(vinInput, fallbackZipCode) {
                 let openers = ()=>{
                     lotNumbers.forEach( (lotNumber)=>{
                         let lotUrl = `https://www.copart.com/lot/${lotNumber}`;
-                        sendNotification(`Copart: your vehicle is lot #${lotNumber}!`, {displayAs:"success"})
+                        sendNotification(`Copart: found a match: lot #${lotNumber}!`, {displayAs:"success"})
                         browser.tabs.create( {url: lotUrl, active: false} )
                     })
                 }
@@ -170,7 +170,7 @@ async function searchIaai(vinInput, fallbackZipCode) {
             lotRe = /itemid=(\d{8})/
             if (lotRe.test(redirectUrl)){
                 let lotNumber = lotRe.exec(redirectUrl)[1];
-                sendNotification(`IAAI: your vehicle is lot #${lotNumber}!`, {displayAs:"success"})
+                sendNotification(`IAAI: found a match: lot #${lotNumber}!`, {displayAs:"success"})
             } else {
                 throw "query returned no results."
             }
@@ -219,8 +219,8 @@ async function searchRow52(vinInput, fallbackZipCode) {
             let resultsNum;
             try { // parse the response HTML and catch any errors
                 let doc = parser.parseFromString(await response.text(), "text/html");
-                let resultCountElement = doc.querySelector("#results-header span")
-                let yardNameElement = document.querySelector("span[itemprop] strong")
+                let resultCountElement = doc.querySelector("#results-header span");
+                let yardNameElement = document.querySelector("span[itemprop] strong");
                 vehiclePaths = Array.from( doc.querySelectorAll(".block-link").values() )
                                         .map(  el=>el.attributes.href.value );
                 resultsNum = /\d+/.exec(resultCountElement.innerText)[0]
@@ -228,7 +228,7 @@ async function searchRow52(vinInput, fallbackZipCode) {
             
             if (vehiclePaths.length) {
                 let yardName = yardNameElement.innerText.trim()
-                sendNotification( `this vehicle is at ${yardName}`, {displayAs: "success"} )
+                sendNotification( `Row52: Found a match at ${yardName}!`, {displayAs: "success"} )
                 // We shouldn't have more than one listing, but never assume
                 // anything without documentation.
                 resolve( ()=>{
