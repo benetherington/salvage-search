@@ -8,16 +8,6 @@ async function downloadImages() {
     copartDownloadImages();
     iaaiDownloadImages();
 };
-console.log("downloadImages passed")
-// listen for messages from content code
-browser.runtime.onMessage.addListener( (message, sender) => {
-    if (message.type == "iaai") {
-        // an IAAI tab has scraped page data and returned oSeaDragon URLs
-        iaaiStoreImages(sender.tab.id, message)
-        return Promise.resolve('done');
-    }
-    return false;
-});
 
 /*------*\
   COPART  
