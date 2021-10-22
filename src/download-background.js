@@ -8,6 +8,19 @@ async function downloadImages() {
     copartDownloadImages();
     iaaiDownloadImages();
 };
+function createImageUrl(uri, name) {
+    // CREATE BLOB https://stackoverflow.com/a/12300351
+    let byteString = atob(uri.split(',')[1]);
+    let mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
+    let ab = new ArrayBuffer(byteString.length);
+    let ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    let blob = new Blob([ab], {type: mimeString});
+    blob.name = name+".png "
+    return URL.createObjectURL(blob)
+};
 
 /*------*\
   COPART  
@@ -26,34 +39,39 @@ async function copartDownloadImages() {
         let ymm = tab.title.match(/^(.*) for Sale/i)[1];
         let lotNumber = tab.url.match(/copart\.com\/lot\/(\d*)/)[1];
         let hdUrls = await copartFetchLotData(lotNumber)
+        // DOWNLOAD IMAGES
+        hdUrls.map(url=>{
+            browser.downloads.download({url:url, saveAs:false})
+        })
         // When clicking on a Copart lot details page from the home page or
         // search results, the URL is updated, but a navigation event does not
         // occur. This means that until that details page is refreshed, our
         // content script will not be injected. Catch this by injecting the
         // script if the message fails to find a recipient.
-        messager = function() {
-            return browser.tabs.sendMessage(
-                tab.id,
-                { type: "copart",
-                  values: [{ ymm:ymm,
-                             lotNumber:lotNumber,
-                             hdUrls:hdUrls }] }
-            )
-        };
-        messager().then(null, async ()=>{ // messenger failed, load scripts and retry
-            await browser.tabs.executeScript(tab.id, {file:"/shared-assets.js"});
-            await browser.tabs.executeScript(tab.id, {file:"/download-copart.js"});
-            messager();
-        });
+        // messager = function() {
+        //     return browser.tabs.sendMessage(
+        //         tab.id,
+        //         { type: "copart",
+        //           values: [{ ymm:ymm,
+        //                      lotNumber:lotNumber,
+        //                      hdUrls:hdUrls }] }
+        //     )
+        // };
+        // messager().then(null, async ()=>{ // messenger failed, load scripts and retry
+        //     await browser.tabs.executeScript(tab.id, {file:"/shared-assets.js"});
+        //     await browser.tabs.executeScript(tab.id, {file:"/download-copart.js"});
+        //     messager();
+        // });
     }
 }
 async function copartFetchLotData(lotNumber) {
     let jsn = await fetch(`https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`)
         .then(r=>r.json())
+    let imageUrls = [];
     try {
         if (jsn.data.imagesList.hasOwnProperty("HIGH_RESOLUTION_IMAGE")) {
-            return jsn.data.imagesList.HIGH_RESOLUTION_IMAGE
-            .map( image => {return image.url} )
+            imageUrls = jsn.data.imagesList.HIGH_RESOLUTION_IMAGE
+                            .map( image => {return image.url} )
         } else { throw "no images found"}
     } catch (error) {
         if (error instanceof TypeError) {
@@ -61,6 +79,7 @@ async function copartFetchLotData(lotNumber) {
         } else { messageText = error }
         sendNotification(`Copart: ${messageText} for lot #${lotNumber}`, {displayAs: "error"})
     }
+    return imageUrls
 };
 
 
@@ -99,9 +118,10 @@ async function iaaiDownloadImages(stockNumber=null) {
             ]
         });
     }
-    // DOWNLOAD AND PROCESS IMAGES
+    // PROCESS IMAGES
     let canvas = document.createElement("canvas");
     for (imageKey of imageKeys) {
+        // FETCH AND PROCESS
         let imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" +
                         imageKey + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
         let bitmap = await fetch(imageUrl)
@@ -110,28 +130,18 @@ async function iaaiDownloadImages(stockNumber=null) {
                            .catch(reason=>console.log(reason))
         let trimmedImage = await iaaiTrimImage(canvas, bitmap)
                                         .catch(reason=>console.log(reason))
+        // DOWNLOAD
         if (trimmedImage) {
-            let url = createImageUrl(trimmedImage)
-            browser.downloads.download({url:url, saveAs:false, filename:"asdf.png"}) }
+            let url = createImageUrl(trimmedImage);
+            browser.downloads.download({url:url, saveAs:false, filename:imageKey+".png"})
+        }
         console.log(`${imageKey} processed`)
         await browser.runtime.sendMessage({type:'feedback', values:[{action: 'download-increment'}]})
     };
-    // DISPLAY IMAGES
+    // DONE
     await browser.runtime.sendMessage({type:'feedback', values:[{action: 'download-end'}]})
 }
-function createImageUrl(uri, name) {
-    // CREATE BLOB https://stackoverflow.com/a/12300351
-    let byteString = atob(uri.split(',')[1]);
-    let mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
-    let ab = new ArrayBuffer(byteString.length);
-    let ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-    let blob = new Blob([ab], {type: mimeString});
-    blob.name = name+".png "
-    return URL.createObjectURL(blob)
-};
+
 async function iaaiImageKeysFromStock(stockNumber) {
     if (typeof(stockNumber) === "number") {stockNumber = stockNumber.toString()}
     let imageKeys = [];
