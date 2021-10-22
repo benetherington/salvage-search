@@ -63,26 +63,128 @@ async function copartFetchLotData(lotNumber) {
     }
 };
 
+
 /*----*\
   IAAI  
 \*----*/
-// IMAGE PROCESSING
+// INITIATOR
+async function iaaiDownloadImages(stockNumber=null) {
+    // Downloads, processes, and displays IAAI images to the user. If
+    // stockNumber is not provided, fetches images from the active tab.
+    
+    // GET IMAGE KEYS
+    console.log("iaaiDownloadImages getting imageKeys")
+    let downloadTab;
+    let imageKeys = [];
+    if (stockNumber) {
+        // we can ignore any open tabs
+        imageKeys = await iaaiImageKeysFromStock(stockNumber)
+    } else {
+        // find IAAI tabs
+        let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
+        // TOOD: send error feedback
+        // fetch keys from tab
+        let iaaiTab;
+        for (iaaiTab of iaaiTabs) {
+            imageKeys = await iaaiImageKeysFromTab(iaaiTab);
+        }
+    }
+    if (imageKeys.length) {
+        await browser.runtime.sendMessage({
+            type: "feedback",
+            values: [
+                // We'll increment on processing, on storing, and we'll do one last chunk from content
+                {action: "download-start", total: imageKeys.length*2+1},
+                {action: "feedback-message", message: `IAAI: processing ${imageKeys.length} images.`}
+            ]
+        });
+    }
+    // DOWNLOAD AND PROCESS IMAGES
+    let canvas = document.createElement("canvas");
+    for (imageKey of imageKeys) {
+        let imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" +
+                        imageKey + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
+        let bitmap = await fetch(imageUrl)
+                           .then(r => r.blob())
+                           .then(createImageBitmap)
+                           .catch(reason=>console.log(reason))
+        let trimmedImage = await iaaiTrimImage(canvas, bitmap)
+                                        .catch(reason=>console.log(reason))
+        if (trimmedImage) {
+            let url = createImageUrl(trimmedImage)
+            browser.downloads.download({url:url, saveAs:false, filename:"asdf.png"}) }
+        console.log(`${imageKey} processed`)
+        await browser.runtime.sendMessage({type:'feedback', values:[{action: 'download-increment'}]})
+    };
+    // DISPLAY IMAGES
+    await browser.runtime.sendMessage({type:'feedback', values:[{action: 'download-end'}]})
+}
+function createImageUrl(uri, name) {
+    // CREATE BLOB https://stackoverflow.com/a/12300351
+    let byteString = atob(uri.split(',')[1]);
+    let mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
+    let ab = new ArrayBuffer(byteString.length);
+    let ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    let blob = new Blob([ab], {type: mimeString});
+    blob.name = name+".png "
+    return URL.createObjectURL(blob)
+};
+async function iaaiImageKeysFromStock(stockNumber) {
+    if (typeof(stockNumber) === "number") {stockNumber = stockNumber.toString()}
+    let imageKeys = [];
+    try {
+        let getKeysUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
+        getKeysUrl.searchParams.append(
+            'json',
+            JSON.stringify({"stockNumber":stockNumber})
+        );
+        let response = await fetch(getKeysUrl);
+        if (!response.ok) {throw "server error"}
+        if (response.headers.get("content-length") == '0') {throw "no query results"}
+        let jsn = await response.json();
+        imageKeys = jsn.keys.map(i=>i.K);
+        } catch (error) {
+            console.log(error)
+        }
+        return imageKeys
+}
+async function iaaiImageKeysFromTab(iaaiTab) {
+    // Fetches image IDs from the provided tab.
+    let imageKeys = [];
+    try {
+        console.log(`Requesting imageKeys from tab #${iaaiTab.id}`)
+        imageKeys = await browser.tabs.sendMessage(
+            iaaiTab.id, {type: "iaai", values:["scrape-images"]}
+        ).catch(()=>{ throw "there was an error communicating with the page. Try refreshing it?"; });
+        if (!imageKeys.length) { throw "no images found!"; }
+        // TODO: send error feedback
+    } catch (error) {
+        browser.runtime.sendMessage({
+            type: "feedback",
+            values: [
+                {   action: "feedback-message",
+                    message: "IAAI: something went wrong while processing images.",
+                    displayAs: 'error'},
+                {action: "download-abort"}
+            ]
+        })
+    }
+    return imageKeys
+}
+// used by iaaiTrimImage
 var isBlackish = (imageData) => {
-    // used by iaaiTrimImage below
+    // Detects if the imageData is close enough to black to be trimmed off.
     // every fourth element will be full opacity
     alphaComponent = imageData.data.length/4 * 255
     // all other elements should be zero... ish
     ishComponent = 20 * imageData.data.length
     return alphaComponent + ishComponent >= imageData.data.reduce( (prev, curr) => {return prev+curr} )
 };
-async function iaaiStoreImages(tabId, data) {
-    // called after message from content script
-    imageData = data;
-    imageData.tabId = tabId;
-    browser.storage.local.set({imageData});
-}
 async function iaaiTrimImage(canvas, img) {
-    // Uses the canvas to operate on the provided image. Trims off the black borders
+    // Uses a provided canvas to trim off the black borders of the provided image.
     canvas.width = img.width;
     canvas.height = img.height;
     ctx = canvas.getContext('2d');
@@ -111,7 +213,6 @@ async function iaaiTrimImage(canvas, img) {
     return Promise.resolve(canvas.toDataURL())
 };
 async function iaaiStoreImages(imageArray) {
-    // we'll await storage set operations... they can take a while
     var largePromises = []
     for (const [idx, image] of imageArray.entries()) {
         // store each image with indexes as keys
@@ -128,79 +229,30 @@ async function iaaiStoreImages(imageArray) {
     };
     await Promise.all(largePromises)
 }
+console.log("download-background loaded")
 
-// INITIATOR
-async function iaaiDownloadImages() {
-    console.log("iaaiDownloadImages beginning fetches")
-    // find IAAI tabs
-    let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
-    // TOOD: send error feedback
-    if (iaaiTabs.length) {
-        await browser.runtime.sendMessage({
-            type: "feedback",
-            values: [
-                { action: "download-started", tabs:iaaiTabs.length },
-                { action: "feedback-message", message:"IAAI: searching for images." }
-            ]
-        });
-    }
-    for (iaaiTab of iaaiTabs) {
-        await iaaiTabDownload(iaaiTab);
-    }
-}
-async function iaaiTabDownload(iaaiTab) {
-    // asks content script to collect image URLs, then processes them
-    try {
-        console.log(`Requesting info from iaai tab #${iaaiTab.id}`)
-        imageKeys = await browser.tabs.sendMessage(
-            iaaiTab.id, {type: "iaai", values:["scrape-images"]}
-        ).catch(()=>{ throw "there was an error communicating with the page. Try refreshing it?"; });
-        if (!imageKeys) { throw "no images found!"; }
-        // TODO: send error feedback
-        await browser.runtime.sendMessage({
-            type: "feedback",
-            values: [
-                {action: "download-start", total: imageKeys.length+1}, // we'll do one last chunk from content
-                {action: "feedback-message", message: `IAAI: processing ${imageKeys.length} images.`}
-            ]
-        });
-        // go over each image and start trimming them down to size
-        trimmedImages = []
-        let canvas = document.createElement("canvas")
-        let processedImages = [];
-        await Promise.all(
-            imageKeys.map( async key => {
-                let imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" +
-                    key + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
-                let bitmap = await fetch(imageUrl)
-                    .then(r => r.blob())
-                    .then(createImageBitmap)
-                    .catch(reason=>console.log(reason))
-                await browser.runtime.sendMessage({type:'feedback', values:[{action: 'download-increment'}]})
-                iaaiTrimImage(canvas, bitmap)
-                    .then(img => processedImages.push(img))
-                    .catch(reason=>console.log(reason))
-                console.log(`${key} processed`)
-            })
-        );
-        // store trimmed images.. they're too big to pass in a message!
-        await iaaiStoreImages(processedImages)
-    } catch (error) {
-        browser.runtime.sendMessage({
-            type: "feedback",
-            values: [
-                {   action: "feedback-message",
-                    message: "IAAI: something went wrong while processing images.",
-                    displayAs: 'error'},
-                {action: "download-abort"}
-            ]
-        })
-        return;
-    }
-    // ask the content script to pull data from storage and download them
-    browser.tabs.sendMessage(
-        iaaiTab.id,
-        { "type": "iaai",
-          "values": ["storage-local"] }
-    );
-}
+// FOR REFERENCE
+// getJsonImageDimensions returns:
+// {
+//     DeepZoomInd: true
+//     Image360Ind: true
+//     Image360Url: "https://spins.spincar.com/iaa-rochester/000-31355822"
+//     UndercarriageInd: false
+//     VRDUrl: "https://mediastorageaccountprod.blob.core.windows.net/media/31819854_VES-100_1"
+//     Videos: [{…}]
+//     keys: (11) [{
+//         AR: 1.33
+//         ART: 1.35
+//         B: 671
+//         H: 1944
+//         I: 0
+//         IN: 1
+//         K: "31819854~SID~B671~S0~I1~RW2592~H1944~TH0"
+//         S: 0
+//         SID: 31819854
+//         SN: 31355822
+//         TH: 72
+//         TW: 96
+//         W: 2592
+//     }, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+// }
