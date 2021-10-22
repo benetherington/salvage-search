@@ -14,7 +14,7 @@
   "permissions": [
     "storage", "unlimitedStorage",
     "clipboardRead",
-    "tabs",
+    "tabs", "downloads",
     "*://*.copart.com/lot/*",
     "*://*.iaai.com/*", "https://*.anvis.iaai.com/deepzoom*",
     "*://*.row52.com/*",
