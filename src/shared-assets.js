@@ -10,7 +10,12 @@ const sendNotification = (message, options={}) => {
     let value = Object.assign(options, {action: "feedback-message", message:message});
     let values = [value]
     browser.runtime.sendMessage({type: "feedback", values})
-        .catch(err=>
-            console.log(err+"\n is the popup closed?")
-        )
+        .catch(err=>console.log(err+"\n is the popup closed?"))
+}
+const sendProgress = (recipient, behavior, options={}) => {
+    let action = `${recipient}-${behavior}`
+    let value = Object.assign(options, {action:action})
+    let values = [value]
+    browser.runtime.sendMessage({type: "feedback", values})
+        .catch(err=>console.log(err+"\n is the popup closed?"))
 }
