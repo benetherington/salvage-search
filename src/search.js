@@ -1,88 +1,81 @@
-async function openSalvagePages(vinInput) {
-    let storage = await browser.storage.local.get("settings");
-    let settings = storage.settings || DEFAULT_SETTINGS;
-    // Fallbacks will be enabled in a future version
-    settings.openFallbacks = false;
+async function openSalvagePages(vinInput) { console.log("openSalvagePages")
+    // FEEDBACK
+    sendProgress("search", "start")
 
-    // test the clipboard text out of an abundance of caution since we need to do code injection for Copart.
+    // SETTINGS
+    let storage = await browser.storage.local.get("settings");
+    let settings = Object.assign(DEFAULT_SETTINGS, storage.settings)
+
+    // SEARCH TERM
     vinInput = encodeURIComponent(vinInput).replace(/^\s+|\s+$/g, '');
     if (!VINREGEX.test(vinInput)) {
         sendNotification("That VIN doesn't look right...", {displayAs: "error"})
+        sendProgress("search", "end")
         return;
     };
 
-    // start the progress bar. Each search will increment once.
-    let searchCount = [settings.searchCopart,
-                       settings.searchIaai,
-                       settings.searchRow52].filter(e=>e).length
-    browser.runtime.sendMessage({
-        type: "feedback", values: [{
-            action: "search-start",
-            total: searchCount
-        }]
-    }).catch( err=> console.log(err+"\n is the popup closed?") )
-
-    // go through each enabled site and get either a listing page or a fallback URL
+    // PRIMARY SEARCH
     let searchPromises = [];
     if (settings.searchCopart) {
         searchPromises.push( searchCopart(vinInput, settings.fallbackZipCode) )
     }
     if (settings.searchIaai) {
         searchPromises.push( searchIaai(vinInput, settings.fallbackZipCode) )
-    };
+    }
     if (settings.searchRow52) {
         searchPromises.push( searchRow52(vinInput, settings.fallbackZipCode) )
-    };
-
-    // alert user if no searches were enabled
-    if (!searchPromises.length) {
-        sendNotification("No salvage yards enabled. Check the settings page.")
     }
-    // wait for searches to complete
-    let results = await Promise.allSettled(searchPromises);
-
-    // sort searches into sucesses and failures
-    let successfulOpeners = [];
-    let fallbackOpeners = [];
-    results.map( promise=>{
-        if (promise.status==="fulfilled") {
-            successfulOpeners.push(promise.value)
-        } else {
-            fallbackOpeners.push(promise.reason)
-        }
-    })
-
-    // if any one search succeeded, skip fallbacks
-    if (successfulOpeners.length) {
-        // Each search function notifies on success with more details than we
-        // have access to.
-        successfulOpeners.forEach(opener=>opener())
-    } else if (settings.openFallbacks) {
-        sendNotification("No matches were found in your configured sites.", {displayAs: "error"})
-        fallbackOpeners.forEach(opener=>opener())
+    // wait for results
+    let searchOpeners;
+    searchOpeners = await Promise.any(searchPromises)
+        .catch(e=>{if (!e instanceof AggregateError){throw e}})
+    // open results
+    if (searchOpeners) {
+        sendProgress("search", "end")
+        searchOpeners[0]()
+        return
     }
-    browser.runtime.sendMessage({
-        type: "feedback", values: [{
-            action: "search-end",
-            total: searchCount
-        }]
-    }).catch( err=>console.log(err+"\n is the popup closed?") )
-};
 
-let incrementProgressbar = ()=>{
-    browser.runtime.sendMessage({
-        type: "feedback",
-        values: [{
-            action: "search-increment"
-        }]
-    }).catch( err=>console.log(err+"\n is the popup closed?") )
+    // ARCHIVE SEARCH
+    let archivePromises = [];
+    if (settings.searchPoctra) {
+        archivePromises.push( searchPoctra(vinInput) )
+    }
+    // wait for results
+    let archiveOpeners;
+    archiveOpeners = await Promise.any(archivePromises)
+        .catch(e=>{if (!e instanceof AggregateError){throw e}})
+    // open results
+    if (archiveOpeners) {
+        archiveOpeners[0]()
+    }
+    sendProgress("search", "end")
 }
+
+
+function downloadByStock(lotList) {
+    // lotList should be an array of objects that at least have a stock number,
+    // but it's faster if they also have a yard/company name:
+    // [{yard: 'IAAI', stock: '29973673'}, ...]
+    for (lot of lotList) {
+        if (lot.hasOwnProperty("yard")) {
+            if (lot.yard.toLowerCase() == 'iaai') {
+                
+            } else if (lot.yard.toLowerCase() == 'copart') {
+
+            }
+        } else {
+            // try everything, I guess?
+        }
+    }
+}
+
 
 
 /*------*\
   COPART  
 \*------*/
-function searchCopart(vinInput, fallbackZipCode) {
+function searchCopart(vinInput, fallbackZipCode) { // => list of tab opener functions
     return new Promise(async (resolve, reject) => {
         try {
             // perform query for VIN
@@ -125,7 +118,7 @@ function searchCopart(vinInput, fallbackZipCode) {
             console.log(`Copart rejecting: ${error}`)
             sendNotification(`Copart: ${error}.`, {displayAs: "error"})
             reject( fallbackCopart(vinInput, fallbackZipCode) )
-        } finally {incrementProgressbar(vinInput, fallbackZipCode)}
+        }
     })
 }
 function fallbackCopart(vinInput, fallbackZipCode) {
@@ -179,7 +172,7 @@ async function searchIaai(vinInput, fallbackZipCode) {
             console.log(`IAAI rejecting: ${error}`)
             sendNotification(`IAAI: ${error}`, {displayAs: "error"})
             reject( fallbackIaai(vinInput, fallbackZipCode) )
-        } finally {incrementProgressbar()}
+        }
     })
 }
 function fallbackIaai(vinInput, fallbackZipCode) {
@@ -241,7 +234,7 @@ async function searchRow52(vinInput, fallbackZipCode) {
             console.log(`Row52 rejecting: ${error}`)
             sendNotification(`Row52: ${error}`, {displayAs: "error"})
             reject( fallbackRow52(vinInput, fallbackZipCode) )
-        } finally {incrementProgressbar()}
+        }
     })
 };
 function fallbackRow52(vinInput, fallbackZipCode) {
