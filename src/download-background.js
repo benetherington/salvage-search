@@ -9,6 +9,7 @@ async function downloadImages() {
         let imageUrls = [];
         imageUrls.push(... await copartImageUrlsFromTab())
         imageUrls.push(... await iaaiImageUrlsFromTab())
+        imageUrls.push(... await poctraImageUrlsFromTab())
         for (let idx=0; idx<imageUrls.length; idx++) {
             let url = imageUrls[idx];
             let filename = `${idx}.jpg`;
@@ -66,6 +67,9 @@ async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
                 {throw "encountered a server error."}
             if (!jsn.data.imagesList.hasOwnProperty("HIGH_RESOLUTION_IMAGE"))
                 {throw "returned no images.";}
+            // TODO: sometimes, imagesList has more images in FULL_RESOLUTION
+            // than in HIGH_RESOLUTION. We need to go over FULL and return HIGH
+            // if present, FULL if not.
             let highResImages = jsn.data.imagesList.HIGH_RESOLUTION_IMAGE.map(image=>image.url)
                 imageUrls.push( ...highResImages )
         } catch (error) {throw `Copart: lot #${jsn.lotNumber} ${error}`}
@@ -274,6 +278,55 @@ function isBlackish(imageData) {
 //     }, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
 // }
 
+
+
+
+/*------*\
+  POCTRA  
+\*------*/
+
+async function poctraImageUrlsFromTab() {
+    let imageUrls = [];
+    try {
+        // FIND TABS
+        let poctraTabs = await browser.tabs.query( {active:true, url:["*://*.poctra.com/*/id-*/*"]} );
+        if (!poctraTabs.length) {return [];}
+        // DETERMINE SALVAGE
+        let lotNumbers = Array.from(await Promise.all(poctraTabs.map(async poctraTab=>
+            await browser.tabs.executeScript(poctraTab.id, { code:`(${poctraGetLotNumber.toString()})()` })
+        ))).flat()
+        console.log('lotNumbers:'); console.log(lotNumbers)
+        if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
+        {throw "is this a Copart or IAAI archive page? If so, please send Ben the URL. They've changed something."}
+        for (lotNumber of lotNumbers) {
+            let urls;
+            if (lotNumber.yard==="copart") {
+                urls = await copartImageUrlsFromLot(lotNumber.number)
+            } else if (lotNumber.yard==="iaai") {
+                urls = await iaaiImageUrlsFromStock(lotNumber.number)
+            } else { console.log('lotNumber:'); console.log(lotNumber) }
+            imageUrls.push(...urls)
+        }
+    } catch (error) {throw `Poctra: ${error}`}
+    return imageUrls
+}
+
+function poctraGetLotNumber() {
+    let idElement = document.querySelector("h2");
+    if (!idElement) {return null}
+    let idString = idElement.innerText;
+    let idMatches = /(?<type>Lot|Stock) no: (?<number>\d*)/.exec(idString);
+    if (!idMatches) {return null}
+    let type, number;
+    ({type, number} = idMatches.groups);
+    if (type==="Lot") {
+        return {yard: "copart", number}
+    } else if (type==="Stock") {
+        return {yard: "iaai", number}
+    } else {
+        return {yard: "unknown"}
+    }
+}
 
 
 
