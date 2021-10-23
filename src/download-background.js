@@ -143,7 +143,7 @@ async function iaaiImageKeysFromStock(stockNumber) {
     );
     let response = await fetch(getKeysUrl);
     if (!response.ok) {throw "server error"}
-    if (response.headers.get("content-length") == '0') {throw "no query results"}
+    if (response.headers.get("content-length") === '0') {throw "no query results"}
     let jsn = await response.json();
     let imageKeys = jsn.keys.map(i=>i.K);
     return imageKeys
