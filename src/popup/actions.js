@@ -128,8 +128,11 @@ window.addEventListener("load", async () => {
     // activate or deactivate download button
     let salvageTabs = await browser.tabs.query(
         {active: true,
-        url: ["*://*.iaai.com/*ehicle*etails*", // i miss blobs
-        "*://*.copart.com/lot/*"]}
+        url: [
+            "*://*.iaai.com/*ehicle*etails*", // i miss blobs
+            "*://*.copart.com/lot/*",
+            "*://*.poctra.com/*/id-*/*"
+        ]}
     );
     if (salvageTabs.length) {
         console.log("found a tab!")
