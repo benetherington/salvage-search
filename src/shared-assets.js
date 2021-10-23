@@ -3,8 +3,7 @@ const DEFAULT_SETTINGS = {
     searchCopart: true,
     searchIaai: true,
     searchRow52: true,
-    fallbackZipCode: "",
-    openFallbacks: false
+    searchPoctra: true
 }
 const sendNotification = (message, options={}) => {
     // quick feedback notification creation with error catching

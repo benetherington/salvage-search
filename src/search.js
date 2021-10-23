@@ -254,34 +254,53 @@ function fallbackRow52(vinInput, fallbackZipCode) {
   POCTRA  
 \*------*/
 async function searchPoctra(vinInput) {
-    let POCTRA_REGEX = /^(?<yard>.*?) (Stock|Lot) No: (?<stock>\d*)<br>.*<br>Location: (?<location>.*)$/;
-    try {
-        let searchUrl = `https://poctra.com/search/ajax`;
-        let body = `q=${vinInput}&by=&asc=&page=1`;
-        let headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"};
-        let response = await fetch( searchUrl, {method: "POST", headers, body} );
-        if (!response.ok) { throw "something went wrong on their end..." }
-        let parser = new DOMParser();
-        try { // parse the response HTML and catch any errors
+    return new Promise(async (resolve, reject)=>{
+        let POCTRA_REGEX = /^(?<yard>.*?) (Stock|Lot) No: (?<stock>\d*)<br>.*<br>Location: (?<location>.*)$/;
+        try {
+            // SEARCH
+            let searchUrl = `https://poctra.com/search/ajax`;
+            let body = `q=${vinInput}&by=&asc=&page=1`;
+            let headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"};
+            let response = await fetch( searchUrl, {method: "POST", headers, body} );
+            if (!response.ok) { throw "something went wrong on their end..." }
+            // CHECK FOR RESULTS
+            let lotUrls = [];
+            let parser = new DOMParser();
             let doc = parser.parseFromString(await response.text(), "text/html");
-            let searchResults = doc.querySelectorAll("p");
-            let stockNumbers = [];
+            // set base URI so that relative links work
+            let base = doc.createElement("base");
+            base.href = searchUrl;
+            doc.head.append(base)
+            let searchResults = doc.querySelectorAll(".clickable-row");
+            if (!searchResults.length) {throw "search returned no results."}
+            // PARSE RESULTS
             for (searchResult of searchResults) {
-                let matched = POCTRA_REGEX.exec(searchResult.innerHTML.trim())
-                if (!mached) {continue}
-                stockNumbers.push(matched.groups)
-                sendNotification( `Poctra: found a match: ${matched.yard} lot ${matched.stock}`, {displayAs: "success"} )
+                // FIND PAGE LINK
+                let lotLink = searchResult.querySelector("a");
+                if (!lotLink) {continue}
+                lotUrls.push(lotLink.href)
+                // NOTIFY
+                try {
+                    let detailsElement = searchResult.querySelector("p");
+                    let details = POCTRA_REGEX.exec(detailsElement.innerHTML.trim()).groups;
+                    sendNotification( `Poctra: found a match at ${details.yard}! Lot ${details.stock}.`, {displayAs: "success"} )
+                } catch {
+                    sendNotification( "Poctra: found a match!", {displayAs: "success"})
+                }
             }
-        } catch { throw "something looks wrong with this page, try searching by hand."}
-        return downloadByStock(stockNumbers)
-    } catch (error) {
-        console.log(`Poctra rejecting: ${error}`)
-        sendNotification(`Poctra: ${error}`, {displayAs: "error"})
-        reject( fallbackRow52(vinInput, fallbackZipCode) )
-    }
-}
-
-
-
+            if (!lotUrls.length) {throw "search returned no results"}
+            // SUCCESS!
+            resolve([()=>{
+                lotUrls.forEach( (lotUrl)=>{
+                    browser.tabs.create({url: lotUrl, active: false})
+                })
+            }])
+        } catch (error) {
+            console.log(`Poctra rejecting: ${error}`)
+            sendNotification(`Poctra: ${error}`, {displayAs: "error"})
+            reject()
+        }
+    })
+};
 
 console.log("search loaded!")
