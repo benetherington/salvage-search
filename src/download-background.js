@@ -108,7 +108,11 @@ async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // => array of dat
     let imageUrls = [];
     try {
         // GET IMAGE KEYS
-        let imageKeys = await iaaiImageKeysFromStock(stockNumbers);
+        let imageKeys = [];
+        for (stockNumber of stockNumbers) {
+            let keys = await iaaiImageKeysFromStock(stockNumber);
+            imageKeys.push(...keys)
+        }
         await sendNotification(`IAAI: processing ${imageKeys.length} images.`)
         await sendProgress("download", "start", {total:imageKeys.length})
         // CREATE DATA URLS
