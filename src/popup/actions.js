@@ -31,7 +31,7 @@ document.addEventListener("click", (event) =>{
   MAIN PAGE  
 \*---------*/
 class ProgressButton {
-    el = undefined;
+    el = null;
     status = "enabled";
     total = 1;
     progress = 1;
