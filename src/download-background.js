@@ -258,19 +258,19 @@ function isBlackish(imageData) {
 //     VRDUrl: "https://mediastorageaccountprod.blob.core.windows.net/media/31819854_VES-100_1"
 //     Videos: [{…}]
 //     keys: (11) [{
-//         AR: 1.33
-//         ART: 1.35
-//         B: 671
-//         H: 1944
-//         I: 0
-//         IN: 1
-//         K: "31819854~SID~B671~S0~I1~RW2592~H1944~TH0"
-//         S: 0
-//         SID: 31819854
-//         SN: 31355822
-//         TH: 72
-//         TW: 96
-//         W: 2592
+//         AR: 1.33,
+//         ART: 1.35,
+//         B: 671,
+//         H: 1944,
+//         I: 0,
+//         IN: 1,
+//         K: "31819854~SID~B671~S0~I1~RW2592~H1944~TH0",
+//         S: 0,
+//         SID: 31819854,
+//         SN: 31355822,
+//         TH: 72,
+//         TW: 96,
+//         W: 2592,
 //     }, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
 // }
 
@@ -288,9 +288,13 @@ async function poctraImageUrlsFromOpenTab() {
         let poctraTabs = await browser.tabs.query( {active:true, url:["*://*.poctra.com/*/id-*/*"]} );
         if (!poctraTabs.length) {return [];}
         // DETERMINE SALVAGE
-        let lotNumbers = Array.from(await Promise.all(poctraTabs.map(async poctraTab=>
-            await browser.tabs.executeScript(poctraTab.id, { code:`(${poctraGetLotNumber.toString()})()` })
-        ))).flat()
+        let lotNumbers = Array.from(
+            await Promise.all(
+                poctraTabs.map(async poctraTab=>
+                    await browser.tabs.executeScript(poctraTab.id, { code:`(${poctraGetLotNumber.toString()})()` })
+                )
+            )
+        ).flat()
         console.log('lotNumbers:'); console.log(lotNumbers)
         if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
         {throw "is this a Copart or IAAI archive page? If so, please send Ben the URL. They've changed something."}
