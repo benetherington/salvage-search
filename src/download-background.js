@@ -94,18 +94,29 @@ async function iaaiImageUrlsFromOpenTab() { // => [objectURL]
         // FIND TABS
         let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
         if (!iaaiTabs.length) {return [];} // no error thrown, as the user might be targeting a Copart tab.
-        // GET IMAGE KEYS
-        let imageKeys = Array.from(await Promise.all(
-            iaaiTabs.map(iaaiTab=>iaaiImageKeysFromTab(iaaiTab))
-        )).flat();
-        await sendNotification(`IAAI: processing ${imageKeys.length} images.`)
-        await sendProgress("download", "start", {total:imageKeys.length})
+        // GET IMAGE DETAILS
+        let stockNumbers = await Promise.all(
+            iaaiTabs.map(iaaiTab=>iaaiStockNumberFromTab(iaaiTab))
+        );
+        let imagesDetails = await Promise.all(
+            stockNumbers.map(stockNumber=>iaaiImagesDetailsFromStock(stockNumber))
+        );
+        let numberOfImages = imagesDetails.reduce((total, details) =>{
+            return total + details.keys.length
+        }, initialValue=0);
+        await sendNotification(`IAAI: processing ${numberOfImages} images.`)
+        await sendProgress("download", "start")
         // CREATE DATA URLS
-        imageUrls = await iaaiImageUrlsFromKeys(imageKeys)
+        imageUrls = await Promise.all(
+            imagesDetails.map(
+                async imageDetails=>await iaaiImageUrlsFromDetails(imageDetails)
+            )
+        )
     } catch (error) {throw `IAAI: ${error}`}
-    return imageUrls
+    return imageUrls.flat()
 }
 async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // => array of dataUrls
+    // Accepts a single stockNumber, multiple stockNumbers, or an array of stockNumbers.
     let stockNumbers = Array.from(arguments).flat();
     let imageUrls = [];
     try {
@@ -126,17 +137,21 @@ async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // => array of dat
 // IMAGE DETAILS
 // These send no notifications, but they do call image processors, which will
 // send progressbar increments. Any errors are thrown without formatting.
-async function iaaiImageKeysFromTab(iaaiTab) {
+async function iaaiStockNumberFromTab(iaaiTab) { // -> {keys:[{}, {}]}
     // Fetches image keyss from the provided tab.
-    console.log(`Requesting imageKeys from tab #${iaaiTab.id}`)
-    let imageKeys = [];
-    imageKeys = await browser.tabs.sendMessage(
-        iaaiTab.id, {type: "iaai", values:["scrape-images"]}
-    ).catch(()=>{ throw "there was an error communicating with the page. Try refreshing it?"; });
-    if (!imageKeys.length) {throw "no images found."}
-    return imageKeys
+    console.log(`Requesting stockNumber from tab #${iaaiTab.id}`)
+    let unparsedJson = await browser.tabs.executeScript(
+        iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
+    ).catch(()=>{ throw "there was an error communicating with the page. Please reload the page and try again." });
+    try {
+        let jsn = JSON.parse(unparsedJson[0]);
+        let stockNumber = jsn.VehicleDetailsViewModel.StockNo;
+        return stockNumber;
+    } catch {
+        throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
+    }
 }
-async function iaaiImageKeysFromStock(stockNumber) {
+async function iaaiImagesDetailsFromStock(stockNumber) { //-> {keys:[{}, {}]}
     if (typeof(stockNumber) === "number") {stockNumber = stockNumber.toString()}
     let getKeysUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
     getKeysUrl.searchParams.append(
@@ -146,72 +161,73 @@ async function iaaiImageKeysFromStock(stockNumber) {
     let response = await fetch(getKeysUrl);
     if (!response.ok) {throw "server error"}
     if (response.headers.get("content-length") === '0') {throw "no query results"}
-    let jsn = await response.json();
-    let imageKeys = jsn.keys.map(i=>i.K);
-    return imageKeys
+    let imagesDetails = await response.json();
+    return imagesDetails
 }
 
 // IMAGE PROCESSING
 // These send no notifications, but they do increment the progressbar. Any
 // errors are thrown without formatting.
-async function iaaiImageUrlsFromKeys(imageKeys) { // => array of objectURLs
-    // SEND NOTIFICATION
-    if (!imageKeys.length){return []}
+async function iaaiImageUrlsFromDetails(imageOrImagesDetails) { // -> [objectURL]
+    // accepts a single imageDetails object, multiple imageDetails objects, or
+    // an array of imageDetails objects
+    let imagesDetails = Array.from(arguments).flat()
+    if (!imagesDetails.length){return []}
     // FETCH AND PROCESS
     let processedUrls = [];
-    let canvas = document.createElement("canvas");
-    for (imageKey of imageKeys) {
-        // FETCH
-        let imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" +
-                        imageKey + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
-        let bitmap = await fetch(imageUrl)
-                           .then(r => r.blob())
-                           .then(createImageBitmap)
-        // TRIM
-        let trimmedImage = await trimImage(canvas, bitmap)
-        // CREATE URL
-        if (trimmedImage) {
-            let url = dataURLtoObjectURL(trimmedImage);
-            processedUrls.push(url)
-        }
-        console.log(`${imageKey} processed`)
-        await sendProgress("download", "increment")
+    for (imageDetails of imagesDetails) {
+        let dezoomed = await iaaiImageUrlsFromImageKeys(imageDetails.keys)
+        processedUrls.push(...dezoomed)
+        // processedUrls.push(...pano)
+        // processedUrls.push(...walkaround)
     };
     // DONE
     return processedUrls
 }
-
-// PROCESSING HELPERS
-async function trimImage(canvas, img) { // => dataURL
-    // Uses a provided canvas to trim off the black borders of the provided image.
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx = canvas.getContext('2d');
-    ctx.drawImage(img,0,0);
-    // number of pixels to trim
-    trimLeft   = 0;
-    trimRight  = img.width-1;
-    trimTop    = 0;
-    trimBottom = img.height-1;
-    // center lines to check for black
-    centerX    = Math.round(img.width /2);
-    centerY    = Math.round(img.height/2);
-    // find trim values
-    sampleWidth = 50 // the number of pixels to sample while finding black(ish) area
-    await Promise.all([
-        new Promise(resolve => {while (isBlackish( ctx.getImageData(trimLeft,centerY,   1,sampleWidth) )) { trimLeft++;   }; resolve()}),
-        new Promise(resolve => {while (isBlackish( ctx.getImageData(trimRight,centerY,  1,sampleWidth) )) { trimRight--;  }; resolve()}),
-        new Promise(resolve => {while (isBlackish( ctx.getImageData(centerX,trimTop,    sampleWidth,1) )) { trimTop++;    }; resolve()}),
-        new Promise(resolve => {while (isBlackish( ctx.getImageData(centerX,trimBottom, sampleWidth,1) )) { trimBottom--; }; resolve()})
-    ]);
-    // re-size the canvas and re-place the image to execute the crop
-    [trimLeft,trimRight,trimTop,trimBottom]
-    canvas.width  = trimRight-trimLeft;
-    canvas.height = trimBottom-trimTop;
-    ctx.drawImage(img, -trimLeft, -trimTop);
-    return Promise.resolve(canvas.toDataURL({type:"image/jpeg"}))
-};
-function dataURLtoObjectURL(uri, name) {
+const TILE_SIZE = 250;
+async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
+    // Accepts a single keys object, multiple keys objects, or an array of keys
+    // objects.
+    keys = Array.from(arguments).flat()
+    let canvas = document.createElement("canvas");
+    let ctx = canvas.getContext("2d")
+    let processedPromises = [];
+    for (key of keys) {
+        fetchWorker = new Worker()
+        processedPromises.push(new Promise((resolve, reject)=>{
+            // PLAN
+            let tileUrl = (x, y)=>`https://anvis.iaai.com/deepzoom?imageKey=${key.K}&level=12&x=${x}&y=${y}&overlap=0&tilesize=${TILE_SIZE}`;
+            // PICKUP: zoom 13 returns an image larger than W, H, but zoom 12
+            // returns an image smaller.
+            canvas.width  = key.W;
+            canvas.height = key.H;
+            let xTiles = Math.ceil(key.W / TILE_SIZE);
+            let yTiles = Math.ceil(key.H / TILE_SIZE);
+            let xRange = [...Array(xTiles).keys()];
+            let yRange = [...Array(yTiles).keys()];
+            // FETCH
+            let bitmapPromises = [];
+            for (let x of xRange) { for (let y of yRange){
+                bitmapPromises.push( fetch(tileUrl(x,y))
+                                .then(r => r.blob())
+                                .then(createImageBitmap)
+                                .then(bmp => new Object({x,y,bmp}))
+                )
+            }}
+            let bmpDetails = await Promise.all(bitmapPromises)
+            bmpDetails.forEach(bmpDetails=>{
+                let {bmp,x,y} = bmpDetails;
+                ctx.drawImage(bmp,x*TILE_SIZE,y*TILE_SIZE)
+            })
+            let dataURL = canvas.toDataURL();
+            let objectURL = dataURLtoObjectURL(dataURL);
+            processedUrls.push(objectURL)
+            console.log(`${key.K} processed`)
+        }))
+    }
+    return processedUrls
+}
+function dataURLtoObjectURL(uri, name) { // -> objectURL
     // Takes a dataURL and turns it into a temporary object URL. This makes it
     // easier to pass around. See: https://stackoverflow.com/a/12300351
     let byteString = atob(uri.split(',')[1]);
@@ -225,31 +241,6 @@ function dataURLtoObjectURL(uri, name) {
     blob.name = name+".jpg"
     return URL.createObjectURL(blob)
 };
-function isBlackish(imageData) {
-    // Detects if the imageData is close enough to black to be trimmed off.
-    // every fourth element will be full opacity
-    alphaComponent = imageData.data.length/4 * 255
-    // all other elements should be zero... ish
-    ishComponent = 20 * imageData.data.length
-    return alphaComponent + ishComponent >= imageData.data.reduce( (prev, curr) => {return prev+curr} )
-}
-// async function iaaiStoreImages(imageArray) {
-//     var largePromises = []
-//     for (const [idx, image] of imageArray.entries()) {
-//         // store each image with indexes as keys
-//         console.log("storing image #"+idx);
-//         // JSON interpretation does not allow arbitrary key names unless you do it this way
-//         // TODO: fix type key.
-//         var obj = {}
-//         obj[idx] = image
-//         obj['type'] = 'large_image'
-//         largePromises.push(
-//             browser.storage.local
-//             .set(obj)
-//         );
-//     };
-//     await Promise.all(largePromises)
-// }
 // FOR REFERENCE
 // getJsonImageDimensions returns:
 // {
