@@ -10,12 +10,14 @@ async function downloadImages() {
         imageUrls.push(... await copartImageUrlsFromOpenTab())
         imageUrls.push(... await iaaiImageUrlsFromOpenTab())
         imageUrls.push(... await poctraImageUrlsFromOpenTab())
+        imageUrls.forEach( (url, idx) => {
+            console.log(`downloading ${idx}`)
             browser.downloads.download({
                 url: url,
                 saveAs: false,
-                filename: filename
+                filename: `${idx}.jpg`
             })
-        }
+        })
         sendProgress("download", "end")
     } catch (error) {
         sendProgress("download", "abort")
