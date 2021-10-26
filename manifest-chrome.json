@@ -23,9 +23,7 @@
   "background": {
     "scripts": [
       "browser-polyfill.js",
-      "levenshtein.js",
       "shared-assets.js",
-      "iaaiSearchParams.js",
       "search.js",
       "download-background.js",
       "background.js"
