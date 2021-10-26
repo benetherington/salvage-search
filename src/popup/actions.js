@@ -31,10 +31,12 @@ document.addEventListener("click", (event) =>{
   MAIN PAGE  
 \*---------*/
 class ProgressButton {
-    el = null;
-    status = "enabled";
-    total = 1;
-    progress = 1;
+    constructor () {
+        this.el = undefined;
+        this.status = "enabled";
+        this.total = 1;
+        this.progress = 1;
+    }
     start(total=0) {
         this.el.className = this.el.dataset.styleOrig;
         this.el.classList.add("feedback-download");
