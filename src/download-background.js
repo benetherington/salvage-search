@@ -165,14 +165,14 @@ async function iaaiImagesDetailsFromStock(stockNumber) { //-> {keys:[{}, {}]}
 // IMAGE PROCESSING
 // These send no notifications, but they do increment the progressbar. Any
 // errors are thrown without formatting.
-async function iaaiImageUrlsFromDetails(imageOrImagesDetails) { // -> [objectURL]
+async function iaaiObjectUrlsFromDetails(imageOrImagesDetails) { // -> [objectURL]
     // accepts a single imageDetails object, multiple imageDetails objects, or
     // an array of imageDetails objects
     let imagesDetails = Array.from(arguments).flat()
     if (!imagesDetails.length){return []}
     // FETCH AND PROCESS
     let processedUrls = [];
-    for (imageDetails of imagesDetails) {
+    for (let imageDetails of imagesDetails) {
         let dezoomed = await iaaiImageUrlsFromImageKeys(imageDetails.keys)
         processedUrls.push(...dezoomed)
         // processedUrls.push(...pano)
@@ -182,6 +182,7 @@ async function iaaiImageUrlsFromDetails(imageOrImagesDetails) { // -> [objectURL
     return processedUrls
 }
 const TILE_SIZE = 250;
+var iaaiTiming = []
 async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
     // Accepts a single keys object, multiple keys objects, or an array of keys
     // objects.
@@ -189,7 +190,10 @@ async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d")
     let processedPromises = [];
+                                                                        iaaiTiming.push({id:"main", action:"before loop", T:performance.now()})
     for (let key of keys) {
+                                                                        iaaiTiming.push({id:key.K, action:"create", t:performance.now()})
+        processedPromises.push(new Promise(async (resolve, reject)=>{
             // PLAN
             let tileUrl = (x, y)=>`https://anvis.iaai.com/deepzoom?imageKey=${key.K}&level=12&x=${x}&y=${y}&overlap=0&tilesize=${TILE_SIZE}`;
             // PICKUP: zoom 13 returns an image larger than W, H, but zoom 12
@@ -202,6 +206,7 @@ async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
             let yRange = [...Array(yTiles).keys()];
             // FETCH
             let bitmapPromises = [];
+                                                                        iaaiTiming.push({id:key.K, action:"begin fetch", t:performance.now()})
             for (let x of xRange) { for (let y of yRange){
                 bitmapPromises.push( fetch(tileUrl(x,y))
                                 .then(r => r.blob())
@@ -209,6 +214,7 @@ async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
                                 .then(bmp => new Object({x,y,bmp}))
                 )
             }}
+                                                                        iaaiTiming.push({id:key.K, action:"between fetch and process", t:performance.now()})
             let bmpDetails = await Promise.all(bitmapPromises)
             bmpDetails.forEach(bmpDetails=>{
                 let {bmp,x,y} = bmpDetails;
@@ -216,10 +222,13 @@ async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
             })
             let dataURL = canvas.toDataURL();
             let objectURL = dataURLtoObjectURL(dataURL);
-            processedUrls.push(objectURL)
+                                                                        iaaiTiming.push({id:key.K, action:"processed", t:performance.now()})
             console.log(`${key.K} processed`)
+            resolve(objectURL)
         }))
+                                                                        iaaiTiming.push({id:key.K, action:"created", t:performance.now()})
     }
+                                                                        iaaiTiming.push({id:"main", action:"after loop", T:performance.now()})
     return processedUrls
 }
 function dataURLtoObjectURL(uri, name) { // -> objectURL
