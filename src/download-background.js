@@ -56,7 +56,7 @@ async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
     let jsons = await Promise.all(lotNumbers.map( lotNumber=>copartFetchLotData(lotNumber) ))
     // PROCESS
     let imageUrls = [];
-    for (jsn of jsons) {
+    for (let jsn of jsons) {
         try {
             if (  !jsn.hasOwnProperty("returnCode")
                ||  jsn.returnCode!=1
@@ -121,10 +121,7 @@ async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // => array of dat
     let imageUrls = [];
     try {
         // GET IMAGE KEYS
-        let imageKeys = [];
-        for (stockNumber of stockNumbers) {
-            let keys = await iaaiImageKeysFromStock(stockNumber);
-            imageKeys.push(...keys)
+        for (let stockNumber of stockNumbers) {
         }
         await sendNotification(`IAAI: processing ${imageKeys.length} images.`)
         await sendProgress("download", "start", {total:imageKeys.length})
@@ -192,9 +189,7 @@ async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d")
     let processedPromises = [];
-    for (key of keys) {
-        fetchWorker = new Worker()
-        processedPromises.push(new Promise((resolve, reject)=>{
+    for (let key of keys) {
             // PLAN
             let tileUrl = (x, y)=>`https://anvis.iaai.com/deepzoom?imageKey=${key.K}&level=12&x=${x}&y=${y}&overlap=0&tilesize=${TILE_SIZE}`;
             // PICKUP: zoom 13 returns an image larger than W, H, but zoom 12
