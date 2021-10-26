@@ -53,25 +53,6 @@ async function openSalvagePages(vinInput) { console.log("openSalvagePages")
 }
 
 
-function downloadByStock(lotList) {
-    // lotList should be an array of objects that at least have a stock number,
-    // but it's faster if they also have a yard/company name:
-    // [{yard: 'IAAI', stock: '29973673'}, ...]
-    for (lot of lotList) {
-        if (lot.hasOwnProperty("yard")) {
-            if (lot.yard.toLowerCase() == 'iaai') {
-                
-            } else if (lot.yard.toLowerCase() == 'copart') {
-
-            }
-        } else {
-            // try everything, I guess?
-        }
-    }
-}
-
-
-
 /*------*\
   COPART  
 \*------*/
