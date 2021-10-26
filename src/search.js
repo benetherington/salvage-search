@@ -26,13 +26,13 @@ async function openSalvagePages(vinInput) { console.log("openSalvagePages")
         searchPromises.push( searchRow52(vinInput, settings.fallbackZipCode) )
     }
     // wait for results
-    let searchOpeners;
-    searchOpeners = await Promise.any(searchPromises)
+    let searchOpener;
+    searchOpener = await Promise.any(searchPromises)
         .catch(e=>{if (!e instanceof AggregateError){throw e}})
     // open results
-    if (searchOpeners) {
+    if (searchOpener) {
         sendProgress("search", "end")
-        searchOpeners[0]()
+        searchOpener()
         return
     }
 
@@ -42,40 +42,21 @@ async function openSalvagePages(vinInput) { console.log("openSalvagePages")
         archivePromises.push( searchPoctra(vinInput) )
     }
     // wait for results
-    let archiveOpeners;
-    archiveOpeners = await Promise.any(archivePromises)
-        .catch(e=>{if (!e instanceof AggregateError){throw e}})
+    let archiveOpener;
+    archiveOpener = await Promise.any(archivePromises)
+                    .catch(e=>{if (!e instanceof AggregateError){throw e}})
     // open results
-    if (archiveOpeners) {
-        archiveOpeners[0]()
+    if (archiveOpener) {
+        archiveOpener()
     }
     sendProgress("search", "end")
 }
 
 
-function downloadByStock(lotList) {
-    // lotList should be an array of objects that at least have a stock number,
-    // but it's faster if they also have a yard/company name:
-    // [{yard: 'IAAI', stock: '29973673'}, ...]
-    for (lot of lotList) {
-        if (lot.hasOwnProperty("yard")) {
-            if (lot.yard.toLowerCase() == 'iaai') {
-                
-            } else if (lot.yard.toLowerCase() == 'copart') {
-
-            }
-        } else {
-            // try everything, I guess?
-        }
-    }
-}
-
-
-
 /*------*\
   COPART  
 \*------*/
-function searchCopart(vinInput, fallbackZipCode) { // => list of tab opener functions
+function searchCopart(vinInput, fallbackZipCode) { // -> function
     return new Promise(async (resolve, reject) => {
         try {
             // perform query for VIN
@@ -105,46 +86,27 @@ function searchCopart(vinInput, fallbackZipCode) { // => list of tab opener func
             // build opener
             if (jsn.data.results.content.length) {
                 let lotNumbers = jsn.data.results.content.map( (vehicle)=>vehicle.lotNumberStr )
-                let openers = ()=>{
-                    lotNumbers.forEach( (lotNumber)=>{
+                resolve( ()=>{
+                    lotNumbers.forEach(lotNumber=>{
                         let lotUrl = `https://www.copart.com/lot/${lotNumber}`;
                         sendNotification(`Copart: found a match: lot #${lotNumber}!`, {displayAs:"success"})
                         browser.tabs.create( {url: lotUrl, active: false} )
                     })
-                }
-                resolve(openers);
+                })
             } else {throw "query returned no results";}
         } catch (error) {
             console.log(`Copart rejecting: ${error}`)
             sendNotification(`Copart: ${error}.`, {displayAs: "error"})
-            reject( fallbackCopart(vinInput, fallbackZipCode) )
+            reject()
         }
     })
 }
-function fallbackCopart(vinInput, fallbackZipCode) {
-    // https://
-    // www.copart.com/
-    // vehicleFinderSearch/?
-    // displayStr=
-    //     %5B0%20TO%20250000%5D,
-    //     %5B2011%20TO%202022%5D,
-    //     10101&
-    // searchStr=
-    //     %7BMISC:%5B%23VehicleTypeCode:VEHTYPE_V,
-    //     %23OdometerReading:%5B0%20TO%20250000%5D,
-    //     %23LotYear:%5B2011%20TO%202022%5D,
-    //     %257B!geofilt%2520pt%253D40.7085%252C-74.0037%2520sfield%253Dyard_location%2520d%253D50%257D%5D,
-    //     sortByZip:true,
-    //     buyerEnteredZip:10101,
-    //     milesAway:50%7D
-    let failureUrl = "https://www.copart.com/lotSearchResults/?free=true&query="+vinInput;
-    return() => { browser.tabs.create({url: failureUrl, active: false}) }
-}
+
 
 /*----*\
   IAAI  
 \*----*/
-async function searchIaai(vinInput, fallbackZipCode) {
+async function searchIaai(vinInput, fallbackZipCode) { // -> function
     return new Promise(async (resolve, reject)=>{
         try {
             // perform query for VIN
@@ -171,19 +133,15 @@ async function searchIaai(vinInput, fallbackZipCode) {
         } catch (error) {
             console.log(`IAAI rejecting: ${error}`)
             sendNotification(`IAAI: ${error}`, {displayAs: "error"})
-            reject( fallbackIaai(vinInput, fallbackZipCode) )
+            reject()
         }
     })
-}
-function fallbackIaai(vinInput, fallbackZipCode) {
-    let failureUrl = "https://www.iaai.com/Search?Keyword="+vinInput;
-    return() => { browser.tabs.create({url: failureUrl, active: false}) }
 }
 
 /*-----*\
   ROW52  
 \*-----*/
-async function searchRow52(vinInput, fallbackZipCode) {
+async function searchRow52(vinInput, fallbackZipCode) { // -> function
     return new Promise(async (resolve, reject)=>{
         try {
             var searchUrl = 'https://row52.com/Search/?YMMorVin=VIN&Year=&'+
@@ -233,20 +191,16 @@ async function searchRow52(vinInput, fallbackZipCode) {
         } catch (error) {
             console.log(`Row52 rejecting: ${error}`)
             sendNotification(`Row52: ${error}`, {displayAs: "error"})
-            reject( fallbackRow52(vinInput, fallbackZipCode) )
+            reject()
         }
     })
 };
-function fallbackRow52(vinInput, fallbackZipCode) {
-    let failureUrl = "https://www.copart.com/lotSearchResults/?free=true&query="+vinInput;
-    return() => { browser.tabs.create({url: failureUrl, active: false}) }
-}
 
 
 /*------*\
   POCTRA  
 \*------*/
-async function searchPoctra(vinInput) {
+async function searchPoctra(vinInput) { // -> function
     return new Promise(async (resolve, reject)=>{
         let POCTRA_REGEX = /^(?<yard>.*?) (Stock|Lot) No: (?<stock>\d*)<br>.*<br>Location: (?<location>.*)$/;
         try {
@@ -283,11 +237,11 @@ async function searchPoctra(vinInput) {
             }
             if (!lotUrls.length) {throw "search returned no results"}
             // SUCCESS!
-            resolve([()=>{
+            resolve(()=>{
                 lotUrls.forEach( (lotUrl)=>{
                     browser.tabs.create({url: lotUrl, active: false})
                 })
-            }])
+            })
         } catch (error) {
             console.log(`Poctra rejecting: ${error}`)
             sendNotification(`Poctra: ${error}`, {displayAs: "error"})
@@ -295,5 +249,6 @@ async function searchPoctra(vinInput) {
         }
     })
 };
+
 
 console.log("search loaded!")
