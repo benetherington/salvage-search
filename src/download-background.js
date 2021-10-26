@@ -132,9 +132,17 @@ async function iaaiImageKeysFromTab(iaaiTab) {
     // Fetches image keyss from the provided tab.
     console.log(`Requesting imageKeys from tab #${iaaiTab.id}`)
     let imageKeys = [];
-    imageKeys = await browser.tabs.sendMessage(
-        iaaiTab.id, {type: "iaai", values:["scrape-images"]}
-    ).catch(()=>{ throw "there was an error communicating with the page. Try refreshing it?"; });
+    let fetcher = async ()=>{
+        imageKeys = await browser.tabs.sendMessage(
+            iaaiTab.id, {type: "iaai", values:["scrape-images"]}
+        )
+    }
+    try {await fetcher()} catch {
+        await browser.tabs.executeScript(iaaiTab.id, {file:"/browser-polyfill.js"})
+        await browser.tabs.executeScript(iaaiTab.id, {file:"/download-iaai.js"})
+        try {await fetcher()}
+        catch {throw "there was an error communicating with the page. Try refreshing it?"}
+    }
     if (!imageKeys.length) {throw "no images found."}
     return imageKeys
 }
