@@ -76,9 +76,18 @@ async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
 };
 async function copartFetchLotData(lotNumber) { // => JSON object
     let imagesUrl = `https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`;
-    let jsn = await fetch(imagesUrl).then(r=>r.json())
-    jsn.lotNumber = lotNumber
-    return jsn
+    let headers = { "User-Agent": window.navigator.userAgent,
+                    "Accept": "application/json, text/plain, */*" }
+    let response = await fetch(imagesUrl, headers)
+    if (response.headers.get("content-type").startsWith("application/json")) {
+        let jsn = await response.json();
+        jsn.lotNumber = lotNumber;
+        return jsn
+    } else {
+        console.log("Copart wants a CAPTCHA check")
+        browser.tabs.create({url:"https://www.copart.com"})
+        throw "please complete the CAPTCHA and try again."
+    }
 };
 
 
@@ -303,7 +312,7 @@ async function poctraImageUrlsFromOpenTab() {
         console.log('lotNumbers:'); console.log(lotNumbers)
         if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
         {throw "is this a Copart or IAAI archive page? If so, please send Ben the URL. They've changed something."}
-        for (lotNumber of lotNumbers) {
+        for (let lotNumber of lotNumbers) {
             let urls;
             if (lotNumber.yard==="copart") {
                 urls = await copartImageUrlsFromLot(lotNumber.number)
