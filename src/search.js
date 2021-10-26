@@ -1,232 +1,253 @@
-async function openSalvagePages(vinInput) {
-    let storage = await browser.storage.local.get("settings")
-    let settings = storage.settings || DEFAULT_SETTINGS
+async function openSalvagePages(vinInput) { console.log("openSalvagePages")
+    // FEEDBACK
+    sendProgress("search", "start")
 
-    // test the clipboard text out of an abundance of caution since we need to do code injection for Copart.
+    // SETTINGS
+    let storage = await browser.storage.local.get("settings");
+    let settings = Object.assign(DEFAULT_SETTINGS, storage.settings)
+
+    // SEARCH TERM
     vinInput = encodeURIComponent(vinInput).replace(/^\s+|\s+$/g, '');
     if (!VINREGEX.test(vinInput)) {
         sendNotification("That VIN doesn't look right...", {displayAs: "error"})
+        sendProgress("search", "end")
         return;
     };
-    if (settings.searchCopart) {
-        openCopart(vinInput);
-    };
-    if (settings.searchIaai) {
-        openIaai(vinInput, settings.zipCode);
-    };
-    if (settings.searchRow52) {
-        openRow52(vinInput);
-    };
 
-};
+    // PRIMARY SEARCH
+    let searchPromises = [];
+    if (settings.searchCopart) {
+        searchPromises.push( searchCopart(vinInput, settings.fallbackZipCode) )
+    }
+    if (settings.searchIaai) {
+        searchPromises.push( searchIaai(vinInput, settings.fallbackZipCode) )
+    }
+    if (settings.searchRow52) {
+        searchPromises.push( searchRow52(vinInput, settings.fallbackZipCode) )
+    }
+    // wait for results
+    let searchOpener;
+    searchOpener = await Promise.any(searchPromises)
+        .catch(e=>{if (!e instanceof AggregateError){throw e}})
+    // open results
+    if (searchOpener) {
+        sendProgress("search", "end")
+        searchOpener()
+        return
+    }
+
+    // ARCHIVE SEARCH
+    let archivePromises = [];
+    if (settings.searchPoctra) {
+        archivePromises.push( searchPoctra(vinInput) )
+    }
+    // wait for results
+    let archiveOpener;
+    archiveOpener = await Promise.any(archivePromises)
+                    .catch(e=>{if (!e instanceof AggregateError){throw e}})
+    // open results
+    if (archiveOpener) {
+        archiveOpener()
+    }
+    sendProgress("search", "end")
+}
 
 
 /*------*\
   COPART  
 \*------*/
-async function openCopart (vinInput) {
-    try {
-        // perform query for VIN
-        let searchUrl = "https://www.copart.com/public/lots/vin/search";
-        let payload = {
-            "filter": {
-                "MISC": [
-                    `ps_vin_number:${vinInput}`,
-                    "sold_flag:false"
-        ]}};
-        let response = await fetch(
-            searchUrl,
-            {
-                method: "POST",
-                headers: {
-                    "User-Agent": window.navigator.userAgent,
-                    "Accept": "application/json, text/plain, */*",
-                    "Content-Type": "application/json;charset=utf-8"
-                },
-                body: JSON.stringify(payload)
-            }
-        )
-        if (!response.ok) {throw `something went wrong on their end: ${response.status} error.`;}
-
-        // parse response
-        let jsn = await response.json()
-        if (!jsn.data.hasOwnProperty("results")) {throw "something went wrong on their end...";}
-
-        // open result tab
-        if (jsn.data.results.content.length) {
-            for (let vehicle of jsn.data.results.content) {
-                let lotUrl = `https://www.copart.com/lot/${vehicle.lotNumberStr}`;
-                sendNotification(`Copart: your vehicle is lot #${vehicle.lotNumberStr}!`, {displayAs:"success"})
-                browser.tabs.create({url: lotUrl})
-            }
-        } else {throw "query returned no results";}
-    } catch (error) {
-        console.log(error)
-        console.log("resorting to fallback url")
-        sendNotification(`Copart: ${error}.`, {displayAs: "error"})
-        let failureUrl = "https://www.copart.com/lotSearchResults/?free=true&query="+vinInput;
-        browser.tabs.create({url: failureUrl})
-    }
+function searchCopart(vinInput, fallbackZipCode) { // -> function
+    return new Promise(async (resolve, reject) => {
+        try {
+            // perform query for VIN
+            let searchUrl = "https://www.copart.com/public/lots/vin/search";
+            let payload = {
+                "filter": {
+                    "MISC": [
+                        `ps_vin_number:${vinInput}`,
+                        "sold_flag:false"
+            ]}};
+            let response = await fetch(
+                searchUrl,
+                {
+                    method: "POST",
+                    headers: {
+                        "User-Agent": window.navigator.userAgent,
+                        "Accept": "application/json, text/plain, */*",
+                        "Content-Type": "application/json;charset=utf-8"
+                    },
+                    body: JSON.stringify(payload)
+                }
+            )
+            if (!response.ok) {throw `something went wrong on their end: ${response.status} error.`;}
+            // parse response
+            let jsn = await response.json()
+            if (!jsn.data.hasOwnProperty("results")) {throw "something went wrong on their end...";}
+            // build opener
+            if (jsn.data.results.content.length) {
+                let lotNumbers = jsn.data.results.content.map( (vehicle)=>vehicle.lotNumberStr )
+                resolve( ()=>{
+                    lotNumbers.forEach(lotNumber=>{
+                        let lotUrl = `https://www.copart.com/lot/${lotNumber}`;
+                        sendNotification(`Copart: found a match: lot #${lotNumber}!`, {displayAs:"success"})
+                        browser.tabs.create( {url: lotUrl, active: false} )
+                    })
+                })
+            } else {throw "query returned no results";}
+        } catch (error) {
+            console.log(`Copart rejecting: ${error}`)
+            sendNotification(`Copart: ${error}.`, {displayAs: "error"})
+            reject()
+        }
+    })
 }
 
 
 /*----*\
   IAAI  
 \*----*/
-vinDecoderUrl = vin=>`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${vin}?format=json`;
-async function openIaai(vinInput, zipCode) {
-    // The big oof. Because IAAI no longer allows VIN searches without a buyer
-    // account, the most helpful thing we can do is do a YMM search. First, the
-    // VIN is decoded using NHTSA's API, then the make and model are selected
-    // using fuzzy magic, then IAAI's inventory is searched, and finally, the
-    // results are displayed to the user. The big issue here is that the final
-    // page we serve to the user is not an AcTuAl results page, but instead is a
-    // page with content injected. It kinda sucks, but A) its the best we can do
-    // without some majorly intensive script injection, B) at some point I want
-    // to agglomerate search results for the user instead of opening tabs, and
-    // C) it's good enough.
-
-    // open a new tab to provide feedback
-    let tab = await browser.tabs.create({url:"https://www.iaai.com/AdvancedSearch"});
-    let executing = browser.tabs.executeScript(
-        tab.id,
-        {code:  `browser.runtime.onMessage.addListener((message)=>{
-                    // display results
-                    document.getElementById("dvList").innerHTML = message.html;
-                    // load lazy images
-                    for (el of document.querySelectorAll(".lazy")) {el.src = el.dataset.original}
-                })`}
-    )
-    // decode VIN, make "clean" versions of make and model
-    let vPicJson = await fetch(vinDecoderUrl(vinInput)).then(resp=>resp.json());
-    let vPicYmm = vPicJson.Results[0]
-    const ymm = {
-        year: vPicYmm.ModelYear,
-        make: vPicYmm.Make.toLowerCase().replaceAll(/\W/g, ""),
-        model: vPicYmm.Model.toLowerCase().replaceAll(/\W/g, "")
-    };
-    sendNotification(`Decoded VIN as: ${ymm.year} ${vPicYmm.Make} ${vPicYmm.Model}.`)
-    console.log(`decoded: ${JSON.stringify(ymm)}`)
-    let iaMakeId = await iaaiMatchMake(ymm);
-    let iaModelIds = await iaaiMatchModel(iaMakeId, ymm);
-    // construct and POST a new search request
-    let searchUrl = "https://iaai.com/AdvancedSearch/GetSearchResults";
-    let searchParams = iaaiSearchParams(ymm.year, iaMakeId, iaModelIds, zipCode);
-    let headers = { "User-Agent": window.navigator.userAgent,
-                    "Accept": "*/*",
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" };
-    searchResults = await fetch(searchUrl, {method:"POST", headers:headers, body:searchParams})
-                            .then(resp=>resp.text());
-    // send results to tab
-    await executing;
-    browser.tabs.sendMessage( tab.id, {html:searchResults} ) // TODO: display notification if page hasn't loaded yet
-}
-async function iaaiMatchMake(ymm) {
-    // get stored names/IDs (pre-cleaned)
-    const iaaiMakes = await fetch(browser.runtime.getURL("iaaiMakes.json"))
-                            .then(response=>response.json())
-    // score IAAI names against provided YMM
-    let selectedMake = {lev: 20, make: "", iaId: ""}
-    for (const [iaMake, iaId] of Object.entries(iaaiMakes)) {
-        // compare
-        let levDist = levenshtein(iaMake, ymm.make);
-        // keep if best so far
-        if (levDist < selectedMake.lev) {
-            selectedMake.lev = levDist;
-            selectedMake.make = iaMake;
-            selectedMake.iaId = iaId;
+async function searchIaai(vinInput, fallbackZipCode) { // -> function
+    return new Promise(async (resolve, reject)=>{
+        try {
+            // perform query for VIN
+            let searchUrl = `https://www.iaai.com/Search?SearchVIN=${vinInput}`;
+            let response = await fetch(
+                searchUrl,
+                {headers: {
+                    "User-Agent": window.navigator.userAgent,
+                    "Accept": "application/json, text/plain, */*"
+                }}
+            )
+            if (!response.ok) {throw `something went wrong on their end: ${response.status} error.`;}
+            if (!response.redirected) {throw "query returned no results.";}
+            // open redirect URL in a new tab
+            let redirectUrl = response.url;
+            lotRe = /itemid=(\d{8})/
+            if (lotRe.test(redirectUrl)){
+                let lotNumber = lotRe.exec(redirectUrl)[1];
+                sendNotification(`IAAI: found a match: lot #${lotNumber}!`, {displayAs:"success"})
+            } else {
+                throw "query returned no results."
+            }
+            resolve(()=>{ browser.tabs.create({url: redirectUrl, active: false}) })
+        } catch (error) {
+            console.log(`IAAI rejecting: ${error}`)
+            sendNotification(`IAAI: ${error}`, {displayAs: "error"})
+            reject()
         }
-    }
-    // return best fit
-    console.log(`IAAI: Selected ${selectedMake.make} with a score of ${selectedMake.lev}`)
-    sendNotification(`Searching IAAI for ${selectedMake.make}.`)
-    return selectedMake.iaId
-}
-async function iaaiMatchModel(makeId, ymm) {
-    // get this make's names/IDs from IAAI
-    const iaaiModels = await iaaiFetchModels(makeId)
-    // score IAAI model names
-    let iaModelFits = [];
-    for (const [iaModel, iaId] of Object.entries(iaaiModels)) {
-        // "clean"
-        let cleanIaModel = iaModel.toLowerCase().replaceAll(/\W/g, "");
-        // compare
-        // TODO add 0
-        if (cleanIaModel.includes(ymm.model)) {var score=1.5;}
-        else                                  {var score=levenshtein(cleanIaModel, ymm.model);}
-        iaModelFits.push({
-            score: score,
-            model: iaModel,
-            iaId: iaId
-        })
-    }
-    // pick a fit strategy
-    let perfectFits = iaModelFits.filter(m=>m.score<2);
-    let excellentFits = iaModelFits.filter(m=>m.score<3);
-    if (perfectFits.length>1)        {var selectedModels=perfectFits;}              // don't go with perfect fits unless there are three or more
-    else if (excellentFits.length>0) {var selectedModels=excellentFits;}            // go with reasonable fits if we have any
-    else {                                                                          // getting desparate...
-        iaModelFits.sort((a, b) => a.score-b.score)                                 // sort fits best to worst
-        let median50 = median( iaModelFits.map(m=>m.score) )*0.5;                   // calculate the median, cut in half
-        let reasonableFits = iaModelFits.filter(m => m.score<median50);
-        if (reasonableFits.length>1) {var selectedModels=reasonableFits;}           // go with half median or better if possible
-        else                         {var selectedModels = iaModelFits.slice(0,4);} // Total fallback: go with the top three
-    }
-    // return selected models
-    console.log(`selected: ${selectedModels.map(m=>m.model+" at "+m.score).join(", ")}`)
-    sendNotification(`Searching IAAI for ${selectedModels.map(m=>m.model.replaceAll(/^ *| *$/g, "")).join(", ")}.`)
-    return selectedModels.map(m=>m.iaId);
-}
-async function iaaiFetchModels(makeId) {
-    let searchUrl = "https://iaai.com/AdvancedSearch/GetVehicleModels";
-    let formData = `SelectedMakes%5B%5D=${makeId}&IsSelectedRunAndDrive=false`;
-    let headers = { "User-Agent": window.navigator.userAgent,
-                    "Accept": "application/json, text/plain, */*",
-                    "Content-Type": "application/x-www-form-urlencoded" };
-    let jsn = await fetch(searchUrl, {method: "POST", headers:headers, body:formData})
-                    .then(response=>response.json())
-    let iaaiModels = {};
-    jsn.forEach(model=>{
-        iaaiModels[model.AC_Model_Name] = model.Salvage_Model_ID;
     })
-    return iaaiModels;
 }
-function median(values){
-    if(values.length ===0) throw new Error("No inputs");
-    values.sort(function(a,b){
-        return a-b;
-    });
-    var half = Math.floor(values.length / 2);
-    if (values.length % 2)
-        return values[half];
-    return (values[half - 1] + values[half]) / 2.0;
-}
-
 
 /*-----*\
   ROW52  
 \*-----*/
-function openRow52 (vinInput) {
-    var searchUrl = 'https://row52.com/Search/?YMMorVin=VIN&Year=&'+
-        'V1='   + vinInput[0] +
-        '&V2='  + vinInput[1] +
-        '&V3='  + vinInput[2] +
-        '&V4='  + vinInput[3] +
-        '&V5='  + vinInput[4] +
-        '&V6='  + vinInput[5] +
-        '&V7='  + vinInput[6] +
-        '&V8='  + vinInput[7] +
-        '&V9='  + vinInput[8] +
-        '&V10=' + vinInput[9] +
-        '&V11=' + vinInput[10] +
-        '&V12=' + vinInput[11] +
-        '&V13=' + vinInput[12] +
-        '&V14=' + vinInput[13] +
-        '&V15=' + vinInput[14] +
-        '&V16=' + vinInput[15] +
-        '&V17=' + vinInput[16] +
-        '&ZipCode=&Page=1&ModelId=&MakeId=&LocationId=&IsVin=true&Distance=50';
-    browser.tabs.create({url: searchUrl});
+async function searchRow52(vinInput, fallbackZipCode) { // -> function
+    return new Promise(async (resolve, reject)=>{
+        try {
+            var searchUrl = 'https://row52.com/Search/?YMMorVin=VIN&Year=&'+
+            'V1='   + vinInput[0] +
+            '&V2='  + vinInput[1] +
+            '&V3='  + vinInput[2] +
+            '&V4='  + vinInput[3] +
+            '&V5='  + vinInput[4] +
+            '&V6='  + vinInput[5] +
+            '&V7='  + vinInput[6] +
+            '&V8='  + vinInput[7] +
+            '&V9='  + vinInput[8] +
+            '&V10=' + vinInput[9] +
+            '&V11=' + vinInput[10] +
+            '&V12=' + vinInput[11] +
+            '&V13=' + vinInput[12] +
+            '&V14=' + vinInput[13] +
+            '&V15=' + vinInput[14] +
+            '&V16=' + vinInput[15] +
+            '&V17=' + vinInput[16] +
+            '&ZipCode=&Page=1&ModelId=&MakeId=&LocationId=&IsVin=true&Distance=50';
+            let response = await fetch(searchUrl);
+            if (!response.ok) { throw "something went wrong on their end..." }
+            let parser = new DOMParser();
+            let vehiclePaths;
+            let resultsNum;
+            try { // parse the response HTML and catch any errors
+                let doc = parser.parseFromString(await response.text(), "text/html");
+                let resultCountElement = doc.querySelector("#results-header span");
+                let yardNameElement = document.querySelector("span[itemprop] strong");
+                vehiclePaths = Array.from( doc.querySelectorAll(".block-link").values() )
+                                        .map(  el=>el.attributes.href.value );
+                resultsNum = /\d+/.exec(resultCountElement.innerText)[0]
+            } catch { throw "something looks wrong with this page, try searching by hand."}
+            
+            if (vehiclePaths.length) {
+                let yardName = yardNameElement.innerText.trim()
+                sendNotification( `Row52: Found a match at ${yardName}!`, {displayAs: "success"} )
+                // We shouldn't have more than one listing, but never assume
+                // anything without documentation.
+                resolve( ()=>{
+                    vehiclePaths.forEach( path=>{
+                        browser.tabs.create({url: "https://row52.com"+path, active: false});
+                    })
+                })
+            } else { throw "query returned no results." }
+        } catch (error) {
+            console.log(`Row52 rejecting: ${error}`)
+            sendNotification(`Row52: ${error}`, {displayAs: "error"})
+            reject()
+        }
+    })
+};
+
+
+/*------*\
+  POCTRA  
+\*------*/
+async function searchPoctra(vinInput) { // -> function
+    return new Promise(async (resolve, reject)=>{
+        let POCTRA_REGEX = /^(?<yard>.*?) (Stock|Lot) No: (?<stock>\d*)<br>.*<br>Location: (?<location>.*)$/;
+        try {
+            // SEARCH
+            let searchUrl = `https://poctra.com/search/ajax`;
+            let body = `q=${vinInput}&by=&asc=&page=1`;
+            let headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"};
+            let response = await fetch( searchUrl, {method: "POST", headers, body} );
+            if (!response.ok) { throw "something went wrong on their end..." }
+            // CHECK FOR RESULTS
+            let lotUrls = [];
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(await response.text(), "text/html");
+            // set base URI so that relative links work
+            let base = doc.createElement("base");
+            base.href = searchUrl;
+            doc.head.append(base)
+            let searchResults = doc.querySelectorAll(".clickable-row");
+            if (!searchResults.length) {throw "search returned no results."}
+            // PARSE RESULTS
+            for (searchResult of searchResults) {
+                // FIND PAGE LINK
+                let lotLink = searchResult.querySelector("a");
+                if (!lotLink) {continue}
+                lotUrls.push(lotLink.href)
+                // NOTIFY
+                try {
+                    let detailsElement = searchResult.querySelector("p");
+                    let details = POCTRA_REGEX.exec(detailsElement.innerHTML.trim()).groups;
+                    sendNotification( `Poctra: found a match at ${details.yard}! Lot ${details.stock}.`, {displayAs: "success"} )
+                } catch {
+                    sendNotification( "Poctra: found a match!", {displayAs: "success"})
+                }
+            }
+            if (!lotUrls.length) {throw "search returned no results"}
+            // SUCCESS!
+            resolve(()=>{
+                lotUrls.forEach( (lotUrl)=>{
+                    browser.tabs.create({url: lotUrl, active: false})
+                })
+            })
+        } catch (error) {
+            console.log(`Poctra rejecting: ${error}`)
+            sendNotification(`Poctra: ${error}`, {displayAs: "error"})
+            reject()
+        }
+    })
 };
 
 

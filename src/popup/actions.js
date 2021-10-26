@@ -12,6 +12,7 @@ document.addEventListener("click", (event) =>{
         // update toolbar
         document.getElementById("button-settings").classList.add("hidden")
         document.getElementById("button-main").classList.remove("hidden")
+        event.stopPropagation()
     } else if (event.target.id === "button-main"){
         // update pages active status
         document.querySelectorAll(".slider-page").forEach(el=>{el.classList.remove("active")})
@@ -21,6 +22,7 @@ document.addEventListener("click", (event) =>{
         // update toolbar
         document.getElementById("button-main").classList.add("hidden")
         document.getElementById("button-settings").classList.remove("hidden")
+        event.stopPropagation()
     };
 });
 
@@ -28,76 +30,126 @@ document.addEventListener("click", (event) =>{
 /*---------*\
   MAIN PAGE  
 \*---------*/
-// handle clicks
-document.addEventListener("click", (event) =>{
-    // check which element was clicked
-    if (event.target.id === 'button-search') {
-        // SEARCH BUTTON
-        let vinInput = document.getElementById("input-vin");
-        if (VINREGEX.test(vinInput.value)) {
-            // that VIN looks good, let's run a search
-            browser.runtime.sendMessage(
-                { type: "popup-action",
-                  values: [{
-                    action: "search",
-                    vin: vinInput.value }]}
-            );
-        } else {
-            // that VIN looks bad, and somehow you were still able to click the button.
-            errorMessage = document.querySelector("#popup-error")
-            vinField = document.getElementById("input-vin")
-            // unhide error message
-            errorMessage.classList.remove("hidden");
-            // wiggle the text input
-            vinField.classList.remove("error-attention"); // in case it's already moving
-            vinField.classList.add("error-attention");
-            // hide the error message after 4 seconds
-            setTimeout( ()=>{
-                errorMessage.classList.add("hidden");
-                vinField.classList.remove("error-attention");
-            }, 4*1000)
-        };
-    } else if (event.target.id === 'button-download') {
-        // DOWNLOAD BUTTON
-        browser.runtime.sendMessage(
-            { type: "popup-action",
-            values: [{
-                action: "download" }]}
-        );
+class ProgressButton {
+    el = undefined;
+    status = "enabled";
+    total = 1;
+    progress = 1;
+    start(total=0) {
+        this.el.className = this.el.dataset.styleOrig;
+        this.el.classList.add("feedback-download");
+        this.total = total;
+        // If we got a total, set progress at zero. If not, set it at 1 so that
+        // we start full color, ie 100%
+        this.progress = total?0:1;
+        this.update()
     }
-})
-// set up enable/disable/validate mechanics
+    increment() {
+        this.el.className = this.el.dataset.styleOrig
+        this.el.classList.add("feedback-progress")
+        ++this.progress
+        this.update()
+    }
+    update() {
+        this.el.style.setProperty(
+            "--progress-percentage",
+            `${this.progress/this.total*100}%`
+        )
+    }
+    enable() {
+        this.el.className = this.el.dataset.styleOrig;
+    }
+    disable() {
+        this.el.className = this.el.dataset.styleOrig;
+        this.el.classList.add("disabled");
+        this.total = this.progress = 1;
+    }
+}
+
+// SEARCH //
+// VIN textbox
 window.addEventListener("load", () => {
     // validate VIN
     let inputVin = document.getElementById('input-vin')
     let inputSearch = document.getElementById('button-search')
-    inputVin.addEventListener('input', (event)=>{
+    inputVin.addEventListener('input', ()=>{
         if (VINREGEX.test(inputVin.value)) {
-            inputSearch.classList.remove('disabled')
+            searchProgressButton.enable()
         } else {
-            inputSearch.classList.add('disabled')
+            searchProgressButton.disable()
         }
     });
-
-    // enable/disable the ZIP field
-    document.querySelector("input#iaai").addEventListener("change", (event)=>{
-        let inputZip = document.querySelector("input#zip")
-        if (event.target.checked) {
-            inputZip.classList.remove("disabled")
-        } else {
-            inputZip.classList.add("disabled")
-        }
-    })
 })
-// auto-fill VIN field
 window.addEventListener("focus", async () => {
-    let clipboardContents = await navigator.clipboard.readText() // TODO: to request access, we need to load actions.html in a new tab
+    // auto-fill
+    let clipboardContents = await navigator.clipboard.readText();
+    // TODO: this fails on Chrome?
+    // TODO: to request access, we need to load actions.html in a new tab
     if (VINREGEX.test(clipboardContents.trim())) {
         document.getElementById('input-vin').value = clipboardContents.trim()
         document.getElementById('button-search').classList.remove('disabled')
     }
 })
+// search ProgressButton
+let searchProgressButton = new ProgressButton();
+let onSearchClick = (event) => {
+    let vinInput = document.getElementById("input-vin");
+    if (VINREGEX.test(vinInput.value)) {
+        // that VIN looks good, let's run a search
+        browser.runtime.sendMessage(
+            { type: "popup-action",
+              values: [{
+                action: "search",
+                vin: vinInput.value }]}
+        );
+    } else {
+        // that VIN looks bad, and somehow you were still able to click the button.
+        // wiggle the text input
+        vinField = document.getElementById("input-vin")
+        vinField.classList.remove("error-attention"); // in case it's already moving
+        vinField.classList.add("error-attention");
+        // hide the error message after 4 seconds
+        addFeedbackMessage({message: "That VIN doesn't look right.", displayAs: "error"})
+    };
+    event.stopPropagation()
+};
+window.addEventListener("load", () => {
+    searchProgressButton.el = document.querySelector("#button-search");
+    searchProgressButton.el.addEventListener("click", onSearchClick)
+})
 
+// DOWNLOAD //
+// ProgressButton
+let dlProgressButton = new ProgressButton();
+dlProgressButton.status = "disabled"
+window.addEventListener("load", async () => {
+    dlProgressButton.el = document.querySelector("#button-download");
+    dlProgressButton.el.addEventListener("click", onDownloadClick)
+    // activate or deactivate download button
+    let salvageTabs = await browser.tabs.query(
+        {active: true,
+        url: [
+            "*://*.iaai.com/*ehicle*etails*", // i miss blobs
+            "*://*.copart.com/lot/*",
+            "*://*.poctra.com/*/id-*/*"
+        ]}
+    );
+    if (salvageTabs.length) {
+        console.log("found a tab!")
+        dlProgressButton.enable()
+    } else {
+        dlProgressButton.disable()
+    }
+})
+let onDownloadClick = (event) =>{
+    dlProgressButton.start()
+    browser.runtime.sendMessage(
+        { type: "popup-action",
+            values: [{
+            action: "download" }]}
+    )
+    event.stopPropagation()
+};
 
 /*--------*\
   FEEDBACK  
@@ -107,19 +159,30 @@ browser.runtime.onMessage.addListener((message)=>{
     if (message.type === "feedback") {
         for (value of message.values) {
             switch (value.action) {
-                case "download-started": // value.tabs
-                    dlFeedback.update("downloading"); break;
-                case "download-tab":
-                    dlFeedback.progressStart(value.images); break;
-                case "tab-increment":
-                    dlFeedback.increment(); break;
-                case "download-finished":
-                    dlFeedback.update("enabled"); break;
-                case "download-abort":
-                    addFeedbackMessage(value.display)
-                    dlFeedback.update("disabled"); break;
                 case "feedback-message":
                     addFeedbackMessage(value)
+                    break;
+                case "download-start":
+                    dlProgressButton.start(value.total)
+                    break;
+                case "download-increment":
+                    dlProgressButton.increment()
+                    break;
+                case "download-end":
+                    dlProgressButton.enable()
+                    break;
+                case "download-abort":
+                    dlProgressButton.disable()
+                    break;
+                case "search-start":
+                    searchProgressButton.start(value.total)
+                    break;
+                case "search-increment":
+                    searchProgressButton.increment()
+                    break;
+                case "search-end":
+                    searchProgressButton.enable()
+                    break;
             }
         }
         return Promise.resolve('done');
@@ -127,7 +190,7 @@ browser.runtime.onMessage.addListener((message)=>{
     return false;
 });
 
-// feedback notification
+// drawer
 var addFeedbackMessage = (rawFeedback)=>{
     // PROCESS
     let feedback = {};
@@ -144,7 +207,7 @@ var addFeedbackMessage = (rawFeedback)=>{
         feedback.message   = message;
         feedback.duration  = duration;
         feedback.closeable = closeable;
-        feedback.displayAs      = displayAs;
+        feedback.displayAs = displayAs;
         feedback.createdAt = performance.now().toString();
     } else {console.log("empty message");return;}
 
@@ -164,7 +227,7 @@ var addFeedbackMessage = (rawFeedback)=>{
         storable = {};
         // time should be pretty unique
         storable[feedback.createdAt] = feedbackToStore;
-        browser.storage.local.set(storable);
+        browser.storage.local.set(storable)
     }
 
     // PREPARE FOR THE END
@@ -183,7 +246,6 @@ var addFeedbackMessage = (rawFeedback)=>{
     // show the drawer
     drawer.classList.remove("hidden")
 }
-
 // restore persisted notifications
 window.addEventListener("load", async ()=>{
     storage = await browser.storage.local.get();
@@ -196,99 +258,72 @@ window.addEventListener("load", async ()=>{
     })
 })
 
-// download button/progress bar
-var dlFeedback = {
-    status: 'disabled',
-    total: 0,
-    progress: 0, 
-    lookForSalvageTabs: async ()=>{
-        let salvageTabs = await browser.tabs.query(
-            {active: true,
-             url: ["*://*.iaai.com/*ehicle*etails*", // i miss blobs
-                   "*://*.copart.com/lot/*"]}
-        )
-        if (salvageTabs.length) {
-            browser.runtime.sendMessage("found a tab!")
-            dlFeedback.update("enabled")
-        } else {
-            dlFeedback.update("disabled")
-        }
-    },
-    update: (status=null) => {
-        dlFeedback.status = status || dlFeedback.status
-        dlFeedback.el.className = dlFeedback.el.dataset.styleOrig
-        switch (dlFeedback.status) {
-            // case "enabled": default w/ no additional classes
-            case "disabled":
-                dlFeedback.el.classList.add("disabled");
-            break; case "downloading":
-                dlFeedback.el.classList.add("feedback-download");
-            break; case "progress":
-                dlFeedback.el.classList.add("feedback-progress")
-                dlFeedback.el.style.setProperty(
-                    "--progress-percentage",
-                    `${dlFeedback.progress/dlFeedback.total*100}%`
-                )
-        }
-    },
-    progressStart: (total) => {
-        dlFeedback.total = total;
-        dlFeedback.progress = 0;
-        dlFeedback.update("progress")
-    },
-    increment: ()=>{++dlFeedback.progress; dlFeedback.update()}
-}
-window.addEventListener("load", () => {
-    dlFeedback.el = document.querySelector("#button-download");
-    dlFeedback.lookForSalvageTabs()
-})
 
 /*----------------*\
   PREFERENCES PAGE  
 \*----------------*/
 var preferences = {
-    copartCheck: null,
-    iaaiCheck: null,
-    zipText: null,
-    row52Check: null,
+    copartCheckEl: undefined,
+    iaaiCheckEl: undefined,
+    row52CheckEl: undefined,
+    poctraCheckEl: undefined,
+    zipTextEl: undefined,
+    fallbackCheckEl: undefined,
     fetchStoredSettings: async ()=>{
-        let storage = await browser.storage.local.get("settings")
-        let settings = storage.settings || DEFAULT_SETTINGS // defined in shared-assets.js
+        let storage = await browser.storage.local.get("settings");
+        let settings = storage.settings || DEFAULT_SETTINGS; // defined in shared-assets.js
         
-        preferences.copartCheck.checked = settings.searchCopart
-        preferences.iaaiCheck.checked   = settings.searchIaai
-        preferences.zipText.value       = settings.zipCode
-        preferences.row52Check.checked  = settings.searchRow52
+        preferences.copartCheckEl.checked   = settings.searchCopart;
+        preferences.iaaiCheckEl.checked     = settings.searchIaai;
+        preferences.row52CheckEl.checked    = settings.searchRow52;
+        preferences.poctraCheckEl.checked    = settings.searchPoctra;
+        // preferences.zipTextEl.value         = settings.fallbackZipCode;
+        // preferences.fallbackCheckEl.checked = settings.openFallbacks;
+
         // re-store settings in case defaults were used
         preferences.setStoredSettings()
     },
     setElementCallbacks: ()=>{
-        [ preferences.copartCheck,
-          preferences.iaaiCheck,
-          preferences.zipText,
-          preferences.row52Check ]
+        [ preferences.copartCheckEl,
+          preferences.iaaiCheckEl,
+          preferences.row52CheckEl,
+          preferences.poctraCheckEl ]
+        //   preferences.zipTextEl,
+        //   preferences.fallbackCheckEl ]
         .forEach(element=>{
             element.addEventListener("change", preferences.setStoredSettings)
         })
+        // let enableZip = ()=>{
+        //     if (preferences.fallbackCheckEl.checked) {
+        //         preferences.zipTextEl.classList.remove("disabled")
+        //     } else {
+        //         preferences.zipTextEl.classList.add("disabled")
+        //     }
+        // };
+        // enableZip()
+        // preferences.fallbackCheckEl.addEventListener("change", enableZip)
     },
     setStoredSettings: async (event=null)=>{
-        let storage = await browser.storage.local.get("settings");
-        let settings = storage.settings || DEFAULT_SETTINGS;
-        settings.searchCopart = preferences.copartCheck.checked;
-        settings.searchIaai   = preferences.iaaiCheck.checked;
-        settings.zipCode      = preferences.zipText.value;
-        settings.searchRow52  = preferences.row52Check.checked;
+        let settings = Object.assign(DEFAULT_SETTINGS);
+        settings.searchCopart    = preferences.copartCheckEl.checked;
+        settings.searchIaai      = preferences.iaaiCheckEl.checked;
+        settings.searchRow52     = preferences.row52CheckEl.checked;
+        settings.searchPoctra    = preferences.poctraCheckEl.checked
+        // settings.fallbackZipCode = preferences.zipTextEl.value;
+        // settings.openFallbacks   = preferences.fallbackCheckEl.checked;
         browser.storage.local.set({settings})
     }
 }
 window.addEventListener("load", async ()=>{
     // store UI elements
-    preferences.copartCheck = document.querySelector(".settings-grid input#copart")
-    preferences.iaaiCheck =   document.querySelector(".settings-grid input#iaai")
-    preferences.zipText =     document.querySelector(".settings-grid input#zip")
-    preferences.row52Check =  document.querySelector(".settings-grid input#row52")
+    preferences.copartCheckEl   = document.querySelector(".settings-grid input#copart")
+    preferences.iaaiCheckEl     = document.querySelector(".settings-grid input#iaai")
+    preferences.row52CheckEl    = document.querySelector(".settings-grid input#row52")
+    preferences.poctraCheckEl   = document.querySelector(".settings-grid input#poctra")
+    // preferences.zipTextEl       = document.querySelector(".settings-grid input#zip")
+    // preferences.fallbackCheckEl = document.querySelector(".settings-grid input#fallback")
     // load and display stored preferences
-    preferences.fetchStoredSettings()
+    await preferences.fetchStoredSettings()
     preferences.setElementCallbacks()
     // set version display
     let versionName = browser.runtime.getManifest().version_name

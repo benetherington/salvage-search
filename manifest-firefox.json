@@ -2,8 +2,8 @@
   "description": "Searches salvage sites for a VIN and automates image downloads.",
   "manifest_version": 2,
   "name": "Salvage Search",
-  "version": "2.3.2",
-  "version_name": "2.3 beta 2",
+  "version": "2.3",
+  "version_name": "2.3",
   "homepage_url": "https://benetherington.com/salvage-search/",
   "browser_specific_settings": {
     "gecko": {"update_url": "https://benetherington.com/salbage-search/updates.json"}
@@ -17,9 +17,11 @@
   "permissions": [
     "storage", "unlimitedStorage",
     "clipboardRead",
-    "tabs", "activeTab",
+    "tabs", "downloads",
     "*://*.copart.com/lot/*",
-    "*://*.iaai.com/*", "https://*.anvis.iaai.com/deepzoom*"
+    "*://*.iaai.com/*", "https://*.anvis.iaai.com/deepzoom*",
+    "*://*.row52.com/*",
+    "*://*.poctra.com/*"
   ],
   "background": {
     "scripts": [

@@ -1,98 +1,199 @@
-/*----------------------*\
-  CONTENT CODE INTERFACE  
-\*----------------------*/
+/*---------------*\
+  POPUP INTERFACE  
+\*---------------*/
 async function downloadImages() {
-    // Called when the page action button is clicked. Retrieves local storage
-    // values and hands them to the correct function to handle.
-    console.log("Fetching images.");
-    copartDownloadImages();
-    iaaiDownloadImages();
-};
-// listen for messages from content code
-browser.runtime.onMessage.addListener( (message, sender) => {
-    if (message.type == "iaai") {
-        // an IAAI tab has scraped page data and returned oSeaDragon URLs
-        iaaiStoreImages(sender.tab.id, message)
-        return Promise.resolve('done');
+    // Called from popup via background.js message handler
+    console.log("Fetching images.")
+    try {
+        sendProgress("download", "start")
+        let imageUrls = [];
+        imageUrls.push(... await copartImageUrlsFromTab())
+        imageUrls.push(... await iaaiImageUrlsFromTab())
+        imageUrls.push(... await poctraImageUrlsFromTab())
+        for (let idx=0; idx<imageUrls.length; idx++) {
+            let url = imageUrls[idx];
+            let filename = `${idx}.jpg`;
+            console.log(`downloading ${filename}`)
+            browser.downloads.download({
+                url: url,
+                saveAs: false,
+                filename: filename
+            })
+        }
+        sendProgress("download", "end")
+    } catch (error) {
+        sendProgress("download", "abort")
+        sendNotification(error, {displayAs: "error"})
     }
-    return false;
-});
+};
 
 
 /*------*\
   COPART  
 \*------*/
-// Copart downloads begin here, in background.js. An onBeforeRequest event
-// allows us to sniff server responses that have HD image URLs, and store those
-// values in local storage. When the page action button is clicked, a message is
-// sent to content code asking it to download those images.
-async function copartDownloadImages() {
+async function copartImageUrlsFromTab() { // => array of URLs
     // Checks active tabs for Copart lot pages, gathers data, including HD image
     // URLs, and sends a message with data.
-    console.log("copartDownloadImages beginning fetches")
+    
+    // FIND TABS
+    console.log("copartDownloadImages getting imageKeys")
     let copartTabs = await browser.tabs.query({active:true, url:"*://*.copart.com/lot/*"});
-    if ( copartTabs.length ) { sendNotification("Copart: searching for images.") }
-    for (tab of copartTabs) {
-        let ymm = tab.title.match(/^(.*) for Sale/i)[1];
-        let lotNumber = tab.url.match(/copart\.com\/lot\/(\d*)/)[1];
-        let hdUrls = await copartFetchLotData(lotNumber)
-        // When clicking on a Copart lot details page from the home page or
-        // search results, the URL is updated, but a navigation event does not
-        // occur. This means that until that details page is refreshed, our
-        // content script will not be injected. Catch this by injecting the
-        // script if the message fails to find a recipient.
-        messager = function() {
-            return browser.tabs.sendMessage(
-                tab.id,
-                { type: "copart",
-                  values: [{ ymm:ymm,
-                             lotNumber:lotNumber,
-                             hdUrls:hdUrls }] }
-        )
-        };
-        messager().then(null, async ()=>{
-            await browser.tabs.executeScript(tab.id, {file:"/shared-assets.js"});
-            await browser.tabs.executeScript(tab.id, {file:"/download-copart.js"});
-            messager();
-        });
-    }
+    if (!copartTabs.length) {return [];}
+    // FIND LOTS
+    let lotNumbers = copartTabs.map(tab=>{
+        // let ymm = tab.title.match(/^(.*) for Sale/i)[1];
+        return tab.url.match(/copart\.com\/lot\/(\d*)/)[1]
+    })
+    if (!lotNumbers.length) {return [];}
+    sendNotification("Copart: searching for images.")
+    // GET URLS
+    let hdUrls = await copartImageUrlsFromLot(lotNumbers);
+    return hdUrls;
 }
-async function copartFetchLotData(lotNumber) {
-    let jsn = await fetch(`https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`)
-        .then(r=>r.json())
-    try {
-        if (jsn.data.imagesList.hasOwnProperty("HIGH_RESOLUTION_IMAGE")) {
-            return jsn.data.imagesList.HIGH_RESOLUTION_IMAGE
-            .map( image => {return image.url} )
-        } else { throw "no images found"}
-    } catch (error) {
-        if (error instanceof TypeError) {
-            messageText = "server error fetching images"
-        } else { messageText = error }
-        sendNotification(`Copart: ${messageText} for lot #${lotNumber}`, {displayAs: "error"})
+async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
+    // Pass in a single lot number, multiple lot numbers, or arrays of lot numbers.
+    let lotNumbers = Array.from(arguments).flat();
+    if (!lotNumbers.length) {throw "copartImageUrlsFromLot requires one or more lot numbers.";}
+    // FETCH
+    let jsons = await Promise.all(lotNumbers.map( lotNumber=>copartFetchLotData(lotNumber) ))
+    // PROCESS
+    let imageUrls = [];
+    for (jsn of jsons) {
+        try {
+            if (  !jsn.hasOwnProperty("returnCode")
+               ||  jsn.returnCode!=1
+               || !jsn.hasOwnProperty("data")
+               || !jsn.data.hasOwnProperty("imagesList") )
+                {throw "encountered a server error."}
+            if (!jsn.data.imagesList.hasOwnProperty("HIGH_RESOLUTION_IMAGE"))
+                {throw "returned no images.";}
+            // TODO: sometimes, imagesList has more images in FULL_RESOLUTION
+            // than in HIGH_RESOLUTION. We need to go over FULL and return HIGH
+            // if present, FULL if not.
+            let highResImages = jsn.data.imagesList.HIGH_RESOLUTION_IMAGE.map(image=>image.url)
+                imageUrls.push( ...highResImages )
+        } catch (error) {throw `Copart: lot #${jsn.lotNumber} ${error}`}
     }
+    return imageUrls
 };
+async function copartFetchLotData(lotNumber) { // => JSON object
+    let imagesUrl = `https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`;
+    let jsn = await fetch(imagesUrl).then(r=>r.json())
+    jsn.lotNumber = lotNumber
+    return jsn
+};
+
 
 /*----*\
   IAAI  
 \*----*/
-// IMAGE PROCESSING
-var isBlackish = (imageData) => {
-    // used by iaaiTrimImage below
-    // every fourth element will be full opacity
-    alphaComponent = imageData.data.length/4 * 255
-    // all other elements should be zero... ish
-    ishComponent = 20 * imageData.data.length
-    return alphaComponent + ishComponent >= imageData.data.reduce( (prev, curr) => {return prev+curr} )
-};
-async function iaaiStoreImages(tabId, data) {
-    // called after message from content script
-    imageData = data;
-    imageData.tabId = tabId;
-    browser.storage.local.set({imageData});
+// TOP-LEVEL INITIATORS
+// These send notifications and progressbar starters, but no increments, nor
+// errors. All errors are caught, formatted, and re-thrown.
+async function iaaiImageUrlsFromTab() { // => array of dataURLs
+    let imageUrls = [];
+    try {
+        // FIND TABS
+        let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
+        if (!iaaiTabs.length) {return [];} // no error thrown, as the user might be targeting a Copart tab.
+        // GET IMAGE KEYS
+        let imageKeys = Array.from(await Promise.all(
+            iaaiTabs.map(iaaiTab=>iaaiImageKeysFromTab(iaaiTab))
+        )).flat();
+        await sendNotification(`IAAI: processing ${imageKeys.length} images.`)
+        await sendProgress("download", "start", {total:imageKeys.length})
+        // CREATE DATA URLS
+        imageUrls = await iaaiImageUrlsFromKeys(imageKeys)
+    } catch (error) {throw `IAAI: ${error}`}
+    return imageUrls
 }
-async function iaaiTrimImage(canvas, img) {
-    // Uses the canvas to operate on the provided image. Trims off the black borders
+async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // => array of dataUrls
+    let stockNumbers = Array.from(arguments).flat();
+    let imageUrls = [];
+    try {
+        // GET IMAGE KEYS
+        let imageKeys = [];
+        for (stockNumber of stockNumbers) {
+            let keys = await iaaiImageKeysFromStock(stockNumber);
+            imageKeys.push(...keys)
+        }
+        await sendNotification(`IAAI: processing ${imageKeys.length} images.`)
+        await sendProgress("download", "start", {total:imageKeys.length})
+        // CREATE DATA URLS
+        imageUrls = await iaaiImageUrlsFromKeys(imageKeys);
+    } catch (error) {throw `IAAI: ${error}`}
+    return imageUrls
+}
+
+// IMAGE KEYS
+// These send no notifications, but they do call image processors, which will
+// send progressbar increments. Any errors are thrown without formatting.
+async function iaaiImageKeysFromTab(iaaiTab) {
+    // Fetches image keyss from the provided tab.
+    console.log(`Requesting imageKeys from tab #${iaaiTab.id}`)
+    let imageKeys = [];
+    let fetcher = async ()=>{
+        imageKeys = await browser.tabs.sendMessage(
+            iaaiTab.id, {type: "iaai", values:["scrape-images"]}
+        )
+    }
+    try {await fetcher()} catch {
+        await browser.tabs.executeScript(iaaiTab.id, {file:"/browser-polyfill.js"})
+        await browser.tabs.executeScript(iaaiTab.id, {file:"/download-iaai.js"})
+        try {await fetcher()}
+        catch {throw "there was an error communicating with the page. Try refreshing it?"}
+    }
+    if (!imageKeys.length) {throw "no images found."}
+    return imageKeys
+}
+async function iaaiImageKeysFromStock(stockNumber) {
+    if (typeof(stockNumber) === "number") {stockNumber = stockNumber.toString()}
+    let getKeysUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
+    getKeysUrl.searchParams.append(
+        'json',
+        JSON.stringify({"stockNumber":stockNumber})
+    );
+    let response = await fetch(getKeysUrl);
+    if (!response.ok) {throw "server error"}
+    if (response.headers.get("content-length") === '0') {throw "no query results"}
+    let jsn = await response.json();
+    let imageKeys = jsn.keys.map(i=>i.K);
+    return imageKeys
+}
+
+// IMAGE PROCESSING
+// These send no notifications, but they do increment the progressbar. Any
+// errors are thrown without formatting.
+async function iaaiImageUrlsFromKeys(imageKeys) { // => array of objectURLs
+    // SEND NOTIFICATION
+    if (!imageKeys.length){return []}
+    // FETCH AND PROCESS
+    let processedUrls = [];
+    let canvas = document.createElement("canvas");
+    for (imageKey of imageKeys) {
+        // FETCH
+        let imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" +
+                        imageKey + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
+        let bitmap = await fetch(imageUrl)
+                           .then(r => r.blob())
+                           .then(createImageBitmap)
+        // TRIM
+        let trimmedImage = await trimImage(canvas, bitmap)
+        // CREATE URL
+        if (trimmedImage) {
+            let url = dataURLtoObjectURL(trimmedImage);
+            processedUrls.push(url)
+        }
+        console.log(`${imageKey} processed`)
+        await sendProgress("download", "increment")
+    };
+    // DONE
+    return processedUrls
+}
+
+// PROCESSING HELPERS
+async function trimImage(canvas, img) { // => dataURL
+    // Uses a provided canvas to trim off the black borders of the provided image.
     canvas.width = img.width;
     canvas.height = img.height;
     ctx = canvas.getContext('2d');
@@ -118,93 +219,123 @@ async function iaaiTrimImage(canvas, img) {
     canvas.width  = trimRight-trimLeft;
     canvas.height = trimBottom-trimTop;
     ctx.drawImage(img, -trimLeft, -trimTop);
-    return Promise.resolve(canvas.toDataURL())
+    return Promise.resolve(canvas.toDataURL({type:"image/jpeg"}))
 };
-async function iaaiStoreImages(imageArray) {
-    // we'll await storage set operations... they can take a while
-    var largePromises = []
-    for (const [idx, image] of imageArray.entries()) {
-        // store each image with indexes as keys
-        console.log("storing image #"+idx);
-        // JSON interpretation does not allow arbitrary key names unless you do it this way
-        // TODO: fix type key.
-        var obj = {}
-        obj[idx] = image
-        obj['type'] = 'large_image'
-        largePromises.push(
-            browser.storage.local
-            .set(obj)
-        );
-    };
-    await Promise.all(largePromises)
+function dataURLtoObjectURL(uri, name) {
+    // Takes a dataURL and turns it into a temporary object URL. This makes it
+    // easier to pass around. See: https://stackoverflow.com/a/12300351
+    let byteString = atob(uri.split(',')[1]);
+    let mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
+    let ab = new ArrayBuffer(byteString.length);
+    let ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    let blob = new Blob([ab], {type: mimeString});
+    blob.name = name+".jpg"
+    return URL.createObjectURL(blob)
+};
+function isBlackish(imageData) {
+    // Detects if the imageData is close enough to black to be trimmed off.
+    // every fourth element will be full opacity
+    alphaComponent = imageData.data.length/4 * 255
+    // all other elements should be zero... ish
+    ishComponent = 20 * imageData.data.length
+    return alphaComponent + ishComponent >= imageData.data.reduce( (prev, curr) => {return prev+curr} )
+}
+// async function iaaiStoreImages(imageArray) {
+//     var largePromises = []
+//     for (const [idx, image] of imageArray.entries()) {
+//         // store each image with indexes as keys
+//         console.log("storing image #"+idx);
+//         // JSON interpretation does not allow arbitrary key names unless you do it this way
+//         // TODO: fix type key.
+//         var obj = {}
+//         obj[idx] = image
+//         obj['type'] = 'large_image'
+//         largePromises.push(
+//             browser.storage.local
+//             .set(obj)
+//         );
+//     };
+//     await Promise.all(largePromises)
+// }
+// FOR REFERENCE
+// getJsonImageDimensions returns:
+// {
+//     DeepZoomInd: true
+//     Image360Ind: true
+//     Image360Url: "https://spins.spincar.com/iaa-rochester/000-31355822"
+//     UndercarriageInd: false
+//     VRDUrl: "https://mediastorageaccountprod.blob.core.windows.net/media/31819854_VES-100_1"
+//     Videos: [{…}]
+//     keys: (11) [{
+//         AR: 1.33
+//         ART: 1.35
+//         B: 671
+//         H: 1944
+//         I: 0
+//         IN: 1
+//         K: "31819854~SID~B671~S0~I1~RW2592~H1944~TH0"
+//         S: 0
+//         SID: 31819854
+//         SN: 31355822
+//         TH: 72
+//         TW: 96
+//         W: 2592
+//     }, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+// }
+
+
+
+
+/*------*\
+  POCTRA  
+\*------*/
+
+async function poctraImageUrlsFromTab() {
+    let imageUrls = [];
+    try {
+        // FIND TABS
+        let poctraTabs = await browser.tabs.query( {active:true, url:["*://*.poctra.com/*/id-*/*"]} );
+        if (!poctraTabs.length) {return [];}
+        // DETERMINE SALVAGE
+        let lotNumbers = Array.from(await Promise.all(poctraTabs.map(async poctraTab=>
+            await browser.tabs.executeScript(poctraTab.id, { code:`(${poctraGetLotNumber.toString()})()` })
+        ))).flat()
+        console.log('lotNumbers:'); console.log(lotNumbers)
+        if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
+        {throw "is this a Copart or IAAI archive page? If so, please send Ben the URL. They've changed something."}
+        for (lotNumber of lotNumbers) {
+            let urls;
+            if (lotNumber.yard==="copart") {
+                urls = await copartImageUrlsFromLot(lotNumber.number)
+            } else if (lotNumber.yard==="iaai") {
+                urls = await iaaiImageUrlsFromStock(lotNumber.number)
+            } else { console.log('lotNumber:'); console.log(lotNumber) }
+            imageUrls.push(...urls)
+        }
+    } catch (error) {throw `Poctra: ${error}`}
+    return imageUrls
 }
 
-// INITIATOR
-async function iaaiDownloadImages() {
-    console.log("iaaiDownloadImages beginning fetches")
-    // find IAAI tabs
-    let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
-    // TOOD: send error feedback
-    if (iaaiTabs.length) {
-        await browser.runtime.sendMessage({
-            type: "feedback",
-            values: [
-                { action: "download-started", tabs:iaaiTabs.length },
-                { action: "feedback-message", message:"IAAI: searching for images." }
-            ]
-        });
-    }
-    for (iaaiTab of iaaiTabs) {
-        await iaaiTabDownload(iaaiTab);
+function poctraGetLotNumber() {
+    let idElement = document.querySelector("h2");
+    if (!idElement) {return null}
+    let idString = idElement.innerText;
+    let idMatches = /(?<type>Lot|Stock) no: (?<number>\d*)/.exec(idString);
+    if (!idMatches) {return null}
+    let type, number;
+    ({type, number} = idMatches.groups);
+    if (type==="Lot") {
+        return {yard: "copart", number}
+    } else if (type==="Stock") {
+        return {yard: "iaai", number}
+    } else {
+        return {yard: "unknown"}
     }
 }
-async function iaaiTabDownload(iaaiTab) {
-    // asks content script to collect image URLs, then processes them
-    try {
-        console.log(`Requesting info from iaai tab #${iaaiTab.id}`)
-        imageKeys = await browser.tabs.sendMessage(
-            iaaiTab.id, {type: "iaai", values:["scrape-images"]}
-        ).catch(()=>{ throw "there was an error communicating with the page. Try refreshing it?"; });
-        if (!imageKeys) { throw "no images found!"; }
-        // TODO: send error feedback
-        await browser.runtime.sendMessage({
-            type: "feedback",
-            values: [ { action: "download-tab", images: imageKeys.length+1 }, // we'll do one last chunk from content
-                    { action: "feedback-message", message: `IAAI: processing ${imageKeys.length} images.`}]
-        });
-        // go over each image and start trimming them down to size
-        trimmedImages = []
-        let canvas = document.createElement("canvas")
-        let processedImages = [];
-        await Promise.all(
-            imageKeys.map( async key => {
-                var imageUrl = "https://anvis.iaai.com/deepzoom?imageKey=" + 
-                    key + "&level=12&x=0&y=0&overlap=350&tilesize=1900";
-                await fetch(imageUrl)
-                    .then(r => r.blob())
-                    .then(createImageBitmap)
-                    .then(img => iaaiTrimImage(canvas, img))
-                    .then(img => processedImages.push(img))
-                await browser.runtime.sendMessage({type:'feedback', values:[{action: 'tab-increment'}]})
-                console.log(`${key} processed`)
-            })
-        );
-        // store trimmed images.. they're too big to pass in a message!
-        await iaaiStoreImages(processedImages)
-    } catch (error) {
-        browser.runtime.sendMessage({
-            type: "feedback-error",
-            values: [{
-                action: "abort-download",
-                display: error
-            }]
-        })
-        return;
-    }
-    // ask the content script to pull data from storage and download them
-    browser.tabs.sendMessage(
-        iaaiTab.id,
-        { "type": "iaai",
-          "values": ["storage-local"] }
-    );
-}
+
+
+
+console.log("download-background loaded")

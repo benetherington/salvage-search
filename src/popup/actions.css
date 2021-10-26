@@ -125,18 +125,18 @@ body {
                         #bdbdb8 70px 90px, /* EFEFE7 */
                         #bb5c53 90px 110px /* F0786D */
                     );
-    background-size: 295% 300%;
+    background-size: 141px 100%; /* trig maybe? Makes ends match when color wraps */
     animation-name: backgroundsweep;
     animation-timing-function: linear;
-    animation-duration: 30s;
+    animation-duration: 3s;
     animation-iteration-count: infinite;
     --progress-percentage: 50%;
 }
 @keyframes backgroundsweep {
-    from { background-position: 0% center; }
-    to   { background-position: 300% center; }
+    from { background-position: 141px center; } /* same as background size for */
+    to   { background-position: 0     center; } /* smooth animation */
 }
-.feedback-progress::before {
+.feedback-download::before, .feedback-progress::before {
     position: absolute;
     top: 0;
     left: 0;
@@ -147,16 +147,19 @@ body {
     background-image: linear-gradient(90deg, #FFF0 0 50%, #FFF6 50% 100%);
     background-size: 200%;
     background-attachment: fixed;
-    background-position: center right var(--progress-percentage);
+    background-position: center right -100%;
     transition: background-position 1s;
+}
+.feedback-progress::before {
+    background-position: center right var(--progress-percentage);
 }
 
 /* TEXT ELEMENTS */
-/* p {
+p {
     font-size: 1.5em;
-    margin-block-start: 0.5em;
+    margin-block-start: 0.5em; /* Override Firefox */
     margin-block-end:   0.5em;
-} */
+}
 input {
     /* clear Chrome injected style */
     outline: none;
@@ -239,6 +242,34 @@ input.disabled, input.disabled:hover {
 .tiny {
     font-size: smaller;
 }
+.helper-wrapper {
+    display:flex;
+}
+.helper-wrapper::after {
+    content: "(?)";
+    font-size: small;
+    margin-left: 5px
+}
+.helpertext {
+    position: absolute;
+    box-sizing: border-box;
+    width: calc(var(--popup-width)*0.9);
+    left: calc(var(--popup-width)*0.05); /* (100-0.9)/2 */
+    bottom: 80px; /* aligned by hand, be careful with placement! */
+    padding: 9px 13px;
+    background-color: white;
+    z-index: 4;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12),
+                0 1px 2px rgba(0,0,0,0.24), /* material design shadow */
+                0 0 40px 0 #888; /* puffy float shadow */
+    opacity: 0%;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+.helper-wrapper:hover .helpertext {
+    opacity: 100%;
+}
+
 /*      Lovely toggle button stolen from:         */
 /* https://codepen.io/Mr_Rahul_Tiwari/pen/ZEWMZNV */
 .toggle-cover {

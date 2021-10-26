@@ -2,4 +2,4 @@ webextension-polyfill-0.8.0/*
 */*.todo*
 src/manifest.json
 .venv
-/workings-out/*
+workings-out/*

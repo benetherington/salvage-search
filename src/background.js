@@ -21,8 +21,31 @@ Values are ususally Strings, containing URLs, blobs, or the stand-in
 for retrieval.
 
 -- "feedback": Sent by background scripts when something has gone wrong and the
-user should be notified. Values are Objects with messages or element identifiers
-to pass along.
+user should be notified. Values are Objects with an action key and optional
+additional key/options as determined by the action:
+    -- "feedback-message": Requres message key, which should be paired with a
+        string to display to the user in a pop-up. Duration defaults to 5000ms,
+        closeable defaults to true, displayAs defaults to "status." Two other
+        options for displayAs are "success" and "error." This decides the color
+        of the popup.
+    -- "download-start": Starts the progress bar animation on the download
+        button. Optional total key, which should be a number indicating how
+        many units 100% progress is. This message can be re-sent if the total
+        is not known at the moment, but with no total, subsquent increments
+        will have no effect.
+    -- "download-increment": Increments the progress bar one unit.
+    -- "download-end": Stops the progress bar animation and switches the
+        button to enabled/standby display.
+    -- "download-abort": Stops the progress bar animation and disables the
+        button.
+    -- "search-start": Starts the progress bar animation on the search button.
+        Optional total key, which should be a number indicating how many units
+        100% progress is. This message can be re-sent if the total is not known
+        at the moment, but with no total, subsquent increments will have no
+        effect.
+    -- "search-increment": Increments the progress bar one unit.
+    -- "search-end": Stops the progress bar animation and switches the
+        button to enabled/standby display.
 
 \*---------------------------------------------------------------------------*/
 
