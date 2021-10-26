@@ -7,13 +7,9 @@ async function downloadImages() {
     try {
         sendProgress("download", "start")
         let imageUrls = [];
-        imageUrls.push(... await copartImageUrlsFromTab())
-        imageUrls.push(... await iaaiImageUrlsFromTab())
-        imageUrls.push(... await poctraImageUrlsFromTab())
-        for (let idx=0; idx<imageUrls.length; idx++) {
-            let url = imageUrls[idx];
-            let filename = `${idx}.jpg`;
-            console.log(`downloading ${filename}`)
+        imageUrls.push(... await copartImageUrlsFromOpenTab())
+        imageUrls.push(... await iaaiImageUrlsFromOpenTab())
+        imageUrls.push(... await poctraImageUrlsFromOpenTab())
             browser.downloads.download({
                 url: url,
                 saveAs: false,
@@ -31,7 +27,7 @@ async function downloadImages() {
 /*------*\
   COPART  
 \*------*/
-async function copartImageUrlsFromTab() { // => array of URLs
+async function copartImageUrlsFromOpenTab() { // => array of URLs
     // Checks active tabs for Copart lot pages, gathers data, including HD image
     // URLs, and sends a message with data.
     
@@ -51,7 +47,7 @@ async function copartImageUrlsFromTab() { // => array of URLs
     return hdUrls;
 }
 async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
-    // Pass in a single lot number, multiple lot numbers, or arrays of lot numbers.
+    // Accepts a single lot number, multiple lot numbers, or an array of lot numbers.
     let lotNumbers = Array.from(arguments).flat();
     if (!lotNumbers.length) {throw "copartImageUrlsFromLot requires one or more lot numbers.";}
     // FETCH
@@ -90,7 +86,7 @@ async function copartFetchLotData(lotNumber) { // => JSON object
 // TOP-LEVEL INITIATORS
 // These send notifications and progressbar starters, but no increments, nor
 // errors. All errors are caught, formatted, and re-thrown.
-async function iaaiImageUrlsFromTab() { // => array of dataURLs
+async function iaaiImageUrlsFromOpenTab() { // => [objectURL]
     let imageUrls = [];
     try {
         // FIND TABS
@@ -125,7 +121,7 @@ async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // => array of dat
     return imageUrls
 }
 
-// IMAGE KEYS
+// IMAGE DETAILS
 // These send no notifications, but they do call image processors, which will
 // send progressbar increments. Any errors are thrown without formatting.
 async function iaaiImageKeysFromTab(iaaiTab) {
@@ -285,7 +281,7 @@ function isBlackish(imageData) {
   POCTRA  
 \*------*/
 
-async function poctraImageUrlsFromTab() {
+async function poctraImageUrlsFromOpenTab() {
     let imageUrls = [];
     try {
         // FIND TABS
