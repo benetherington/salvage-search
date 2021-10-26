@@ -88,7 +88,7 @@ async function copartFetchLotData(lotNumber) { // => JSON object
 // TOP-LEVEL INITIATORS
 // These send notifications and progressbar starters, but no increments, nor
 // errors. All errors are caught, formatted, and re-thrown.
-async function iaaiImageUrlsFromOpenTab() { // => [objectURL]
+async function iaaiImageUrlsFromOpenTab() { // -> [objectURL]
     let imageUrls = [];
     try {
         // FIND TABS
@@ -98,44 +98,50 @@ async function iaaiImageUrlsFromOpenTab() { // => [objectURL]
         let stockNumbers = await Promise.all(
             iaaiTabs.map(iaaiTab=>iaaiStockNumberFromTab(iaaiTab))
         );
-        let imagesDetails = await Promise.all(
-            stockNumbers.map(stockNumber=>iaaiImagesDetailsFromStock(stockNumber))
+        let lotDetails = await Promise.all(
+            stockNumbers.map(stockNumber=>iaaiFetchLotDetail(stockNumber))
         );
-        let numberOfImages = imagesDetails.reduce((total, details) =>{
-            return total + details.keys.length
-        }, initialValue=0);
-        await sendNotification(`IAAI: processing ${numberOfImages} images.`)
-        await sendProgress("download", "start")
+        await sendNotification(`IAAI: processing ${imageCount} images.`)
+        await sendProgress("download", "start", {total:imageCount})
         // CREATE DATA URLS
         imageUrls = await Promise.all(
-            imagesDetails.map(
-                async imageDetails=>await iaaiImageUrlsFromDetails(imageDetails)
+            lotDetails.map(
+                async imageDetails=>await iaaiObjectUrlsFromDetails(imageDetails)
             )
         )
     } catch (error) {throw `IAAI: ${error}`}
     return imageUrls.flat()
 }
-async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // => array of dataUrls
+async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // -> [dataUrl]
     // Accepts a single stockNumber, multiple stockNumbers, or an array of stockNumbers.
     let stockNumbers = Array.from(arguments).flat();
     let imageUrls = [];
     try {
         // GET IMAGE KEYS
+        let imagesDetails = [];
         for (let stockNumber of stockNumbers) {
+            let details = await iaaiImageKeysFromStock(stockNumber);
+            imagesDetails.push(...details)
         }
-        await sendNotification(`IAAI: processing ${imageKeys.length} images.`)
-        await sendProgress("download", "start", {total:imageKeys.length})
+        let imageCount = countImages(imagesDetails)
+        await sendNotification(`IAAI: processing ${imageCount} images.`)
+        await sendProgress("download", "start", {total:imageCount})
         // CREATE DATA URLS
-        imageUrls = await iaaiImageUrlsFromKeys(imageKeys);
+        imageUrls = await iaaiImageUrlsFromKeys(imagesDetails);
     } catch (error) {throw `IAAI: ${error}`}
     return imageUrls
+}
+function countImages(imagesDetails){ // -> int
+    return imagesDetails.reduce((total, details)=>{
+        return total + details.keys.length
+    }, initialValue=0)
 }
 
 // IMAGE DETAILS
 // These send no notifications, but they do call image processors, which will
 // send progressbar increments. Any errors are thrown without formatting.
-async function iaaiStockNumberFromTab(iaaiTab) { // -> {keys:[{}, {}]}
-    // Fetches image keyss from the provided tab.
+async function iaaiStockNumberFromTab(iaaiTab) { // -> string
+    // Gets image keys from the provided tab.
     console.log(`Requesting stockNumber from tab #${iaaiTab.id}`)
     let unparsedJson = await browser.tabs.executeScript(
         iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
@@ -148,18 +154,20 @@ async function iaaiStockNumberFromTab(iaaiTab) { // -> {keys:[{}, {}]}
         throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
     }
 }
-async function iaaiImagesDetailsFromStock(stockNumber) { //-> {keys:[{}, {}]}
+async function iaaiFetchLotDetail(stockNumber) { //-> [ {keys:[]} ]
     if (typeof(stockNumber) === "number") {stockNumber = stockNumber.toString()}
     let getKeysUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
     getKeysUrl.searchParams.append(
         'json',
         JSON.stringify({"stockNumber":stockNumber})
     );
-    let response = await fetch(getKeysUrl);
+    let headers = { "User-Agent": window.navigator.userAgent,
+                    "Accept": "application/json, text/plain, */*" }
+    let response = await fetch(getKeysUrl, {headers});
     if (!response.ok) {throw "server error"}
     if (response.headers.get("content-length") === '0') {throw "no query results"}
-    let imagesDetails = await response.json();
-    return imagesDetails
+    let lotDetails = await response.json();
+    return lotDetails
 }
 
 // IMAGE PROCESSING
