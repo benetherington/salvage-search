@@ -6,7 +6,7 @@
   "version_name": "2.3 beta 5",
   "homepage_url": "https://benetherington.com/salvage-search/",
   "browser_specific_settings": {
-    "gecko": {"update_url": "https://benetherington.com/salbage-search/updates.json"}
+    "gecko": {"update_url": "https://benetherington.com/salvage-search/updates.json"}
   },
   "icons": {
     "16": "icons/SS-16.png",
@@ -34,18 +34,6 @@
       "background.js"
     ]
   },
-  "content_scripts": [
-    {
-      "matches": ["*://*.copart.com/*"],
-      "include_globs": ["*/lot/*"],
-      "js": ["browser-polyfill.js", "shared-assets.js", "download-copart.js"]
-    },
-    {
-      "matches": ["*://*.iaai.com/*"],
-      "include_globs": ["*/?ehicle?etails*"],
-      "js": ["browser-polyfill.js","shared-assets.js", "download-iaai.js"]
-    }
-  ],
   "browser_action": {
     "default_icon": {
       "16": "icons/SS-16.png",

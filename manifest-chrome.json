@@ -31,18 +31,6 @@
       "background.js"
     ]
   },
-  "content_scripts": [
-    {
-      "matches": ["*://*.copart.com/*"],
-      "include_globs": ["*/lot/*"],
-      "js": ["browser-polyfill.js", "shared-assets.js", "download-copart.js"]
-    },
-    {
-      "matches": ["*://*.iaai.com/*"],
-      "include_globs": ["*/?ehicle?etails*"],
-      "js": ["browser-polyfill.js","shared-assets.js", "download-iaai.js"]
-    }
-  ],
   "browser_action": {
     "default_icon": {
       "16": "icons/SS-16.png",
