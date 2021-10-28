@@ -103,45 +103,35 @@ async function iaaiImageUrlsFromOpenTab() { // -> [objectURL]
         // FIND TABS
         let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
         if (!iaaiTabs.length) {return [];} // no error thrown, as the user might be targeting a Copart tab.
-        // GET IMAGE DETAILS
-        let stockNumbers = await Promise.all(
-            iaaiTabs.map(iaaiTab=>iaaiStockNumberFromTab(iaaiTab))
-        );
-        let lotDetails = await Promise.all(
-            stockNumbers.map(stockNumber=>iaaiFetchLotDetail(stockNumber))
-        );
+        // GET STOCK NUMBERS
+        let stockNumbers = await iaaiStockNumbersFromTab(iaaiTabs)
+        // GET DETAILS
+        let lotDetails = await iaaiFetchLotDetails(stockNumbers)
+        let imageCount = countImages(lotDetails)
         await sendNotification(`IAAI: processing ${imageCount} images.`)
-        await sendProgress("download", "start", {total:imageCount})
-        // CREATE DATA URLS
-        imageUrls = await Promise.all(
-            lotDetails.map(
-                async imageDetails=>await iaaiObjectUrlsFromDetails(imageDetails)
-            )
-        )
+        await sendProgress("download", "start", {total: imageCount})
+        // FETCH IMAGES
+        return iaaiImageUrlsFromDetails(lotDetails);
     } catch (error) {throw `IAAI: ${error}`}
-    return imageUrls.flat()
 }
-async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // -> [dataUrl]
+async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // -> [objectURL]
     // Accepts a single stockNumber, multiple stockNumbers, or an array of stockNumbers.
     let stockNumbers = Array.from(arguments).flat();
     let imageUrls = [];
     try {
-        // GET IMAGE KEYS
-        let imagesDetails = [];
-        for (let stockNumber of stockNumbers) {
-            let details = await iaaiImageKeysFromStock(stockNumber);
-            imagesDetails.push(...details)
-        }
-        let imageCount = countImages(imagesDetails)
+        // GET DETAILS
+        let lotDetails = await iaaiFetchLotDetails(stockNumbers)
+        let imageCount = countImages(lotDetails)
         await sendNotification(`IAAI: processing ${imageCount} images.`)
         await sendProgress("download", "start", {total:imageCount})
-        // CREATE DATA URLS
-        imageUrls = await iaaiImageUrlsFromKeys(imagesDetails);
+        // FETCH IMAGES
+        imageUrls = await iaaiImageUrlsFromDetails(lotDetails);
     } catch (error) {throw `IAAI: ${error}`}
     return imageUrls
 }
-function countImages(imagesDetails){ // -> int
-    return imagesDetails.reduce((total, details)=>{
+function countImages(imageDetailOrDetails){ // -> int
+    let imageDetails = Array.from(arguments).flat()
+    return imageDetails.reduce((total, details)=>{
         return total + details.keys.length
     }, initialValue=0)
 }
@@ -149,48 +139,61 @@ function countImages(imagesDetails){ // -> int
 // IMAGE DETAILS
 // These send no notifications, but they do call image processors, which will
 // send progressbar increments. Any errors are thrown without formatting.
-async function iaaiStockNumberFromTab(iaaiTab) { // -> string
+async function iaaiStockNumbersFromTab(iaaiTabOrTabs) { // -> [string]
     // Gets image keys from the provided tab.
-    console.log(`Requesting stockNumber from tab #${iaaiTab.id}`)
-    let unparsedJson = await browser.tabs.executeScript(
-        iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
-    ).catch(()=>{ throw "there was an error communicating with the page. Please reload the page and try again." });
+    let iaaiTabs = Array.from(arguments).flat();
     try {
-        let jsn = JSON.parse(unparsedJson[0]);
-        let stockNumber = jsn.VehicleDetailsViewModel.StockNo;
-        return stockNumber;
+        let stockPromises = iaaiTabs.map(iaaiTab=>
+            browser.tabs.executeScript(
+        iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
+            ).catch(()=>{ throw "there was an error communicating with the page."+
+                                "Please reload the page and try again." })
+            .then( lastEvaluated=>JSON.parse(lastEvaluated[0]) )
+            .then( jsn=>jsn.VehicleDetailsViewModel.StockNo )
+        )
+        return Promise.all(stockPromises)
     } catch {
         throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
     }
 }
-async function iaaiFetchLotDetail(stockNumber) { //-> [ {keys:[]} ]
-    if (typeof(stockNumber) === "number") {stockNumber = stockNumber.toString()}
-    let getKeysUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
-    getKeysUrl.searchParams.append(
-        'json',
-        JSON.stringify({"stockNumber":stockNumber})
-    );
+async function iaaiFetchLotDetails(stockNumberOrNumbers) { //-> [ {keys:[]} ]
+    let stockNumbers = Array.from(arguments).flat()
+    // ENSURE TYPE
+    stockNumbers = stockNumbers.map( stockNumber=>stockNumber.toString() );
+    let lotPromises = stockNumbers.map( stockNumber=>{
+        // BUILD REQUEST
+        let getLotDetailsUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
+        getLotDetailsUrl.searchParams.append(
+            'json', JSON.stringify({"stockNumber":stockNumber})
+        )
     let headers = { "User-Agent": window.navigator.userAgent,
-                    "Accept": "application/json, text/plain, */*" }
-    let response = await fetch(getKeysUrl, {headers});
-    if (!response.ok) {throw "server error"}
-    if (response.headers.get("content-length") === '0') {throw "no query results"}
-    let lotDetails = await response.json();
-    return lotDetails
+                        "Accept": "application/json, text/plain, */*" };
+        // FETCH AND PARSE
+        return fetch(getLotDetailsUrl, {headers})
+            .then( response=> {
+                if (response.ok) {return response}
+                else {throw "server error"}
+            }).then( response=> {
+                if (response.headers.get("content-length") > '0')
+                {return response.json()}
+                {throw "no images found."}
+            })
+    })
+    return Promise.all(lotPromises)
 }
 
 // IMAGE PROCESSING
 // These send no notifications, but they do increment the progressbar. Any
 // errors are thrown without formatting.
-async function iaaiObjectUrlsFromDetails(imageOrImagesDetails) { // -> [objectURL]
+async function iaaiImageUrlsFromDetails(lotDetailOrDetails) { // -> [objectURL]
     // accepts a single imageDetails object, multiple imageDetails objects, or
     // an array of imageDetails objects
-    let imagesDetails = Array.from(arguments).flat()
-    if (!imagesDetails.length){return []}
+    let lotDetails = Array.from(arguments).flat()
+    if (!lotDetails.length){return []}
     // FETCH AND PROCESS
     let processedUrls = [];
-    for (let imageDetails of imagesDetails) {
-        let dezoomed = await iaaiImageUrlsFromImageKeys(imageDetails.keys)
+    for (let lotDetail of lotDetails) {
+        let dezoomed = await iaaiFetchAndDezoom(lotDetail.keys)
         processedUrls.push(...dezoomed)
         // processedUrls.push(...pano)
         // processedUrls.push(...walkaround)
@@ -199,22 +202,17 @@ async function iaaiObjectUrlsFromDetails(imageOrImagesDetails) { // -> [objectUR
     return processedUrls
 }
 const TILE_SIZE = 250;
-var iaaiTiming = []
-async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
+async function iaaiFetchAndDezoom(imageKeyOrKeys) { // -> [objectURL]
     // Accepts a single keys object, multiple keys objects, or an array of keys
     // objects.
-    keys = Array.from(arguments).flat()
+    let imageKeys = Array.from(arguments).flat()
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d")
     let processedPromises = [];
-                                                                        iaaiTiming.push({id:"main", action:"before loop", T:performance.now()})
-    for (let key of keys) {
-                                                                        iaaiTiming.push({id:key.K, action:"create", t:performance.now()})
+    for (let key of imageKeys) {
         processedPromises.push(new Promise(async (resolve, reject)=>{
             // PLAN
             let tileUrl = (x, y)=>`https://anvis.iaai.com/deepzoom?imageKey=${key.K}&level=12&x=${x}&y=${y}&overlap=0&tilesize=${TILE_SIZE}`;
-            // PICKUP: zoom 13 returns an image larger than W, H, but zoom 12
-            // returns an image smaller.
             canvas.width  = key.W;
             canvas.height = key.H;
             let xTiles = Math.ceil(key.W / TILE_SIZE);
@@ -223,15 +221,14 @@ async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
             let yRange = [...Array(yTiles).keys()];
             // FETCH
             let bitmapPromises = [];
-                                                                        iaaiTiming.push({id:key.K, action:"begin fetch", t:performance.now()})
             for (let x of xRange) { for (let y of yRange){
-                bitmapPromises.push( fetch(tileUrl(x,y))
+                bitmapPromises.push(
+                    fetch(tileUrl(x,y))
                                 .then(r => r.blob())
                                 .then(createImageBitmap)
                                 .then(bmp => new Object({x,y,bmp}))
                 )
             }}
-                                                                        iaaiTiming.push({id:key.K, action:"between fetch and process", t:performance.now()})
             let bmpDetails = await Promise.all(bitmapPromises)
             bmpDetails.forEach(bmpDetails=>{
                 let {bmp,x,y} = bmpDetails;
@@ -239,15 +236,17 @@ async function iaaiImageUrlsFromImageKeys(keyOrKeys) { // -> [objectURL]
             })
             let dataURL = canvas.toDataURL();
             let objectURL = dataURLtoObjectURL(dataURL);
-                                                                        iaaiTiming.push({id:key.K, action:"processed", t:performance.now()})
             console.log(`${key.K} processed`)
             resolve(objectURL)
         }))
-                                                                        iaaiTiming.push({id:key.K, action:"created", t:performance.now()})
     }
-                                                                        iaaiTiming.push({id:"main", action:"after loop", T:performance.now()})
-    return processedUrls
+    return Promise.all(processedPromises)
 }
+// for 10 images, got:
+// average 461.7 ms from create to processed
+// Total 79 ms from first processed to last
+// Total 502ms from before loop to last processed
+
 function dataURLtoObjectURL(uri, name) { // -> objectURL
     // Takes a dataURL and turns it into a temporary object URL. This makes it
     // easier to pass around. See: https://stackoverflow.com/a/12300351
