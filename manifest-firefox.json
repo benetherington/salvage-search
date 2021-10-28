@@ -30,7 +30,7 @@
       "shared-assets.js",
       "iaaiSearchParams.js",
       "search.js",
-      "download-background.js",
+      "download.js",
       "background.js"
     ]
   },
