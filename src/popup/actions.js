@@ -66,6 +66,11 @@ class ProgressButton {
         this.el.classList.add("disabled");
         this.total = this.progress = 1;
     }
+    attention() {
+        this.el.className = this.el.dataset.styleOrig;
+        this.el.classList.add("success-attention");
+        this.total = this.progress = 1;
+    }
 }
 
 // SEARCH //
@@ -148,7 +153,7 @@ let onDownloadClick = (event) =>{
     browser.runtime.sendMessage(
         { type: "popup-action",
             values: [{
-            action: "download" }]}
+                action: "download" }] }
     )
     event.stopPropagation()
 };
@@ -163,6 +168,9 @@ browser.runtime.onMessage.addListener((message)=>{
             switch (value.action) {
                 case "feedback-message":
                     addFeedbackMessage(value)
+                    break;
+                case "download-attention":
+                    dlProgressButton.attention()
                     break;
                 case "download-start":
                     dlProgressButton.start(value.total)

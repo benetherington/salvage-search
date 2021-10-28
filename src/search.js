@@ -86,11 +86,12 @@ function searchCopart(vinInput, fallbackZipCode) { // -> function
             // build opener
             if (jsn.data.results.content.length) {
                 let lotNumbers = jsn.data.results.content.map( (vehicle)=>vehicle.lotNumberStr )
+                sendNotification(`Copart: found a match: lot #${lotNumber}!`, {displayAs:"success"})
                 resolve( ()=>{
                     lotNumbers.forEach(lotNumber=>{
                         let lotUrl = `https://www.copart.com/lot/${lotNumber}`;
-                        sendNotification(`Copart: found a match: lot #${lotNumber}!`, {displayAs:"success"})
-                        browser.tabs.create( {url: lotUrl, active: false} )
+                        browser.tabs.create( {url: lotUrl} )
+                        sendProgress("download", "attention")
                     })
                 })
             } else {throw "query returned no results";}
@@ -129,7 +130,10 @@ async function searchIaai(vinInput, fallbackZipCode) { // -> function
             } else {
                 throw "query returned no results."
             }
-            resolve(()=>{ browser.tabs.create({url: redirectUrl, active: false}) })
+            resolve(()=>{
+                browser.tabs.create({url: redirectUrl})
+                sendProgress("download", "attention")
+            })
         } catch (error) {
             console.log(`IAAI rejecting: ${error}`)
             sendNotification(`IAAI: ${error}`, {displayAs: "error"})
@@ -180,12 +184,13 @@ async function searchRow52(vinInput, fallbackZipCode) { // -> function
             if (vehiclePaths.length) {
                 let yardName = yardNameElement.innerText.trim()
                 sendNotification( `Row52: Found a match at ${yardName}!`, {displayAs: "success"} )
-                // We shouldn't have more than one listing, but never assume
-                // anything without documentation.
                 resolve( ()=>{
+                    // We shouldn't have more than one listing, but never assume
+                    // anything without API documentation.
                     vehiclePaths.forEach( path=>{
-                        browser.tabs.create({url: "https://row52.com"+path, active: false});
+                        browser.tabs.create({url: "https://row52.com"+path});
                     })
+                    sendProgress("download", "attention")
                 })
             } else { throw "query returned no results." }
         } catch (error) {
@@ -239,8 +244,9 @@ async function searchPoctra(vinInput) { // -> function
             // SUCCESS!
             resolve(()=>{
                 lotUrls.forEach( (lotUrl)=>{
-                    browser.tabs.create({url: lotUrl, active: false})
+                    browser.tabs.create({url: lotUrl})
                 })
+                sendProgress("download", "attention")
             })
         } catch (error) {
             console.log(`Poctra rejecting: ${error}`)
