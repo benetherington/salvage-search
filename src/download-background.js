@@ -19,6 +19,7 @@ async function downloadImages() {
             })
         })
         sendProgress("download", "end")
+        sendNotification(`${imageUrls.length} images sent to downloads folder!`, {displayAs: "success"})
     } catch (error) {
         sendProgress("download", "abort")
         sendNotification(error, {displayAs: "error"})
@@ -32,7 +33,7 @@ async function downloadImages() {
 async function copartImageUrlsFromOpenTab() { // => array of URLs
     // Checks active tabs for Copart lot pages, gathers data, including HD image
     // URLs, and sends a message with data.
-    
+
     // FIND TABS
     console.log("copartDownloadImages getting imageKeys")
     let copartTabs = await browser.tabs.query({active:true, url:"*://*.copart.com/lot/*"});
@@ -43,7 +44,7 @@ async function copartImageUrlsFromOpenTab() { // => array of URLs
         return tab.url.match(/copart\.com\/lot\/(\d*)/)[1]
     })
     if (!lotNumbers.length) {return [];}
-    sendNotification("Copart: searching for images.")
+    sendNotification(`Copart: downloading images from lot #${lotNumbers.join(", ")},`)
     // GET URLS
     let hdUrls = await copartImageUrlsFromLot(lotNumbers);
     return hdUrls;
@@ -51,7 +52,7 @@ async function copartImageUrlsFromOpenTab() { // => array of URLs
 async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
     // Accepts a single lot number, multiple lot numbers, or an array of lot numbers.
     let lotNumbers = Array.from(arguments).flat();
-    if (!lotNumbers.length) {throw "copartImageUrlsFromLot requires one or more lot numbers.";}
+    if (!lotNumbers.length) {throw "no lot number provided.";}
     // FETCH
     let jsons = await Promise.all(lotNumbers.map( lotNumber=>copartFetchLotData(lotNumber) ))
     // PROCESS
@@ -64,7 +65,7 @@ async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
                || !jsn.data.hasOwnProperty("imagesList") )
                 {throw "encountered a server error."}
             if (!jsn.data.imagesList.hasOwnProperty("HIGH_RESOLUTION_IMAGE"))
-                {throw "returned no images.";}
+                {throw `has no high resolution images.`}
             // TODO: sometimes, imagesList has more images in FULL_RESOLUTION
             // than in HIGH_RESOLUTION. We need to go over FULL and return HIGH
             // if present, FULL if not.
@@ -98,11 +99,12 @@ async function copartFetchLotData(lotNumber) { // => JSON object
 // These send notifications and progressbar starters, but no increments, nor
 // errors. All errors are caught, formatted, and re-thrown.
 async function iaaiImageUrlsFromOpenTab() { // -> [objectURL]
-    let imageUrls = [];
+    console.log("iaaiImageUrlsFromOpenTab()")
     try {
         // FIND TABS
         let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
         if (!iaaiTabs.length) {return [];} // no error thrown, as the user might be targeting a Copart tab.
+        console.log(`Found ${iaaiTabs.length} tabs.`)
         // GET STOCK NUMBERS
         let stockNumbers = await iaaiStockNumbersFromTab(iaaiTabs)
         // GET DETAILS
@@ -117,6 +119,7 @@ async function iaaiImageUrlsFromOpenTab() { // -> [objectURL]
 async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // -> [objectURL]
     // Accepts a single stockNumber, multiple stockNumbers, or an array of stockNumbers.
     let stockNumbers = Array.from(arguments).flat();
+    console.log(`iaaiImageUrlsFromStock(${stockNumbers})`)
     let imageUrls = [];
     try {
         // GET DETAILS
@@ -142,10 +145,11 @@ function countImages(imageDetailOrDetails){ // -> int
 async function iaaiStockNumbersFromTab(iaaiTabOrTabs) { // -> [string]
     // Gets image keys from the provided tab.
     let iaaiTabs = Array.from(arguments).flat();
+    console.log(`iaaiStockNumbersFromTab(${iaaiTabs.map(t=>t.id)})`)
     try {
         let stockPromises = iaaiTabs.map(iaaiTab=>
             browser.tabs.executeScript(
-        iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
+                iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
             ).catch(()=>{ throw "there was an error communicating with the page."+
                                 "Please reload the page and try again." })
             .then( lastEvaluated=>JSON.parse(lastEvaluated[0]) )
@@ -160,13 +164,14 @@ async function iaaiFetchLotDetails(stockNumberOrNumbers) { //-> [ {keys:[]} ]
     let stockNumbers = Array.from(arguments).flat()
     // ENSURE TYPE
     stockNumbers = stockNumbers.map( stockNumber=>stockNumber.toString() );
+    console.log(`iaaiFetchLotDetails(${stockNumbers})`)
     let lotPromises = stockNumbers.map( stockNumber=>{
         // BUILD REQUEST
         let getLotDetailsUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
         getLotDetailsUrl.searchParams.append(
             'json', JSON.stringify({"stockNumber":stockNumber})
         )
-    let headers = { "User-Agent": window.navigator.userAgent,
+        let headers = { "User-Agent": window.navigator.userAgent,
                         "Accept": "application/json, text/plain, */*" };
         // FETCH AND PARSE
         return fetch(getLotDetailsUrl, {headers})
@@ -189,6 +194,8 @@ async function iaaiImageUrlsFromDetails(lotDetailOrDetails) { // -> [objectURL]
     // accepts a single imageDetails object, multiple imageDetails objects, or
     // an array of imageDetails objects
     let lotDetails = Array.from(arguments).flat()
+    console.log("iaaiImageUrlsFromDetails(...)")
+    console.log(lotDetails)
     if (!lotDetails.length){return []}
     // FETCH AND PROCESS
     let processedUrls = [];
@@ -206,6 +213,8 @@ async function iaaiFetchAndDezoom(imageKeyOrKeys) { // -> [objectURL]
     // Accepts a single keys object, multiple keys objects, or an array of keys
     // objects.
     let imageKeys = Array.from(arguments).flat()
+    console.log("iaaiFetchAndDezoom(...)")
+    console.log(imageKeys)
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d")
     let processedPromises = [];
@@ -224,9 +233,9 @@ async function iaaiFetchAndDezoom(imageKeyOrKeys) { // -> [objectURL]
             for (let x of xRange) { for (let y of yRange){
                 bitmapPromises.push(
                     fetch(tileUrl(x,y))
-                                .then(r => r.blob())
-                                .then(createImageBitmap)
-                                .then(bmp => new Object({x,y,bmp}))
+                    .then(r => r.blob())
+                    .then(createImageBitmap)
+                    .then(bmp => new Object({x,y,bmp}))
                 )
             }}
             let bmpDetails = await Promise.all(bitmapPromises)
@@ -234,9 +243,10 @@ async function iaaiFetchAndDezoom(imageKeyOrKeys) { // -> [objectURL]
                 let {bmp,x,y} = bmpDetails;
                 ctx.drawImage(bmp,x*TILE_SIZE,y*TILE_SIZE)
             })
-            let dataURL = canvas.toDataURL();
+            let dataURL = canvas.toDataURL("image/jpeg");
             let objectURL = dataURLtoObjectURL(dataURL);
             console.log(`${key.K} processed`)
+            sendProgress("download", "increment")
             resolve(objectURL)
         }))
     }
