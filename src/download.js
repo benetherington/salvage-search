@@ -186,6 +186,32 @@ async function iaaiFetchLotDetails(stockNumberOrNumbers) { //-> [ {keys:[]} ]
     })
     return Promise.all(lotPromises)
 }
+// FOR REFERENCE
+// getJsonImageDimensions returns:
+// {
+//     DeepZoomInd: true
+//     Image360Ind: true
+//     Image360Url:                   "https://spins.spincar.com/iaa-rochester/000-31355822"
+//                  https://cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/2021 09 28 16 53 05.CUFD0VOL/ec/0-41.jpg
+//     UndercarriageInd: false
+//     VRDUrl: "https://mediastorageaccountprod.blob.core.windows.net/media/31819854_VES-100_1"
+//     Videos: [{…}]
+//     keys: (11) [{
+//         AR: 1.33,
+//         ART: 1.35,
+//         B: 671,
+//         H: 1944,
+//         I: 0,
+//         IN: 1,
+//         K: "31819854~SID~B671~S0~I1~RW2592~H1944~TH0",
+//         S: 0,
+//         SID: 31819854,
+//         SN: 31355822,
+//         TH: 72,
+//         TW: 96,
+//         W: 2592,
+//     }, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+// }
 
 // IMAGE PROCESSING
 // These send no notifications, but they do increment the progressbar. Any
@@ -202,6 +228,7 @@ async function iaaiImageUrlsFromDetails(lotDetailOrDetails) { // -> [objectURL]
     for (let lotDetail of lotDetails) {
         let dezoomed = await iaaiFetchAndDezoom(lotDetail.keys)
         processedUrls.push(...dezoomed)
+        // let {walkaroundUrls, panoUrls} = await spincarFetchInfo(lotDetail.cdn_image_prefix)
         // processedUrls.push(...pano)
         // processedUrls.push(...walkaround)
     };
@@ -257,6 +284,112 @@ async function iaaiFetchAndDezoom(imageKeyOrKeys) { // -> [objectURL]
 // Total 79 ms from first processed to last
 // Total 502ms from before loop to last processed
 
+async function spincarFetchInfo(spinUrlOrUrls) {
+    let spinUrls = Array.from(arguments).flat()
+    let spinPromises = spinUrls.map( async spinUrl=>{
+        let spinPath = /com\/(.*)/.exec(spinUrl)[1];
+        let apiUrl = "https://api.spincar.com/spin/" + spinPath;
+        let headers = { "User-Agent": window.navigator.userAgent,
+                       "Accept": "application/json" };
+        let jsn = await fetch( apiUrl, headers )
+                        .then( r=>r.json() );
+        let walkaroundCount = jsn.info.options.numImgEC;
+        let walkaroundUrls = [...Array(walkaroundCount).keys()].map(
+            idx=>`https:${jsn.cdn_image_prefix}ec/0-${idx}.jpg`
+        );
+        let panoUrls = ['f', 'l', 'b', 'r', 'u', 'd'].map(
+            dir=>`https:${jsn.cdn_image_prefix}pano/pano_${dir}.jpg`
+        );
+        return {walkaroundUrls, panoUrls}
+    })
+    return Promise.all(spinPromises)
+}
+// FOR REFERENCE
+// walkaround/pano URL format is:
+// https://cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/20210928165305.CUFD0VOL/ec/0-49.jpg
+// https://cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/20210928165305.CUFD0VOL/pano/pano_u.jpg
+//
+// api.spincar.com/spin returns:
+// {
+//     "cdn_image_prefix": "//cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/20210928165305.CUFD0VOL/",
+//     "customer": {...},
+//     "customer_name": "IAA - Rochester",
+//     "enable_auction_disclaimer": true,
+//     "finance_insurance_products": null,
+//     "ft_locale": "en-US",
+//     "ga_tracking_id": "UA-6058889-4",
+//     "info": {
+//       "body_type": null,
+//       "created_by": "adesa@spincar.com",
+//       "factory_upgrades": null,
+//       "ft_locale": "en-US",
+//       "is_new": false,
+//       "isdamage_tags": {},
+//       "last_keywords_update": "2021-10-28 14:51:18.206559",
+//       "make": "Mazda",
+//       "model": "CX-7",
+//       "options": {
+//         "additional_videos": [],
+//         "closeup_tags": {},
+//         "disable_autoplay": false,
+//         "disable_autospin": false,
+//         "disable_vr_mode": false,
+//         "enable_drag_to_view_overlay": false,
+//         "enable_factory_upgrades": false,
+//         "enable_photo_labels": false,
+//         "features_translated": [],
+//         "has_custom_pano_overlay": false,
+//         "has_pano": true,
+//         "has_raw_pano": true,
+//         "has_thumbs": true,
+//         "hide_carousel": true,
+//         "hide_photos": false,
+//         "hotspots": [{...}],
+//         "needs_assessment_quiz": false,
+//         "numImgEC": 64,
+//         "s3_folder": "iaa-rochester",
+//         "version": "20210928165305.CUFD0VOL"
+//       },
+//       "stock": null,
+//       "video_tour_key": null,
+//       "views": {
+//         "closeup": {},
+//         "exterior": {
+//           "has_low_res": true,
+//           "source": "app"
+//         },
+//         "interior": {},
+//         "pano": {
+//           "has_low_res": true,
+//           "source": "app"
+//         }
+//       },
+//       "vin": "000-31355822",
+//       "year": "2009"
+//     },
+//     "partner_id": 15,
+//     "perf": {
+//       "customer_config_cache": 27,
+//       "local_info:vin": 27,
+//       "total": 54,
+//       "vehicle_query": 12
+//     },
+//     "s3_folder": "iaa-rochester",
+//     "s3_prefix": "s3://swipetospin-viewers/iaa-rochester/000-31355822/",
+//     "show_feature_highlights": false,
+//     "show_featuretour": true,
+//     "show_finance_insurance_products": false,
+//     "show_finance_insurance_quiz": false,
+//     "show_spin": true,
+//     "thumb": "//cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/20210928165305.CUFD0VOL/thumb-sm.jpg",
+//     "vin": "000-31355822",
+//     "wa_products": {
+//       "ft": true,
+//       "wa_360": true
+//     }
+//   }
+
+
 function dataURLtoObjectURL(uri, name) { // -> objectURL
     // Takes a dataURL and turns it into a temporary object URL. This makes it
     // easier to pass around. See: https://stackoverflow.com/a/12300351
@@ -271,32 +404,6 @@ function dataURLtoObjectURL(uri, name) { // -> objectURL
     blob.name = name+".jpg"
     return URL.createObjectURL(blob)
 };
-// FOR REFERENCE
-// getJsonImageDimensions returns:
-// {
-//     DeepZoomInd: true
-//     Image360Ind: true
-//     Image360Url: "https://spins.spincar.com/iaa-rochester/000-31355822"
-//     UndercarriageInd: false
-//     VRDUrl: "https://mediastorageaccountprod.blob.core.windows.net/media/31819854_VES-100_1"
-//     Videos: [{…}]
-//     keys: (11) [{
-//         AR: 1.33,
-//         ART: 1.35,
-//         B: 671,
-//         H: 1944,
-//         I: 0,
-//         IN: 1,
-//         K: "31819854~SID~B671~S0~I1~RW2592~H1944~TH0",
-//         S: 0,
-//         SID: 31819854,
-//         SN: 31355822,
-//         TH: 72,
-//         TW: 96,
-//         W: 2592,
-//     }, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
-// }
-
 
 
 
