@@ -336,7 +336,7 @@ window.addEventListener("load", async ()=>{
     await preferences.fetchStoredSettings()
     preferences.setElementCallbacks()
     // set version display
-    let versionName = browser.runtime.getManifest().version_name
+    let versionName = browser.runtime.getManifest().version
     document.querySelector("#version").textContent = 'v' + versionName;
 })
 
