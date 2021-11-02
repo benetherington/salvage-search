@@ -3,6 +3,9 @@ const DEFAULT_SETTINGS = {
     searchCopart: true,
     searchIaai: true,
     searchRow52: true,
+    searchPoctra: true,
+    searchBidfax: true
+}
 const defaultedSettings = async () => {
     let storage = await browser.storage.local.get("settings");
     let settings = storage.settings || new Object;

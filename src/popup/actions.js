@@ -277,8 +277,7 @@ var preferences = {
     iaaiCheckEl: undefined,
     row52CheckEl: undefined,
     poctraCheckEl: undefined,
-    zipTextEl: undefined,
-    fallbackCheckEl: undefined,
+    bidfaxCheckEl: undefined,
     fetchStoredSettings: async ()=>{
         let settings = await defaultedSettings() // defined in shared-assets.js
         
@@ -286,37 +285,25 @@ var preferences = {
         preferences.iaaiCheckEl.checked     = settings.searchIaai;
         preferences.row52CheckEl.checked    = settings.searchRow52;
         preferences.poctraCheckEl.checked    = settings.searchPoctra;
-        // preferences.zipTextEl.value         = settings.fallbackZipCode;
-        // preferences.fallbackCheckEl.checked = settings.openFallbacks;
+        preferences.bidfaxCheckEl.checked    = settings.searchBidfax;
     },
     setElementCallbacks: ()=>{
         [ preferences.copartCheckEl,
           preferences.iaaiCheckEl,
           preferences.row52CheckEl,
-          preferences.poctraCheckEl ]
-        //   preferences.zipTextEl,
-        //   preferences.fallbackCheckEl ]
+          preferences.poctraCheckEl,
+          preferences.bidfaxCheckEl ]
         .forEach(element=>{
             element.addEventListener("change", preferences.setStoredSettings)
         })
-        // let enableZip = ()=>{
-        //     if (preferences.fallbackCheckEl.checked) {
-        //         preferences.zipTextEl.classList.remove("disabled")
-        //     } else {
-        //         preferences.zipTextEl.classList.add("disabled")
-        //     }
-        // };
-        // enableZip()
-        // preferences.fallbackCheckEl.addEventListener("change", enableZip)
     },
     setStoredSettings: async (event=null)=>{
         let settings = Object.assign(DEFAULT_SETTINGS);
-        settings.searchCopart    = preferences.copartCheckEl.checked;
-        settings.searchIaai      = preferences.iaaiCheckEl.checked;
-        settings.searchRow52     = preferences.row52CheckEl.checked;
-        settings.searchPoctra    = preferences.poctraCheckEl.checked
-        // settings.fallbackZipCode = preferences.zipTextEl.value;
-        // settings.openFallbacks   = preferences.fallbackCheckEl.checked;
+        settings.searchCopart   = preferences.copartCheckEl.checked;
+        settings.searchIaai     = preferences.iaaiCheckEl.checked;
+        settings.searchRow52    = preferences.row52CheckEl.checked;
+        settings.searchPoctra   = preferences.poctraCheckEl.checked;
+        settings.searchBidfax   = preferences.bidfaxCheckEl.checked;
         browser.storage.local.set({settings})
     }
 }
@@ -326,8 +313,7 @@ window.addEventListener("load", async ()=>{
     preferences.iaaiCheckEl     = document.querySelector(".settings-grid input#iaai")
     preferences.row52CheckEl    = document.querySelector(".settings-grid input#row52")
     preferences.poctraCheckEl   = document.querySelector(".settings-grid input#poctra")
-    // preferences.zipTextEl       = document.querySelector(".settings-grid input#zip")
-    // preferences.fallbackCheckEl = document.querySelector(".settings-grid input#fallback")
+    preferences.bidfaxCheckEl   = document.querySelector(".settings-grid input#bidfax")
     // load and display stored preferences
     await preferences.fetchStoredSettings()
     preferences.setElementCallbacks()

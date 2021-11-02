@@ -40,6 +40,9 @@ async function openSalvagePages(vinInput) { console.log("openSalvagePages")
     if (settings.searchPoctra) {
         archivePromises.push( searchPoctra(vinInput) )
     }
+    if (settings.searchBidfax) {
+        archivePromises.push( searchBidfax(vinInput) )
+    }
     // wait for results
     let archiveOpener;
     archiveOpener = await Promise.any(archivePromises)
@@ -255,5 +258,55 @@ async function searchPoctra(vinInput) { // -> function
     })
 };
 
+
+/*------*\
+  BIDFAX  
+\*------*/
+
+async function searchBidfax(vinInput) { // -> function
+    return new Promise(async (resolve, reject)=>{
+        try {
+            // SEARCH
+            let searchUrl = `https://en.bidfax.info/?do=search&subaction=search&story=${vinInput}`;
+            let headers = {"Accept": "application/json,application/xml"};
+            let response = await fetch( searchUrl, {headers});
+            if (!response.ok) { throw "something went wrong on their end..." }
+            // CHECK FOR RESULTS
+            let lotUrls = [];
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(await response.text(), "text/html");
+            let searchResults = doc.querySelectorAll(".thumbnail.offer");
+            if (!searchResults.length) {throw "search returned no results."}
+            // PARSE RESULTS
+            for (searchResult of searchResults) {
+                // FIND PAGE LINK
+                let lotLinkElement = searchResult.querySelector(".caption a");
+                if (!lotLinkElement) {continue}
+                lotUrls.push(lotLinkElement.href)
+                // NOTIFY
+                try {
+                    let yardNameElement = searchResult.querySelector(".short-storyup span");
+                    let yardName = yardNameElement.innerText.trim();
+                    let stockNumberElement = searchResult.querySelector(".short-story span");
+                    let stockNumber = stockNumberElement.innerText;
+                    sendNotification( `BidFax: found a match at ${yardName}! Lot ${stockNumber}.`, {displayAs: "success"} )
+                } catch {
+                    sendNotification( "BidFax: found a match!", {displayAs: "success"})
+                }
+            }
+            if (!lotUrls.length) {throw "search returned no results"}
+            // SUCCESS!
+            resolve(()=>{
+                lotUrls.forEach( lotUrl=>{
+                    browser.tabs.create({url: lotUrl})
+                })
+            })
+        } catch (error) {
+            console.log(`BidFax rejecting: ${error}`)
+            sendNotification(`BidFax: ${error}`, {displayAs: "error"})
+            reject()
+        }
+    })
+}
 
 console.log("search loaded!")
