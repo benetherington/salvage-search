@@ -280,8 +280,7 @@ var preferences = {
     zipTextEl: undefined,
     fallbackCheckEl: undefined,
     fetchStoredSettings: async ()=>{
-        let storage = await browser.storage.local.get("settings");
-        let settings = storage.settings || DEFAULT_SETTINGS; // defined in shared-assets.js
+        let settings = await defaultedSettings() // defined in shared-assets.js
         
         preferences.copartCheckEl.checked   = settings.searchCopart;
         preferences.iaaiCheckEl.checked     = settings.searchIaai;
@@ -289,9 +288,6 @@ var preferences = {
         preferences.poctraCheckEl.checked    = settings.searchPoctra;
         // preferences.zipTextEl.value         = settings.fallbackZipCode;
         // preferences.fallbackCheckEl.checked = settings.openFallbacks;
-
-        // re-store settings in case defaults were used
-        preferences.setStoredSettings()
     },
     setElementCallbacks: ()=>{
         [ preferences.copartCheckEl,

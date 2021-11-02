@@ -3,8 +3,7 @@ async function openSalvagePages(vinInput) { console.log("openSalvagePages")
     sendProgress("search", "start")
 
     // SETTINGS
-    let storage = await browser.storage.local.get("settings");
-    let settings = Object.assign(DEFAULT_SETTINGS, storage.settings)
+    let settings = await defaultedSettings()
 
     // SEARCH TERM
     vinInput = encodeURIComponent(vinInput).replace(/^\s+|\s+$/g, '');

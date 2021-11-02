@@ -3,7 +3,16 @@ const DEFAULT_SETTINGS = {
     searchCopart: true,
     searchIaai: true,
     searchRow52: true,
-    searchPoctra: true
+const defaultedSettings = async () => {
+    let storage = await browser.storage.local.get("settings");
+    let settings = storage.settings || new Object;
+    if (
+        !Object.keys(DEFAULT_SETTINGS).every(k=>settings.hasOwnProperty(k))
+    ) {
+        settings = Object.assign(DEFAULT_SETTINGS, settings);
+        browser.storage.local.set({settings})
+    }
+    return settings
 }
 const sendNotification = (message, options={}) => {
     // quick feedback notification creation with error catching
