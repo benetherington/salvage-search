@@ -10,6 +10,7 @@ async function downloadImages() {
         imageUrls.push(... await copartImageUrlsFromOpenTab())
         imageUrls.push(... await iaaiImageUrlsFromOpenTab())
         imageUrls.push(... await poctraImageUrlsFromOpenTab())
+        imageUrls.push(... await bidfaxImageUrlsFromOpenTab())
         imageUrls.forEach( (url, idx) => {
             console.log(`downloading ${idx}`)
             browser.downloads.download({
@@ -425,9 +426,8 @@ async function poctraImageUrlsFromOpenTab() {
                 )
             )
         ).flat()
-        console.log('lotNumbers:'); console.log(lotNumbers)
         if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
-        {throw "is this a Copart or IAAI archive page? If so, please send Ben the URL. They've changed something."}
+        {throw "is this an archived listing for a Copart or IAAI sale? If so, please send Ben the URL. They've changed something."}
         for (let lotNumber of lotNumbers) {
             let urls;
             if (lotNumber.yard==="copart") {
@@ -459,5 +459,58 @@ function poctraGetLotNumber() {
 }
 
 
+/*------*\
+  BIDFAX  
+\*------*/
+async function bidfaxImageUrlsFromOpenTab() {
+    let imageUrls = [];
+    try {
+        // FIND TABS
+        let bidfaxTabs = await browser.tabs.query( {active:true, url:["*://en.bidfax.info/*"]} );
+        if (!bidfaxTabs.length) {return [];}
+        // DETERMINE SALVAGE
+        // I'm using the var name lotNumbers, but it's more like lotDetails.
+        // an object with a yard and number key.
+        let lotNumbers = Array.from(
+            await Promise.all(
+                bidfaxTabs.map(async bidfaxTab=>
+                    await browser.tabs.executeScript(bidfaxTab.id, { code:`(${bidfaxGetLotNumber.toString()})()` })
+                )
+            )
+        ).flat()
+        if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
+        {throw "is this an archived listing for a Copart or IAAI sale? If so, please send Ben the URL. They've changed something."}
+        for (let lotNumber of lotNumbers) {
+            let urls;
+            if (lotNumber.yard==="copart") {
+                urls = await copartImageUrlsFromLot(lotNumber.number)
+            } else if (lotNumber.yard==="iaai") {
+                urls = await iaaiImageUrlsFromStock(lotNumber.number)
+            } else {
+                console.log(`Unknown yard encountered at bidfax: ${lotNumbers.map(lot=>Object.values(lot)).join()}, tab.id: ${bidfaxTabs.map(t=>t.id)}`);
+                throw "only IAAI and Copart image downloads are supported. We might be able to add support for this yard, please send Ben the URL for this page."
+            }
+            imageUrls.push(...urls)
+        }
+    } catch (error) {throw `BidFax: ${error}`}
+    return imageUrls
+}
+
+function bidfaxGetLotNumber() {
+    // GET LOT INFO
+    let infoElement = document.querySelector("#aside")
+    if (!infoElement) {return null}
+    // LOOK FOR CORRECT INFO
+    // we're looking for bits of text like: "Auction:  IAAI" and "Lot number: 31451264"
+    let yardRe = /(?<=auction:.*)iaai|copart/i
+    let numberRe = /(?<=lot.*:\D*)\d+/i
+    let yard   = yardRe.exec(infoElement.innerText)[0].toLowerCase()
+    let number = numberRe.exec(infoElement.innerText)[0]
+    if (yard && number) {
+        return {yard, number}
+    } else {
+        return {yard: "unknown", number}
+    }
+}
 
 console.log("download-background loaded")

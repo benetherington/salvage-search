@@ -138,7 +138,8 @@ window.addEventListener("load", async () => {
         url: [
             "*://*.iaai.com/*ehicle*etails*", // i miss blobs
             "*://*.copart.com/lot/*",
-            "*://*.poctra.com/*/id-*/*"
+            "*://*.poctra.com/*/id-*/*",
+            "*://en.bidfax.info/*"
         ]}
     );
     if (salvageTabs.length) {
