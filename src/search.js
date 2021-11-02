@@ -1,4 +1,4 @@
-async function openSalvagePages(vinInput) { console.log("openSalvagePages")
+async function searchSalvageSites(vinInput) { console.log("openSalvagePages")
     // FEEDBACK
     sendProgress("search", "start")
 
@@ -245,7 +245,7 @@ async function searchPoctra(vinInput) { // -> function
             if (!lotUrls.length) {throw "search returned no results"}
             // SUCCESS!
             resolve(()=>{
-                lotUrls.forEach( (lotUrl)=>{
+                lotUrls.forEach( lotUrl=>{
                     browser.tabs.create({url: lotUrl})
                 })
                 sendProgress("download", "attention")
@@ -268,16 +268,17 @@ async function searchBidfax(vinInput) { // -> function
         try {
             // SEARCH
             let searchUrl = `https://en.bidfax.info/?do=search&subaction=search&story=${vinInput}`;
-            let headers = {"Accept": "application/json,application/xml"};
+            let headers = {"Accept": "text/html"};
             let response = await fetch( searchUrl, {headers});
             if (!response.ok) { throw "something went wrong on their end..." }
             // CHECK FOR RESULTS
-            let lotUrls = [];
             let parser = new DOMParser();
             let doc = parser.parseFromString(await response.text(), "text/html");
             let searchResults = doc.querySelectorAll(".thumbnail.offer");
             if (!searchResults.length) {throw "search returned no results."}
             // PARSE RESULTS
+            let lotUrls = [];
+            let stockNumbers = [];
             for (searchResult of searchResults) {
                 // FIND PAGE LINK
                 let lotLinkElement = searchResult.querySelector(".caption a");
@@ -289,6 +290,14 @@ async function searchBidfax(vinInput) { // -> function
                     let yardName = yardNameElement.innerText.trim();
                     let stockNumberElement = searchResult.querySelector(".short-story span");
                     let stockNumber = stockNumberElement.innerText;
+                    if (stockNumbers.includes(stockNumber)) {
+                        // Sometimes, multiple pages for the same lot number are
+                        // returned, and we don't want to include this URL after
+                        // all.
+                        lotUrls.pop(lotLinkElement.href)
+                        continue
+                    }
+                    stockNumbers.push(stockNumber)
                     sendNotification( `BidFax: found a match at ${yardName}! Lot ${stockNumber}.`, {displayAs: "success"} )
                 } catch {
                     sendNotification( "BidFax: found a match!", {displayAs: "success"})
@@ -300,6 +309,7 @@ async function searchBidfax(vinInput) { // -> function
                 lotUrls.forEach( lotUrl=>{
                     browser.tabs.create({url: lotUrl})
                 })
+                sendProgress("download", "attention")
             })
         } catch (error) {
             console.log(`BidFax rejecting: ${error}`)
