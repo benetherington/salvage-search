@@ -262,17 +262,40 @@ async function searchPoctra(vinInput) { // -> function
 /*------*\
   BIDFAX  
 \*------*/
-
 async function searchBidfax(vinInput) { // -> function
     return new Promise(async (resolve, reject)=>{
         try {
+            // FETCH GC TOKEN
+            let homeUrl = "https://en.bidfax.info";
+            let tokenTab = await browser.tabs.create({url:homeUrl, active:false})
+            await browser.tabs.executeScript(tokenTab.id,{code:
+                `(()=>{
+                    document.querySelector("#submit").click()
+                })()`
+            })
+            let token = await browser.tabs.executeScript(tokenTab.id, {code:
+                `(()=>{return (new URL(document.querySelector("link[rel=alternate]").href)).searchParams.get('token2');})()`
+            })[0]
+            browser.tabs.remove(tokenTab.id)
+            
             // SEARCH
-            let searchUrl = `https://en.bidfax.info/?do=search&subaction=search&story=${vinInput}`;
-            let headers = {"Accept": "text/html"};
-            let response = await fetch( searchUrl, {headers});
+            let searchUrl = new URL("https://en.bidfax.info/")
+            searchUrl.searchParams.append("do", "search")
+            searchUrl.searchParams.append("subaction", "search")
+            searchUrl.searchParams.append("story", vinInput)
+            searchUrl.searchParams.append("token2", token)
+            searchUrl.searchParams.append("action2", "search_action")
+            let response = await fetch(searchUrl);
             if (!response.ok) { throw "something went wrong on their end..." }
+            if (response.status === 301) {
+                // Moved Permanently is returned when the GC token is invalid or
+                // missing.
+                console.log("BidFax wants a CAPTCHA check")
+                browser.tabs.create({url:homeUrl})
+                throw "CAPTCHA failed. Please click on a listing before trying again."
+            }
             // CHECK FOR RESULTS
-            let parser = new DOMParser();
+            let parser = new DOMParser()
             let doc = parser.parseFromString(await response.text(), "text/html");
             let searchResults = doc.querySelectorAll(".thumbnail.offer");
             if (!searchResults.length) {throw "search returned no results."}
