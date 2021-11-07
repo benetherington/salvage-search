@@ -1,22 +1,25 @@
 /*---------------*\
   POPUP INTERFACE  
 \*---------------*/
-async function downloadImages() {
+async function downloadImages(messageValue) {
     // Called from popup via background.js message handler
     console.log("Fetching images.")
+    let {yardName, lotNumber} = messageValue;
     try {
         sendProgress("download", "start")
         let imageUrls = [];
-        imageUrls.push(... await copartImageUrlsFromOpenTab())
-        imageUrls.push(... await iaaiImageUrlsFromOpenTab())
-        imageUrls.push(... await poctraImageUrlsFromOpenTab())
-        imageUrls.push(... await bidfaxImageUrlsFromOpenTab())
+        // If we know the yard, skip the other. If we don't know, try both.
+        if (yardName==="copart" || !yardName) {
+            imageUrls.push(... await copartImageUrlsFromLot(lotNumber))
+        } else if (yardName==="iaai" || !yardName) {
+            imageUrls.push(... await iaaiImageUrlsFromStock(lotNumber))
+        }
         imageUrls.forEach( (url, idx) => {
             console.log(`downloading ${idx}`)
             browser.downloads.download({
                 url: url,
                 saveAs: false,
-                filename: `${idx}.jpg`
+                filename: `${yardName}-${idx}.jpg`
             })
         })
         sendProgress("download", "end")
@@ -27,38 +30,139 @@ async function downloadImages() {
     }
 };
 
+const Salvage = class SalvageObject {
+    constructor(tabId=null, data=null) {
+        this.tab = null              //
+        this.salvageName = null     // Private. If getter works, lotNumber or lotNumberFetcher should also be set.
+        this.lotNumber = null       // Private. Get/set lotNumber instead so that data can be persisted.
+        this.lotNumberFetcher = null // A Copart, IAAI, Poctra, or BidFax function.
+        this.imageInfo = null       // Private. Get/set imageInfo instead.
+        this.imageInfoFetcher = null // A Copart or IAAI function.
+        this.imageUrls = null       // Private. Get/set imageUrls instead.
+        this.imageUrlsFetcher = null // A Copart or IAAI function.
+        if (tabId) {this.setTabId(tabId)}
+        if (data) {this.setData(data)}
+    }
+    setData(values) {
+        Object.assign(this, values)
+    }
+    async setTabId(id) {this.tab = await browser.tabs.get(id)}
+    async getSalvageName() {
+        if (this.salvageName) {return this.salvageName}
+        if (this.tab) {
+            await this.fetchFromTab()
+            return this.salvageName;
+        } else {throw "no tab"}
+    }
+    async fetchFromTab() {
+        // get salvageName as well as lotNumber or lotNumberFetcher from the tab
+        if (/copart\.com/i.test(this.tab.url)) {
+            this.salvageName = 'copart';
+            this.lotNumberFetcher = copartLotNumbersFromTab;
+        } else if (/iaai\.com/i.test(this.tab.url)) {
+            this.salvageName = 'iaai';
+            this.lotNumberFetcher = iaaiStockNumbersFromTab;
+        } else if (/poctra\.com/i.test(this.tab.url)) {
+            this.setData( await poctraLotNumbersFromTabs() )
+        } else if (/bidfax\.info/i.test(this.tab.url)) {
+            this.setData( await bidfaxLotNumbersFromTabs() )
+        }
+    }
+    async getLotNumber() {
+        if (this.lotNumber) {return this.lotNumber}
+        if (await this.getSalvageName()) {
+            this.setData( await this.lotNumberFetcher(this) )
+            return this.lotNumber
+        }
+    }
+    async getImageInfo() {
+        if (this.imageInfo) {return this.imageInfo}
+        if (this.imageInfoFetcher || await this.getLotNumber()) {
+            this.setData( await this.imageInfoFetcher(this) )
+            return this.imageInfo;
+        }
+    }
+    async getImageUrls() {
+        if (this.imageUrls) {return this.imageUrls}
+        if (this.imageUrlsFetcher || await this.getImageInfo()) {
+            this.setData( await this.imageUrlsFetcher(this) )
+            return this.imageUrls;
+        }
+    }
+}
+
+async function identifySalvageTabs() {
+    // get all salvage tabs
+    let salvageTabs = await browser.tabs.query({
+        url: [COPART_URL_PATTERN, IAAI_URL_PATTERN, POCTRA_URL_PATTERN, BIDFAX_URL_PATTERN]
+    });
+    // if any are active, discard all others
+    let activeTabs = salvageTabs.filter(t=>t.active);
+    if (activeTabs.length) { salvageTabs = activeTabs; }
+    // sort decending by ID. First element will be oldest
+    salvageTabs.sort( (t1, t2)=>t1.id>t2.id?-1:1 )
+    return salvageTabs.map( tab=>new Salvage(tab) )
+}
+// function () {
+//     if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
+//     for (let lotNumber of lotNumbers) {
+//         let urls;
+//         if (lotNumber.yard==="copart") {
+//             urls = await copartImageUrlsFromLot(lotNumber.number)
+//         } else if (lotNumber.yard==="iaai") {
+//             urls = await iaaiImageUrlsFromStock(lotNumber.number)
+//         } else { console.log('lotNumber:'); console.log(lotNumber) }
+//         imageUrls.push(...urls)
+//     }
+//     {throw "is this an archived listing for a Copart or IAAI sale? If so, please send Ben the URL. They've changed something."}
+// }
 
 /*------*\
   COPART  
 \*------*/
-async function copartImageUrlsFromOpenTab() { // => array of URLs
-    // Checks active tabs for Copart lot pages, gathers data, including HD image
-    // URLs, and sends a message with data.
-
-    // FIND TABS
-    console.log("copartDownloadImages getting imageKeys")
-    let copartTabs = await browser.tabs.query({active:true, url:"*://*.copart.com/lot/*"});
-    if (!copartTabs.length) {return [];}
-    // FIND LOTS
-    let lotNumbers = copartTabs.map(tab=>{
-        // let ymm = tab.title.match(/^(.*) for Sale/i)[1];
-        return tab.url.match(/copart\.com\/lot\/(\d*)/)[1]
-    })
-    if (!lotNumbers.length) {return [];}
-    sendNotification(`Copart: downloading images from lot #${lotNumbers.join(", ")},`)
-    // GET URLS
-    let hdUrls = await copartImageUrlsFromLot(lotNumbers);
-    return hdUrls;
+const COPART_URL_PATTERN = "*://*.copart.com/lot/*";
+// async function copartGetTabs(queryOptions={}) { // -> [objectURL]
+//     Object.assign( {active:true, url:[COPART_URL_PATTERN]}, queryOptions)
+//     return browser.tabs.query(...queryOptions);
+// }
+// async function copartLotNumbersFromTabs(copartTabOrTabs) { // => array of URLs
+//     let copartTabs = Array.from(arguments).flat();
+//     let lotNumbers = copartTabs.map(tab=>{
+//         // can also extract more data from the title!
+//         // let ymm = tab.title.match(/^(.*) for Sale/i)[1];
+//         return tab.url.match(/copart\.com\/lot\/(\d*)/)[1];
+//     })
+//     return {yardName: 'copart', lotNumbers};
+// }
+async function copartLotNumbersFromTab(tabOrSalvage) {
+    let copartTab;
+    if (tabOrSalvage instanceof Salvage) { copartTab = tabOrSalvage.tab }
+    else { copartTab = tabOrSalvage }
+    let salvageName = 'copart';
+    let lotMatch = copartTab.title.match(/^(.*) for Sale/i);
+    let lotNumber;
+    if (lotMatch) { lotNumber = lotMatch[0] }
+    else {
+        let framesResponses = await browser.tabs.executeScript(
+            copartTab.id, {code:`document.querySelector("#lot-details .lot-number").lastChild.textContent.trim()`}
+        )
+        lotNumber = framesResponses[0]
+    }
+    let imageInfoFetcher = copartFetchImageInfoFromLotNumber
+    let imageUrlsFetcher = copartImageUrlsFromInfo
+    return {salvageName, lotNumber, imageInfoFetcher, imageUrlsFetcher}
 }
-async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
+async function copartImageUrlsFromInfo(imageInfosOrSalvage) { // => array of URLs
     // Accepts a single lot number, multiple lot numbers, or an array of lot numbers.
-    let lotNumbers = Array.from(arguments).flat();
-    if (!lotNumbers.length) {throw "no lot number provided.";}
-    // FETCH
-    let jsons = await Promise.all(lotNumbers.map( lotNumber=>copartFetchLotData(lotNumber) ))
+    let imageInfos;
+    if (imageInfosOrSalvage instanceof Salvage) {
+        imageInfos = [await imageInfosOrSalvage.getImageInfo()]
+    } else { imageInfos = Array.from(arguments).flat(); }
+    if (!imageInfos.length) {throw "no lot number provided.";}
+    sendNotification(`Copart: downloading images from lot #${imageInfos.map(i=>i.lotNumber).join(", ")},`)
     // PROCESS
     let imageUrls = [];
-    for (let jsn of jsons) {
+    for (let jsn of imageInfos) {
         try {
             if (  !jsn.hasOwnProperty("returnCode")
                ||  jsn.returnCode!=1
@@ -74,9 +178,13 @@ async function copartImageUrlsFromLot(lotNumberOrNumbers) { // => array of URLs
                 imageUrls.push( ...highResImages )
         } catch (error) {throw `Copart: lot #${jsn.lotNumber} ${error}`}
     }
-    return imageUrls
+    return {imageUrls}
 };
-async function copartFetchLotData(lotNumber) { // => JSON object
+async function copartFetchImageInfoFromLotNumber(lotNumberOrSalvage) { // => JSON object
+    let lotNumber;
+    if (lotNumberOrSalvage instanceof Salvage) {
+        lotNumber = await lotNumberOrSalvage.getLotNumber();
+    } else { lotNumber = lotNumberOrSalvage; }
     let imagesUrl = `https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`;
     let headers = { "User-Agent": window.navigator.userAgent,
                     "Accept": "application/json, text/plain, */*" }
@@ -96,96 +204,133 @@ async function copartFetchLotData(lotNumber) { // => JSON object
 /*----*\
   IAAI  
 \*----*/
-// TOP-LEVEL INITIATORS
-// These send notifications and progressbar starters, but no increments, nor
-// errors. All errors are caught, formatted, and re-thrown.
-async function iaaiImageUrlsFromOpenTab() { // -> [objectURL]
-    console.log("iaaiImageUrlsFromOpenTab()")
-    try {
-        // FIND TABS
-        let iaaiTabs = await browser.tabs.query( {active:true, url:["*://*.iaai.com/*ehicle*etails*"]} );
-        if (!iaaiTabs.length) {return [];} // no error thrown, as the user might be targeting a Copart tab.
-        console.log(`Found ${iaaiTabs.length} tabs.`)
-        // GET STOCK NUMBERS
-        let stockNumbers = await iaaiStockNumbersFromTab(iaaiTabs)
-        // GET DETAILS
-        let lotDetails = await iaaiFetchLotDetails(stockNumbers)
-        let imageCount = countImages(lotDetails)
-        await sendNotification(`IAAI: processing ${imageCount} images.`)
-        await sendProgress("download", "start", {total: imageCount})
-        // FETCH IMAGES
-        return iaaiImageUrlsFromDetails(lotDetails);
-    } catch (error) {throw `IAAI: ${error}`}
+const IAAI_URL_PATTERN = "*://*.iaai.com/*ehicle*etails*";
+// async function iaaiGetTabs(queryOptions={}) { // -> [objectURL]
+//     Object.assign( {active:true, url:[IAAI_URL_PATTERN]}, queryOptions)
+//     return browser.tabs.query(...queryOptions);
+// }
+// async function iaaiStockNumbersFromTabs(iaaiTabOrTabs) { // -> [string]
+//     // Gets image keys from the provided tab.
+//     let iaaiTabs = Array.from(arguments).flat();
+//     console.log(`iaaiStockNumbersFromTab(${iaaiTabs.map(t=>t.id)})`)
+//     try {
+//         let stockPromises = iaaiTabs.map(iaaiTab=>
+//             browser.tabs.executeScript(
+//                 iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
+//             ).catch(()=>{ throw "there was an error communicating with the page."+
+//                                 "Please reload the page and try again." })
+//             .then( lastEvaluated=>JSON.parse(lastEvaluated[0]) )
+//             .then( jsn=>jsn.VehicleDetailsViewModel.StockNo )
+//         )
+//         let stockNumbers = await Promise.all(stockPromises);
+//         return {yardName: 'iaai', lotNumbers};
+//     } catch {
+//         throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
+//     }
+// }
+async function iaaiStockNumbersFromTab(iaaiTabOrSalvage) { // -> [string]
+    // Gets image keys from the provided tab.
+    let iaaiTab;
+    if (iaaiTabOrSalvage instanceof Salvage) {
+        iaaiTab = iaaiTabOrSalvage.tab;
+    } else { iaaiTab = iaaiTabOrSalvage }
+    // try {
+        let salvageName = 'iaai';
+        let lotNumber = await browser.tabs.executeScript(
+                iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
+            ).catch(()=>{ throw "there was an error communicating with the page."+
+                                "Please reload the page and try again." })
+            .then( lastEvaluated=>JSON.parse(lastEvaluated[0]) )
+            .then( jsn=>jsn.VehicleDetailsViewModel.StockNo );
+        let imageInfoFetcher = iaaiFetchImageInfosFromLotNumber;
+        let imageUrlsFetcher = iaaiImageUrlsFromImageInfo;
+        return {salvageName, lotNumber, imageInfoFetcher, imageUrlsFetcher}
+    // } catch {
+    //     throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
+    // }
 }
-async function iaaiImageUrlsFromStock(stockNumberOrNumbers) { // -> [objectURL]
-    // Accepts a single stockNumber, multiple stockNumbers, or an array of stockNumbers.
-    let stockNumbers = Array.from(arguments).flat();
-    console.log(`iaaiImageUrlsFromStock(${stockNumbers})`)
-    let imageUrls = [];
-    try {
-        // GET DETAILS
-        let lotDetails = await iaaiFetchLotDetails(stockNumbers)
-        let imageCount = countImages(lotDetails)
-        await sendNotification(`IAAI: processing ${imageCount} images.`)
-        await sendProgress("download", "start", {total:imageCount})
-        // FETCH IMAGES
-        imageUrls = await iaaiImageUrlsFromDetails(lotDetails);
-    } catch (error) {throw `IAAI: ${error}`}
-    return imageUrls
-}
+
+// async function iaaiImageUrlsFromStockNumber(stockNumberOrNumbers) { // -> [objectURL]
+//     // Accepts a single stockNumber, multiple stockNumbers, or an array of stockNumbers.
+//     let stockNumbers = Array.from(arguments).flat();
+//     console.log(`iaaiImageUrlsFromStock(${stockNumbers})`)
+//     let imageUrls = [];
+//     try {
+//         // GET DETAILS
+//         let lotDetails = await iaaiFetchImageInfoFromLotNumber(stockNumbers)
+//         let imageCount = countImages(lotDetails)
+//         await sendNotification(`IAAI: processing ${imageCount} images.`)
+//         await sendProgress("download", "start", {total:imageCount})
+//         // FETCH IMAGES
+//         imageUrls = await iaaiImageUrlsFromImageInfo(lotDetails);
+//     } catch (error) {throw `IAAI: ${error}`}
+//     return imageUrls
+// }
 function countImages(imageDetailOrDetails){ // -> int
     let imageDetails = Array.from(arguments).flat()
     return imageDetails.reduce((total, details)=>{
         return total + details.keys.length
     }, initialValue=0)
 }
-
-// IMAGE DETAILS
-// These send no notifications, but they do call image processors, which will
-// send progressbar increments. Any errors are thrown without formatting.
-async function iaaiStockNumbersFromTab(iaaiTabOrTabs) { // -> [string]
-    // Gets image keys from the provided tab.
-    let iaaiTabs = Array.from(arguments).flat();
-    console.log(`iaaiStockNumbersFromTab(${iaaiTabs.map(t=>t.id)})`)
-    try {
-        let stockPromises = iaaiTabs.map(iaaiTab=>
-            browser.tabs.executeScript(
-                iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
-            ).catch(()=>{ throw "there was an error communicating with the page."+
-                                "Please reload the page and try again." })
-            .then( lastEvaluated=>JSON.parse(lastEvaluated[0]) )
-            .then( jsn=>jsn.VehicleDetailsViewModel.StockNo )
-        )
-        return Promise.all(stockPromises)
-    } catch {
-        throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
+// async function iaaiFetchImageInfosFromLotNumber(stockNumberOrNumbers) { //-> [ {keys:[]} ]
+//     let stockNumbers;
+//     if (stockNumberOrNumbers instanceof Salvage) {
+//         stockNumbers = [await stockNumberOrNumbers.getLotNumber()];
+//     } else {
+//         stockNumbers = Array.from(arguments).flat();
+//     }
+//     // ENSURE TYPE
+//     stockNumbers = stockNumbers.map( stockNumber=>stockNumber.toString() );
+//     console.log(`iaaiFetchImageInfoFromLotNumber(${stockNumbers})`)
+//     let lotPromises = stockNumbers.map( stockNumber=>{
+//         // BUILD REQUEST
+//         let getLotDetailsUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
+//         getLotDetailsUrl.searchParams.append(
+//             'json', JSON.stringify({"stockNumber":stockNumber})
+//         )
+//         let headers = { "User-Agent": window.navigator.userAgent,
+//                         "Accept": "application/json, text/plain, */*" };
+//         // FETCH AND PARSE
+//         return fetch(getLotDetailsUrl, {headers})
+//             .then( response=> {
+//                 if (response.ok) {return response}
+//                 else {throw "server error"}
+//             }).then( response=> {
+//                 if (response.headers.get("content-length") > '0')
+//                 {return response.json()}
+//                 {throw "no images found."}
+//             })
+//     })
+//     return Promise.all(lotPromises)
+// }
+async function iaaiFetchImageInfosFromLotNumber(stockNumberOrSalvage) { //-> [ {keys:[]} ]
+    let stockNumber;
+    if (stockNumberOrSalvage instanceof Salvage) {
+        stockNumber = await stockNumberOrSalvage.getLotNumber()
+    } else {
+        stockNumber = stockNumberOrSalvage;
     }
-}
-async function iaaiFetchLotDetails(stockNumberOrNumbers) { //-> [ {keys:[]} ]
-    let stockNumbers = Array.from(arguments).flat()
     // ENSURE TYPE
-    stockNumbers = stockNumbers.map( stockNumber=>stockNumber.toString() );
-    console.log(`iaaiFetchLotDetails(${stockNumbers})`)
-    let lotPromises = stockNumbers.map( stockNumber=>{
-        // BUILD REQUEST
-        let getLotDetailsUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
-        getLotDetailsUrl.searchParams.append(
-            'json', JSON.stringify({"stockNumber":stockNumber})
-        )
-        let headers = { "User-Agent": window.navigator.userAgent,
-                        "Accept": "application/json, text/plain, */*" };
-        // FETCH AND PARSE
-        return fetch(getLotDetailsUrl, {headers})
-            .then( response=> {
-                if (response.ok) {return response}
-                else {throw "server error"}
-            }).then( response=> {
-                if (response.headers.get("content-length") > '0')
-                {return response.json()}
-                {throw "no images found."}
-            })
-    })
-    return Promise.all(lotPromises)
+    stockNumber = stockNumber.toString();
+    console.log(`iaaiFetchImageInfoFromLotNumber(${stockNumber})`)
+    // BUILD REQUEST
+    let getLotDetailsUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
+    getLotDetailsUrl.searchParams.append(
+        'json', JSON.stringify({"stockNumber":stockNumber})
+    )
+    let headers = { "User-Agent": window.navigator.userAgent,
+                    "Accept": "application/json, text/plain, */*" };
+    // FETCH AND PARSE
+    let imageInfo = await fetch(getLotDetailsUrl, {headers})
+        .then( response=> {
+            if (response.ok) {return response}
+            else {throw "server error"}
+        }).then( response=> {
+            if (response.headers.get("content-length") > '0') {
+                return response.json()
+            } else {throw "no images found."}
+        })
+    return {imageInfo}
 }
 // FOR REFERENCE
 // getJsonImageDimensions returns:
@@ -217,11 +362,16 @@ async function iaaiFetchLotDetails(stockNumberOrNumbers) { //-> [ {keys:[]} ]
 // IMAGE PROCESSING
 // These send no notifications, but they do increment the progressbar. Any
 // errors are thrown without formatting.
-async function iaaiImageUrlsFromDetails(lotDetailOrDetails) { // -> [objectURL]
+async function iaaiImageUrlsFromImageInfo(lotInfosOrSalvage) { // -> [objectURL]
     // accepts a single imageDetails object, multiple imageDetails objects, or
     // an array of imageDetails objects
-    let lotDetails = Array.from(arguments).flat()
-    console.log("iaaiImageUrlsFromDetails(...)")
+    let lotDetails;
+    if (lotInfosOrSalvage instanceof Salvage) {
+        lotDetails = [await lotInfosOrSalvage.getImageInfo()];
+    } else {
+        lotDetails = Array.from(arguments).flat();
+    }
+    console.log("iaaiImageUrlsFromImageInfo(...)")
     console.log(lotDetails)
     if (!lotDetails.length){return []}
     // FETCH AND PROCESS
@@ -229,12 +379,12 @@ async function iaaiImageUrlsFromDetails(lotDetailOrDetails) { // -> [objectURL]
     for (let lotDetail of lotDetails) {
         let dezoomed = await iaaiFetchAndDezoom(lotDetail.keys)
         processedUrls.push(...dezoomed)
-        // let {walkaroundUrls, panoUrls} = await spincarFetchInfo(lotDetail.cdn_image_prefix)
+        // let {walkaroundUrls, panoUrls} = await spincarFetchDetails(lotDetail.cdn_image_prefix)
         // processedUrls.push(...pano)
         // processedUrls.push(...walkaround)
     };
     // DONE
-    return processedUrls
+    return {imageUrls: processedUrls}
 }
 const TILE_SIZE = 250;
 async function iaaiFetchAndDezoom(imageKeyOrKeys) { // -> [objectURL]
@@ -280,12 +430,7 @@ async function iaaiFetchAndDezoom(imageKeyOrKeys) { // -> [objectURL]
     }
     return Promise.all(processedPromises)
 }
-// for 10 images, got:
-// average 461.7 ms from create to processed
-// Total 79 ms from first processed to last
-// Total 502ms from before loop to last processed
-
-async function spincarFetchInfo(spinUrlOrUrls) {
+async function spincarFetchDetails(spinUrlOrUrls) {
     let spinUrls = Array.from(arguments).flat()
     let spinPromises = spinUrls.map( async spinUrl=>{
         let spinPath = /com\/(.*)/.exec(spinUrl)[1];
@@ -305,6 +450,20 @@ async function spincarFetchInfo(spinUrlOrUrls) {
     })
     return Promise.all(spinPromises)
 }
+function dataURLtoObjectURL(uri, name) { // -> objectURL
+    // Takes a dataURL and turns it into a temporary object URL. This makes it
+    // easier to pass around. See: https://stackoverflow.com/a/12300351
+    let byteString = atob(uri.split(',')[1]);
+    let mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
+    let ab = new ArrayBuffer(byteString.length);
+    let ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    let blob = new Blob([ab], {type: mimeString});
+    blob.name = name+".jpg"
+    return URL.createObjectURL(blob)
+};
 // FOR REFERENCE
 // walkaround/pano URL format is:
 // https://cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/20210928165305.CUFD0VOL/ec/0-49.jpg
@@ -391,126 +550,80 @@ async function spincarFetchInfo(spinUrlOrUrls) {
 //   }
 
 
-function dataURLtoObjectURL(uri, name) { // -> objectURL
-    // Takes a dataURL and turns it into a temporary object URL. This makes it
-    // easier to pass around. See: https://stackoverflow.com/a/12300351
-    let byteString = atob(uri.split(',')[1]);
-    let mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
-    let ab = new ArrayBuffer(byteString.length);
-    let ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-    let blob = new Blob([ab], {type: mimeString});
-    blob.name = name+".jpg"
-    return URL.createObjectURL(blob)
-};
-
-
 
 /*------*\
   POCTRA  
 \*------*/
-
-async function poctraImageUrlsFromOpenTab() {
-    let imageUrls = [];
+const POCTRA_URL_PATTERN = "*://*.poctra.com/*/id-*/*";
+// async function poctraLotNumbersFromTabs(poctraTabOrTabs) {
+//     let poctraTabs = Array.from(arguments).flat();
+//     try {
+//         return await Promise.all(
+//             poctraTabs.map(async poctraTab=>{
+//                 let framesResults = await browser.tabs.executeScript(poctraTab.id, { code:`(${poctraGetLotNumber.toString()})()` });
+//                 return framesResults[0]
+//             })
+//         );
+//     } catch (error) {throw `Poctra: ${error}`}
+// }
+async function poctraLotNumbersFromTab(poctraTab) {
     try {
-        // FIND TABS
-        let poctraTabs = await browser.tabs.query( {active:true, url:["*://*.poctra.com/*/id-*/*"]} );
-        if (!poctraTabs.length) {return [];}
-        // DETERMINE SALVAGE
-        let lotNumbers = Array.from(
-            await Promise.all(
-                poctraTabs.map(async poctraTab=>
-                    await browser.tabs.executeScript(poctraTab.id, { code:`(${poctraGetLotNumber.toString()})()` })
-                )
-            )
-        ).flat()
-        if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
-        {throw "is this an archived listing for a Copart or IAAI sale? If so, please send Ben the URL. They've changed something."}
-        for (let lotNumber of lotNumbers) {
-            let urls;
-            if (lotNumber.yard==="copart") {
-                urls = await copartImageUrlsFromLot(lotNumber.number)
-            } else if (lotNumber.yard==="iaai") {
-                urls = await iaaiImageUrlsFromStock(lotNumber.number)
-            } else { console.log('lotNumber:'); console.log(lotNumber) }
-            imageUrls.push(...urls)
-        }
+        let framesResults = await browser.tabs.executeScript(poctraTab.id, { code:`(${poctraGetLotNumber.toString()})()` });
+        return framesResults[0]
     } catch (error) {throw `Poctra: ${error}`}
-    return imageUrls
 }
-
 function poctraGetLotNumber() {
     let idElement = document.querySelector("h2");
     if (!idElement) {return null}
     let idString = idElement.innerText;
-    let idMatches = /(?<type>Lot|Stock) no: (?<number>\d*)/.exec(idString);
-    if (!idMatches) {return null}
-    let type, number;
-    ({type, number} = idMatches.groups);
-    if (type==="Lot") {
-        return {yard: "copart", number}
-    } else if (type==="Stock") {
-        return {yard: "iaai", number}
+    let idMatches = /(?<type>Lot|Stock) no: (?<lotNumber>\d*)/.exec(idString);
+    let type, salvageName, lotNumber;
+    if (idMatches){
+        ({type, lotNumber} = idMatches.groups);
+        salvageName = {lot:"copart", stock:"iaai"}[type];
     } else {
-        return {yard: "unknown"}
+        salvageName = "unknown";
     }
+    
+    return {salvageName, lotNumber}
 }
 
 
 /*------*\
   BIDFAX  
 \*------*/
-async function bidfaxImageUrlsFromOpenTab() {
-    let imageUrls = [];
-    try {
-        // FIND TABS
-        let bidfaxTabs = await browser.tabs.query( {active:true, url:["*://en.bidfax.info/*"]} );
-        if (!bidfaxTabs.length) {return [];}
-        // DETERMINE SALVAGE
-        // I'm using the var name lotNumbers, but it's more like lotDetails.
-        // an object with a yard and number key.
-        let lotNumbers = Array.from(
-            await Promise.all(
-                bidfaxTabs.map(async bidfaxTab=>
-                    await browser.tabs.executeScript(bidfaxTab.id, { code:`(${bidfaxGetLotNumber.toString()})()` })
-                )
-            )
-        ).flat()
-        if (!lotNumbers.some(ln=>ln.yard!="unknown")) // if we didn't get at least one solid hit
-        {throw "is this an archived listing for a Copart or IAAI sale? If so, please send Ben the URL. They've changed something."}
-        for (let lotNumber of lotNumbers) {
-            let urls;
-            if (lotNumber.yard==="copart") {
-                urls = await copartImageUrlsFromLot(lotNumber.number)
-            } else if (lotNumber.yard==="iaai") {
-                urls = await iaaiImageUrlsFromStock(lotNumber.number)
-            } else {
-                console.log(`Unknown yard encountered at bidfax: ${lotNumbers.map(lot=>Object.values(lot)).join()}, tab.id: ${bidfaxTabs.map(t=>t.id)}`);
-                throw "only IAAI and Copart image downloads are supported. We might be able to add support for this yard, please send Ben the URL for this page."
-            }
-            imageUrls.push(...urls)
-        }
-    } catch (error) {throw `BidFax: ${error}`}
-    return imageUrls
+const BIDFAX_URL_PATTERN = "*://en.bidfax.info/*";
+// async function bidfaxLotNumbersFromTabs(bidfaxTabOrTabs) {
+//     let bidfaxTabs = Array.from(arguments).flat()
+//     try {
+//         return await Promise.all(
+//             bidfaxTabs.map(async bidfaxTab=>{
+//                 let framesResults = await browser.tabs.executeScript(bidfaxTab.id, { code:`(${bidfaxGetLotNumber.toString()})()` });
+//                 return framesResults[0]
+//             })
+//         );
+//     } catch (error) {throw `BidFax: ${error}`}
+// }
+async function bidfaxLotNumbersFromTab(bidfaxTab) {
+    let framesResults = await browser.tabs.executeScript(bidfaxTab.id, { code:`(${bidfaxGetLotNumber.toString()})()` });
+    return framesResults[0]
 }
-
 function bidfaxGetLotNumber() {
     // GET LOT INFO
     let infoElement = document.querySelector("#aside")
     if (!infoElement) {return null}
     // LOOK FOR CORRECT INFO
     // we're looking for bits of text like: "Auction:  IAAI" and "Lot number: 31451264"
-    let yardRe = /(?<=auction:.*)iaai|copart/i
-    let numberRe = /(?<=lot.*:\D*)\d+/i
-    let yard   = yardRe.exec(infoElement.innerText)[0].toLowerCase()
-    let number = numberRe.exec(infoElement.innerText)[0]
-    if (yard && number) {
-        return {yard, number}
-    } else {
-        return {yard: "unknown", number}
-    }
+    let yardRe = /(?<=auction:.*)iaai|copart/i;
+    let yardMatch = yardRe.exec(infoElement.innerText) || ["unknown"];
+    let salvageName = yardMatch[0].toLowerCase();
+    
+    let numberRe = /(?<=lot.*:\D*)\d+/i;
+    let numberMatch = numberRe.exec(infoElement.innerText) || [undefined];
+    let lotNumber = numberMatch[0]
+    
+    return {salvageName, lotNumber};
 }
+
 
 console.log("download-background loaded")
