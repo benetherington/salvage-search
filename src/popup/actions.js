@@ -39,7 +39,7 @@ class ProgressButton {
     }
     start(total=0) {
         this.el.className = this.el.dataset.styleOrig;
-        this.el.classList.add("feedback-download");
+        this.el.classList.add("feedback-busy");
         this.total = total;
         // If we got a total, set progress at zero. If not, set it at 1 so that
         // we start full color, ie 100%
@@ -74,81 +74,81 @@ class ProgressButton {
 }
 
 // SEARCH //
-// VIN textbox
-window.addEventListener("load", () => {
+// Search textbox
+window.addEventListener("load", ()=>{
     // validate VIN
-    let inputVin = document.getElementById('input-vin')
-    let inputSearch = document.getElementById('button-search')
-    inputVin.addEventListener('input', ()=>{
-        if (VINREGEX.test(inputVin.value)) {
+    let inputSearch = document.querySelector('#search-input')
+    inputSearch.addEventListener('input', ()=>{
+        if (VINREGEX.test(inputSearch.value)) {
             searchProgressButton.enable()
         } else {
             searchProgressButton.disable()
         }
     });
 })
-window.addEventListener("focus", async () => {
+window.addEventListener("focus", async ()=>{
     // auto-fill
     let clipboardContents = await navigator.clipboard.readText();
     // TODO: this fails on Chrome?
     // TODO: to request access, we need to load actions.html in a new tab
     if (VINREGEX.test(clipboardContents.trim())) {
-        document.getElementById('input-vin').value = clipboardContents.trim()
-        document.getElementById('button-search').classList.remove('disabled')
+        document.querySelector('#search-input').value = clipboardContents.trim()
+        searchProgressButton.enable()
     }
 })
 // search ProgressButton
 let searchProgressButton = new ProgressButton();
 let onSearchClick = (event) => {
-    let vinInput = document.getElementById("input-vin");
-    if (VINREGEX.test(vinInput.value)) {
+    let searchInput = document.querySelector("#search-input");
+    if (VINREGEX.test(searchInput.value)) {
         // that VIN looks good, let's run a search
         browser.runtime.sendMessage(
             { type: "popup-action",
               values: [{
                 action: "search",
-                vin: vinInput.value }]}
-        );
+                vin: searchInput.value }]}
+        )
     } else {
         // that VIN looks bad, and somehow you were still able to click the button.
         // wiggle the text input
-        vinField = document.getElementById("input-vin")
+        vinField = document.querySelector("#input-vin")
         vinField.classList.remove("error-attention"); // in case it's already moving
         vinField.classList.add("error-attention");
         // hide the error message after 4 seconds
         addFeedbackMessage({message: "That VIN doesn't look right.", displayAs: "error"})
     };
+    
     event.stopPropagation()
 };
-window.addEventListener("load", () => {
-    searchProgressButton.el = document.querySelector("#button-search");
-    searchProgressButton.el.addEventListener("click", onSearchClick)
+window.addEventListener("load", ()=>{
+    let searchButton = document.querySelector("#search-button");
+    searchProgressButton.el = searchButton;
+    searchButton.addEventListener("click", onSearchClick)
 })
 
 // DOWNLOAD //
-// ProgressButton
-let dlProgressButton = new ProgressButton();
-dlProgressButton.status = "disabled"
-window.addEventListener("load", async () => {
-    dlProgressButton.el = document.querySelector("#button-download");
-    dlProgressButton.el.addEventListener("click", onDownloadClick)
-    // activate or deactivate download button
-    let salvageTabs = await browser.tabs.query(
-        {active: true,
-        url: [
-            "*://*.iaai.com/*ehicle*etails*", // i miss blobs
-            "*://*.copart.com/lot/*",
-            "*://*.poctra.com/*/id-*/*",
-            "*://en.bidfax.info/*"
-        ]}
-    );
-    if (salvageTabs.length) {
-        console.log("found a tab!")
+// download textbox
+window.addEventListener('load', ()=>{
+    let downloadInput = document.querySelector("#download-input");
+    downloadInput.addEventListener('input', ()=>{
+        if (STOCKREGEX.test(downloadInput.value)) {
         dlProgressButton.enable()
     } else {
         dlProgressButton.disable()
     }
 })
+window.addEventListener("focus", async ()=>{
+    // auto-fill
+    let clipboardContents = await navigator.clipboard.readText();
+    // TODO: this fails on Chrome?
+    // TODO: to request access, we need to load actions.html in a new tab
+    if (STOCKREGEX.test(clipboardContents.trim())) {
+        document.querySelector('#download-input').value = clipboardContents.trim()
+        dlProgressButton.enable()
+    }
+})
+// download ProgressButton
+let dlProgressButton = new ProgressButton();
 let onDownloadClick = (event) =>{
     dlProgressButton.start()
     browser.runtime.sendMessage(
@@ -158,6 +158,11 @@ let onDownloadClick = (event) =>{
     )
     event.stopPropagation()
 };
+window.addEventListener("load", async ()=>{
+    let downloadButton = document.querySelector("#download-button");
+    dlProgressButton.el = downloadButton;
+    downloadButton.addEventListener("click", onDownloadClick)
+})
 
 /*--------*\
   FEEDBACK  
