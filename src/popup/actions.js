@@ -128,14 +128,23 @@ window.addEventListener("load", ()=>{
 
 // DOWNLOAD //
 // download textbox
+const downloadPort = browser.runtime.connect({name:"popup-seek"});
 window.addEventListener('load', ()=>{
     let downloadInput = document.querySelector("#download-input");
     downloadInput.addEventListener('input', ()=>{
         if (STOCKREGEX.test(downloadInput.value)) {
-        dlProgressButton.enable()
-    } else {
-        dlProgressButton.disable()
-    }
+            dlProgressButton.enable()
+        } else {
+            dlProgressButton.disable()
+        }
+    })
+    downloadPort.onMessage.addListener(message=>{
+        if (message.vehicleDatas) {
+            bestVehicle = message.vehicleDatas[0];
+            downloadInput.value = bestVehicle.lotNumber;
+            dlProgressButton.enable()
+        }
+    })
 })
 window.addEventListener("focus", async ()=>{
     // auto-fill
@@ -151,11 +160,7 @@ window.addEventListener("focus", async ()=>{
 let dlProgressButton = new ProgressButton();
 let onDownloadClick = (event) =>{
     dlProgressButton.start()
-    browser.runtime.sendMessage(
-        { type: "popup-action",
-            values: [{
-                action: "download" }] }
-    )
+    downloadPort.postMessage({idx:0, action:"downloadImages", exec:true})
     event.stopPropagation()
 };
 window.addEventListener("load", async ()=>{
