@@ -1,30 +1,6 @@
 /*---------------*\
   POPUP INTERFACE  
 \*---------------*/
-async function downloadImages(vehicleData) {
-    // Called from popup via background.js message handler
-    console.log("Fetching images.")
-    console.log('vehicleData:'); console.log(vehicleData)
-    try {
-        sendProgress("download", "start")
-        console.log("awaiting vd.getImageUrls")
-        let imageUrls = await vehicleData.getImageUrls()
-        imageUrls.forEach( (url, idx) => {
-            console.log(`downloading ${idx}`)
-            browser.downloads.download({
-                url: url,
-                saveAs: false,
-                filename: `${vehicleData.salvage.NAME}-${idx}.jpg`
-            })
-        })
-        sendProgress("download", "end")
-        sendNotification(`${imageUrls.length} images sent to downloads folder!`, {displayAs: "success"})
-    } catch (error) {
-        sendProgress("download", "abort")
-        sendNotification(error, {displayAs: "error"})
-    }
-};
-
 const DownloadableVehicle = class extends BackgroundVehicle {
     constructor(data={}) {
         super()
@@ -112,44 +88,13 @@ const DownloadableVehicle = class extends BackgroundVehicle {
     }
 }
 
+var downloadVehicle;
 browser.runtime.onConnect.addListener( async port=>{
-    if (port.name!=="popup-seek") {return}
-    vdObjects = await vehicleFromOpenTabs()
-    // connect vehicles to future messages
-    vdObjects.forEach( (vd, idx)=>{
-        port.onMessage.addListener( m=>{
-            if (m.idx===idx) {
-                vd.do.bind(vd)(m, port.postMessage)
-            }
-        })
-    })
-    // reply with data
-    vehicleDatas = vdObjects.map(vdo=>vdo.getData())
-    port.postMessage({vehicleDatas})
+    if (port.name!=="download") {return}
+    downloadVehicle = new DownloadableVehicle
+    downloadVehicle.setPort(port)
 })
 
-async function vehicleFromOpenTabs(salvageTab) {
-    let salvageTabs;
-    if (salvageTab) {
-        salvageTabs = [salvageTab];
-    } else {
-        // get all salvage tabs
-        salvageTabs = await browser.tabs.query({
-            url: [COPART.URL_PATTERN, IAAI.URL_PATTERN, POCTRA.URL_PATTERN, BIDFAX.URL_PATTERN]
-        });
-        // if any are active, discard all others
-        let activeTabs = salvageTabs.filter(t=>t.active);
-        if (activeTabs.length) { salvageTabs = activeTabs; }
-        // sort decending by ID. First element will be oldest
-        salvageTabs.sort( (t1, t2)=>t1.id>t2.id?-1:1 )
-    }
-    vdPromises = salvageTabs.map( async tab=>{
-        let vd = new VehicleData({tab});
-        await vd.getLotNumber()
-        return vd
-    })
-    return await Promise.all(vdPromises)
-}
 
 /*------*\
   COPART  

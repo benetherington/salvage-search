@@ -1,60 +1,3 @@
-async function searchSalvageSites(vinInput) { console.log("openSalvagePages")
-    // FEEDBACK
-    sendProgress("search", "start")
-
-    // SETTINGS
-    let settings = await defaultedSettings()
-
-    // SEARCH TERM
-    vinInput = encodeURIComponent(vinInput).replace(/^\s+|\s+$/g, '');
-    if (!VINREGEX.test(vinInput)) {
-        sendNotification("That VIN doesn't look right...", {displayAs: "error"})
-        sendProgress("search", "end")
-        return;
-    };
-
-    // PRIMARY SEARCH
-    let searchPromises = [];
-    if (settings.searchCopart) {
-        searchPromises.push( searchCopart(vinInput, settings.fallbackZipCode) )
-    }
-    if (settings.searchIaai) {
-        searchPromises.push( searchIaai(vinInput, settings.fallbackZipCode) )
-    }
-    if (settings.searchRow52) {
-        searchPromises.push( searchRow52(vinInput, settings.fallbackZipCode) )
-    }
-    // wait for results
-    let searchOpener;
-    searchOpener = await Promise.any(searchPromises)
-        .catch(e=>{if (!e instanceof AggregateError){throw e}})
-    // open results
-    if (searchOpener) {
-        sendProgress("search", "end")
-        searchOpener()
-        return
-    }
-
-    // ARCHIVE SEARCH
-    let archivePromises = [];
-    if (settings.searchPoctra) {
-        archivePromises.push( searchPoctra(vinInput) )
-    }
-    if (settings.searchBidfax) {
-        archivePromises.push( searchBidfax(vinInput) )
-    }
-    // wait for results
-    let archiveOpener;
-    archiveOpener = await Promise.any(archivePromises)
-                    .catch(e=>{if (!e instanceof AggregateError){throw e}})
-    // open results
-    if (archiveOpener) {
-        archiveOpener()
-    }
-    sendProgress("search", "end")
-}
-
-
 class SearchVehicle extends BackgroundVehicle {
     // INPUT
     onMessage(message) {
@@ -116,6 +59,16 @@ class SearchVehicle extends BackgroundVehicle {
         if (settings.searchBidFax) {return BIDFAX_S.search(this, notify)}
     }
 }
+
+let searchVehicle;
+browser.runtime.onConnect.addListener( async port=>{
+    if (port.name!=="search") {return}
+    searchVehicle = new SearchVehicle
+    searchVehicle.setPort(port)
+})
+
+
+
 /*------*\
   COPART  
 \*------*/

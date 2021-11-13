@@ -188,19 +188,18 @@ class GuiVehicle extends VehicleABC {
             displayAs: "success"
 })
     }
+}
+let guiVehicle
+window.addEventListener("load", ()=>{
+    guiVehicle = new GuiVehicle
 })
-// download ProgressButton
+
+// SEARCH //
+let searchProgressButton = new ProgressButton();
+
+// DOWNLOAD //
 let dlProgressButton = new ProgressButton();
-let onDownloadClick = (event) =>{
-    dlProgressButton.start()
-    downloadPort.postMessage({idx:0, action:"downloadImages", exec:true})
-    event.stopPropagation()
-};
-window.addEventListener("load", async ()=>{
-    let downloadButton = document.querySelector("#download-button");
-    dlProgressButton.el = downloadButton;
-    downloadButton.addEventListener("click", onDownloadClick)
-})
+
 
 /*--------*\
   FEEDBACK  
@@ -212,30 +211,6 @@ browser.runtime.onMessage.addListener((message)=>{
             switch (value.action) {
                 case "feedback-message":
                     addFeedbackMessage(value)
-                    break;
-                case "download-attention":
-                    dlProgressButton.attention()
-                    break;
-                case "download-start":
-                    dlProgressButton.start(value.total)
-                    break;
-                case "download-increment":
-                    dlProgressButton.increment()
-                    break;
-                case "download-end":
-                    dlProgressButton.enable()
-                    break;
-                case "download-abort":
-                    dlProgressButton.disable()
-                    break;
-                case "search-start":
-                    searchProgressButton.start(value.total)
-                    break;
-                case "search-increment":
-                    searchProgressButton.increment()
-                    break;
-                case "search-end":
-                    searchProgressButton.enable()
                     break;
             }
         }
