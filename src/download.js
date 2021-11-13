@@ -154,19 +154,22 @@ async function vehicleFromOpenTabs(salvageTab) {
 /*------*\
   COPART  
 \*------*/
-const COPART = {
+const COPART_D = {
+    __proto__: Salvage,
     NAME: "copart",
     URL_PATTERN: "*://*.copart.com/lot/*",
-    lotNumberFromTab: async (tabOrVehicleData)=>{
-        let copartTab;
-        if (tabOrVehicleData instanceof VehicleData) { copartTab = tabOrVehicleData.tab }
-        else { copartTab = tabOrVehicleData }
-        let lotMatch = copartTab.title.match(/^(.*) for Sale/i);
+    lotNumberFromTab: async (tabOrVehicle)=>{
+        let tabId;
+        if (tabOrVehicle.tabId)   {tabId = tabOrVehicle.tabId;}
+        else if (tabOrVehicle.id) {tabId = tabOrVehicle.id;}
+        else                      {tabId = tabOrVehicle;}
+        
+        let lotMatch = tabId.title.match(/^(.*) for Sale/i);
         let lotNumber;
         if (lotMatch) { lotNumber = lotMatch[0] }
         else {
             let framesResponses = await browser.tabs.executeScript(
-                copartTab.id, {code:`document.querySelector("#lot-details .lot-number").lastChild.textContent.trim()`}
+                tabId, {code:`document.querySelector("#lot-details .lot-number").lastChild.textContent.trim()`}
             )
             lotNumber = framesResponses[0]
         }
@@ -174,7 +177,7 @@ const COPART = {
     },
     imageInfoFromLotNumber: async (lotNumberOrVehicleData)=>{
         let lotNumber;
-        if (lotNumberOrVehicleData instanceof VehicleData) {
+        if (lotNumberOrVehicleData instanceof DownloadableVehicle) {
             lotNumber = await lotNumberOrVehicleData.getLotNumber();
         } else { lotNumber = lotNumberOrVehicleData; }
         let imagesUrl = `https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`;
@@ -191,13 +194,13 @@ const COPART = {
         }
         return {imageInfo}
     },
-    imageUrlsFromInfo: async (imageInfosOrVehicleData)=>{
+    imageUrlsFromInfo: async function (...imageInfosOrVehicle) {
         // Accepts a single lot number, multiple lot numbers, or an array of lot numbers.
         let imageInfos, lotNumber;
-        if (imageInfosOrVehicleData instanceof VehicleData) {
-            imageInfos = [await imageInfosOrVehicleData.getImageInfo()]
-            lotNumber = imageInfosOrVehicleData.lotNumber;
-        } else { imageInfos = Array.from(arguments).flat(); }
+        if (imageInfosOrVehicle[0] instanceof DownloadableVehicle) {
+            imageInfos = [await imageInfosOrVehicle[0].getImageInfo()]
+            lotNumber = imageInfosOrVehicle[0].lotNumber;
+        } else { imageInfos = imageInfosOrVehicle.flat(); }
         if (!imageInfos.length) {throw "no lot number provided.";}
         sendNotification(`Copart: downloading images from lot #${lotNumber},`)
         // PROCESS
@@ -226,18 +229,19 @@ const COPART = {
 /*----*\
   IAAI  
 \*----*/
-const IAAI = {
+const IAAI_D = {
+    __proto__: Salvage,
     NAME: "iaai",
     URL_PATTERN: "*://*.iaai.com/*ehicle*etails*",
-    lotNumberFromTab: async (iaaiTabOrVehicleData)=>{
-        let iaaiTab;
-        if (iaaiTabOrVehicleData instanceof VehicleData) {
-            iaaiTab = iaaiTabOrVehicleData.tab;
-        } else { iaaiTab = iaaiTabOrVehicleData }
+    lotNumberFromTab: async (tabOrVehicle)=>{
+        let tabId;
+        if (tabOrVehicle.tabId)   {tabId = tabOrVehicle.tabId;}
+        else if (tabOrVehicle.id) {tabId = tabOrVehicle.id;}
+        else                      {tabId = tabOrVehicle;}
+        
         try {
-            let salvageName = 'iaai';
             let lotNumber = await browser.tabs.executeScript(
-                    iaaiTab.id, {code:`document.querySelector("#ProductDetailsVM").innerText`}
+                    tabId, {code:`document.querySelector("#ProductDetailsVM").innerText`}
                 ).catch(()=>{ throw "there was an error communicating with the page."+
                                     "Please reload the page and try again." })
                 .then( lastEvaluated=>JSON.parse(lastEvaluated[0]) )
@@ -247,12 +251,12 @@ const IAAI = {
             throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
         }
     },
-    imageInfoFromLotNumber: async (stockNumberOrVehicleData)=>{
+    imageInfoFromLotNumber: async (stockNumberOrDownloadableVehicle)=>{
         let stockNumber;
-        if (stockNumberOrVehicleData instanceof VehicleData) {
-            stockNumber = await stockNumberOrVehicleData.getLotNumber()
+        if (stockNumberOrDownloadableVehicle instanceof DownloadableVehicle) {
+            stockNumber = await stockNumberOrDownloadableVehicle.getLotNumber()
         } else {
-            stockNumber = stockNumberOrVehicleData;
+            stockNumber = stockNumberOrDownloadableVehicle;
         }
         // ENSURE TYPE
         stockNumber = stockNumber.toString();
@@ -276,14 +280,14 @@ const IAAI = {
             })
         return {imageInfo}
     },
-    imageUrlsFromInfo: async (lotInfosOrVehicleData)=>{
+    imageUrlsFromInfo: async function (...lotInfosOrVehicle) {
         // accepts a single imageDetails object, multiple imageDetails objects, or
         // an array of imageDetails objects
         let lotDetails;
-        if (lotInfosOrVehicleData instanceof VehicleData) {
-            lotDetails = [await lotInfosOrVehicleData.getImageInfo()];
+        if (lotInfosOrVehicle[0] instanceof DownloadableVehicle) {
+            lotDetails = [await lotInfosOrVehicle[0].getImageInfo()];
         } else {
-            lotDetails = Array.from(arguments).flat();
+            lotDetails = lotInfosOrVehicle.flat();
         }
         console.log("iaaiImageUrlsFromImageInfo(...)")
         console.log(lotDetails)
@@ -291,7 +295,7 @@ const IAAI = {
         // FETCH AND PROCESS
         let processedUrls = [];
         for (let lotDetail of lotDetails) {
-            let dezoomed = await IAAI.fetchAndDezoom(lotDetail.keys)
+            let dezoomed = await IAAI_D.fetchAndDezoom(lotDetail.keys)
             processedUrls.push(...dezoomed)
             // let {walkaroundUrls, panoUrls} = await SpinCar.fetchDetails(lotDetail.cdn_image_prefix)
             // processedUrls.push(...pano)
@@ -300,17 +304,17 @@ const IAAI = {
         // DONE
         return {imageUrls: processedUrls}
     },
-    countImages: (imageDetailOrDetails)=>{
-        let imageDetails = Array.from(arguments).flat()
+    countImages: function (...imageDetails) {
+        imageDetails = imageDetails.flat()
         return imageDetails.reduce((total, details)=>{
             return total + details.keys.length
         }, initialValue=0)
     },
     TILE_SIZE: 250,
-    fetchAndDezoom: async (imageKeyOrKeys)=>{
+    fetchAndDezoom: async function (...imageKeys) {
         // Accepts a single keys object, multiple keys objects, or an array of keys
         // objects.
-        let imageKeys = Array.from(arguments).flat()
+        imageKeys = imageKeys.flat()
         console.log("iaaiFetchAndDezoom(...)")
         console.log(imageKeys)
         let canvas = document.createElement("canvas");
@@ -319,11 +323,12 @@ const IAAI = {
         for (let key of imageKeys) {
             processedPromises.push(new Promise(async (resolve, reject)=>{
                 // PLAN
-                let tileUrl = (x, y)=>`https://anvis.iaai.com/deepzoom?imageKey=${key.K}&level=12&x=${x}&y=${y}&overlap=0&tilesize=${TILE_SIZE}`;
+                let tileUrl = (x, y)=>`https://anvis.iaai.com/deepzoom?imageKey=${key.K}`+
+                                      `&level=12&x=${x}&y=${y}&overlap=0&tilesize=${IAAI_D.TILE_SIZE}`;
                 canvas.width  = key.W;
                 canvas.height = key.H;
-                let xTiles = Math.ceil(key.W / TILE_SIZE);
-                let yTiles = Math.ceil(key.H / TILE_SIZE);
+                let xTiles = Math.ceil(key.W / IAAI_D.TILE_SIZE);
+                let yTiles = Math.ceil(key.H / IAAI_D.TILE_SIZE);
                 let xRange = [...Array(xTiles).keys()];
                 let yRange = [...Array(yTiles).keys()];
                 // FETCH
@@ -339,10 +344,10 @@ const IAAI = {
                 let bmpDetails = await Promise.all(bitmapPromises)
                 bmpDetails.forEach(bmpDetails=>{
                     let {bmp,x,y} = bmpDetails;
-                    ctx.drawImage(bmp,x*TILE_SIZE,y*TILE_SIZE)
+                    ctx.drawImage(bmp,x*IAAI_D.TILE_SIZE,y*IAAI_D.TILE_SIZE)
                 })
                 let dataURL = canvas.toDataURL("image/jpeg");
-                let objectURL = IAAI.dataURLtoObjectURL(dataURL);
+                let objectURL = IAAI_D.dataURLtoObjectURL(dataURL);
                 console.log(`${key.K} processed`)
                 sendProgress("download", "increment")
                 resolve(objectURL)
@@ -365,9 +370,10 @@ const IAAI = {
         return URL.createObjectURL(blob)
     }
 }
-const SpinCar = {
-    fetchDetails: (spinUrlOrUrls)=>{
-        let spinUrls = Array.from(arguments).flat()
+let SPINCAR_D = {
+    __proto__: Salvage,
+    fetchDetails: function (...spinUrls) {
+        spinUrls = spinUrls.flat()
         let spinPromises = spinUrls.map( async spinUrl=>{
             let spinPath = /com\/(.*)/.exec(spinUrl)[1];
             let apiUrl = "https://api.spincar.com/spin/" + spinPath;
@@ -504,11 +510,11 @@ const SpinCar = {
 /*------*\
   POCTRA  
 \*------*/
-const POCTRA = {
+const POCTRA_D = {
     URL_PATTERN: "*://*.poctra.com/*/id-*/*",
     lotNumbersFromTab: async (poctraTab)=>{
         try {
-            let framesResults = await browser.tabs.executeScript(poctraTab.id, { code:`(${POCTRA.getLotNumber.toString()})()` });
+            let framesResults = await browser.tabs.executeScript(poctraTab.id, { code:`(${POCTRA_D.getLotNumber.toString()})()` });
             return framesResults[0]
         } catch (error) {throw `Poctra: ${error}`}
     },
@@ -530,10 +536,10 @@ const POCTRA = {
 /*------*\
   BIDFAX  
 \*------*/
-const BIDFAX = {
+const BIDFAX_D = {
     URL_PATTERN: "*://en.bidfax.info/*",
     lotNumbersFromTab: async (bidfaxTab)=>{
-        let framesResults = await browser.tabs.executeScript(bidfaxTab.id, { code:`(${BIDFAX.getLotNumber.toString()})()` });
+        let framesResults = await browser.tabs.executeScript(bidfaxTab.id, { code:`(${BIDFAX_D.getLotNumber.toString()})()` });
         return framesResults[0]
     },
     getLotNumber: ()=>{
@@ -541,7 +547,7 @@ const BIDFAX = {
         let infoElement = document.querySelector("#aside")
         if (!infoElement) {return null}
         // LOOK FOR CORRECT INFO
-        // we're looking for bits of text like: "Auction:  IAAI" and "Lot number: 31451264"
+        // we're looking for bits of text like: "Auction:  IAAI_D" and "Lot number: 31451264"
         let yardRe = /(?<=auction:.*)iaai|copart/i;
         let yardMatch = yardRe.exec(infoElement.innerText) || ["unknown"];
         let salvageName = yardMatch[0].toLowerCase();
