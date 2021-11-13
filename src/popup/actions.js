@@ -73,87 +73,119 @@ class ProgressButton {
     }
 }
 
-// SEARCH //
-// Search textbox
-window.addEventListener("load", ()=>{
-    // validate VIN
-    let inputSearch = document.querySelector('#search-input')
-    inputSearch.addEventListener('input', ()=>{
-        if (VINREGEX.test(inputSearch.value)) {
-            searchProgressButton.enable()
-        } else {
-            searchProgressButton.disable()
+class GuiVehicle extends VehicleABC {
+    constructor() {
+        super()
+        this.activate()
         }
-    });
-})
-window.addEventListener("focus", async ()=>{
-    // auto-fill
-    let clipboardContents = await navigator.clipboard.readText();
-    // TODO: this fails on Chrome?
-    // TODO: to request access, we need to load actions.html in a new tab
-    if (VINREGEX.test(clipboardContents.trim())) {
-        document.querySelector('#search-input').value = clipboardContents.trim()
+    activate() {
+        this.searchInput = document.querySelector('#search-input');
+        this.searchInput.addEventListener('input', this.onInput.bind(this))
+        window.addEventListener("focus", this.onFocus.bind(this))
+        
+        this.searchButton = document.querySelector("#search-button");
+        searchProgressButton.el = this.searchButton;
+        this.searchButton.addEventListener("click", this.submitSearch.bind(this))
+        this.searchPort = browser.runtime.connect({name:"search"});
+        this.searchPort.onMessage.addListener(this.onSearchMessage.bind(this))
+        
+        this.downloadButton = document.querySelector("#download-button");
+        dlProgressButton.el = this.downloadButton;
+        this.downloadButton.addEventListener("click", this.submitDownload.bind(this))
+        this.downloadPort = browser.runtime.connect({name:"download"});
+        this.downloadPort.onMessage.addListener(this.onDownloadMessage.bind(this))
+    }
+    
+    // INPUTS
+    onSearchMessage(message) {
+        super.onMessage(message)
+        if (this.salvage) {dlProgressButton.attention(); this.openTab()}
+        searchProgressButton.stop()
+    }
+    onDownloadMessage(message) {
+        super.onMessage(message)
+        if (message.download) {this.download()}
+        if (message.findTabs      && this.vin      ) {this.setVin()}
+        else if (message.findTabs && this.lotNumber) {this.setLot()}
+        dlProgressButton.stop()
+    }
+    async onFocus() {
+        // TODO: to request access in Chrome, we need to load a new tab
+        let clipboard = await navigator.clipboard.readText().then(s=>s.trim());
+        if (!this.testInput(clipboard)) {
+            let findTabs = true;
+            this.send(this.downloadPort, {findTabs})
+        }
+    }
+    onInput() {
+        let input = this.searchInput.value;
+        this.testInput(input)
+    }
+    testInput(vinOrLot) {
+        if      (this.validateVin(vinOrLot)) {this.setVin(vinOrLot); return 'vin'}
+        else if (this.validateLot(vinOrLot)) {this.setLot(vinOrLot); return 'lotNumber'}
+        else                                 {this.clear()}
+    }
+    setVin(newVin) {
+        if (newVin) {
+            this.vin = newVin;
+            this.lotNumber = null;
+        }
+        this.searchInput.value = this.vin
         searchProgressButton.enable()
     }
-})
-// search ProgressButton
-let searchProgressButton = new ProgressButton();
-let onSearchClick = (event) => {
-    let searchInput = document.querySelector("#search-input");
-    if (VINREGEX.test(searchInput.value)) {
-        // that VIN looks good, let's run a search
-        browser.runtime.sendMessage(
-            { type: "popup-action",
-              values: [{
-                action: "search",
-                vin: searchInput.value }]}
-        )
-    } else {
-        // that VIN looks bad, and somehow you were still able to click the button.
-        // wiggle the text input
-        vinField = document.querySelector("#input-vin")
-        vinField.classList.remove("error-attention"); // in case it's already moving
-        vinField.classList.add("error-attention");
-        // hide the error message after 4 seconds
-        addFeedbackMessage({message: "That VIN doesn't look right.", displayAs: "error"})
-    };
-    
-    event.stopPropagation()
-};
-window.addEventListener("load", ()=>{
-    let searchButton = document.querySelector("#search-button");
-    searchProgressButton.el = searchButton;
-    searchButton.addEventListener("click", onSearchClick)
-})
-
-// DOWNLOAD //
-// download textbox
-const downloadPort = browser.runtime.connect({name:"popup-seek"});
-window.addEventListener('load', ()=>{
-    let downloadInput = document.querySelector("#download-input");
-    downloadInput.addEventListener('input', ()=>{
-        if (STOCKREGEX.test(downloadInput.value)) {
-            dlProgressButton.enable()
-        } else {
-            dlProgressButton.disable()
+    setLot(newLot) {
+        if (newLot) {
+            this.vin = null;
+            this.lotNumber = newLot;
         }
-    })
-    downloadPort.onMessage.addListener(message=>{
-        if (message.vehicleDatas) {
-            bestVehicle = message.vehicleDatas[0];
-            downloadInput.value = bestVehicle.lotNumber;
-            dlProgressButton.enable()
-        }
-    })
-})
-window.addEventListener("focus", async ()=>{
-    // auto-fill
-    let clipboardContents = await navigator.clipboard.readText();
-    // TODO: this fails on Chrome?
-    // TODO: to request access, we need to load actions.html in a new tab
-    if (STOCKREGEX.test(clipboardContents.trim())) {
-        document.querySelector('#download-input').value = clipboardContents.trim()
+        this.searchInput.value = this.lotNumber
         dlProgressButton.enable()
+    }
+    clear() {
+        this.vin = null;
+        this.lotNumber = null;
+        searchProgressButton.disable()
+        dlProgressButton.disable()
+    }
+    
+    // OUTPUTS
+    submitSearch(event) {
+        searchProgressButton.start()
+        let search = true;
+        this.send(this.searchPort, {search})
+    event.stopPropagation()
+    }
+    submitDownload(event) {
+        dlProgressButton.start()
+        let download = true;
+        this.send(this.downloadPort, {download})
+        event.stopPropagation()
+        // PICKUP: establish download-from-lotNumber logic. Right now, results
+        // in "no tab" error
+    }
+    send(port, options={}) {
+        let values =  this.serialize();
+        port.postMessage({values, ...options})
+    }
+    async openTab() {
+        let url = this.listingUrl || this.salvage.listingUrl(this.lotNumber)
+        let tab = await browser.tabs.create({url})
+        this.tabId = tab.id
+        }
+    download() {
+        this.imageUrls.forEach( (url, idx) => {
+            console.log(`downloading ${idx}`)
+            browser.downloads.download({
+                url: url,
+                saveAs: false,
+                filename: `${this.salvage}-${idx}.jpg`
+    })
+    })
+        addFeedbackMessage({
+            message:`${this.imageUrls.length} images sent to downloads folder!`,
+            displayAs: "success"
+})
     }
 })
 // download ProgressButton

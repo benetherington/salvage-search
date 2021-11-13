@@ -55,6 +55,67 @@ async function searchSalvageSites(vinInput) { console.log("openSalvagePages")
 }
 
 
+class SearchVehicle extends BackgroundVehicle {
+    // INPUT
+    onMessage(message) {
+        super.onMessage(message)
+        if (message.search) {this.search()}
+    }
+    async search() {
+        if      (this.salvage)             {await this.knowledgeableSearch()}
+        else if (this.lotNumber||this.vin) {await this.ignorantSearch()}
+        else                               {return this.error()}
+        this.reply()
+    }
+    
+    // OUTPUT
+    async knowledgeableSearch() {
+        let notify = notifyUntilSuccess();
+        if      (this.salvage==="copart") {return COPART_S.search(this, notify)}
+        else if (this.salvage==="iaai"  ) {return IAAI_S.search(this, notify)}
+    }
+    async ignorantSearch() {
+        let notify = notifyUntilSuccess();
+        let salvagePromise = Promise.any([
+            this.ifSettingsCopart(notify),
+            this.ifSettingsIaai(notify),
+            this.ifSettingsRow52(notify)
+        ])
+        return salvagePromise.catch(()=>{
+            // AggrigateError, no results
+            let archivePromise = Promise.any([
+                this.ifSettingsPoctra(notify),
+                this.ifSettingsBidfax(notify)
+            ])
+            return archivePromise.catch(()=>{})
+        })
+    }
+    async error() {
+        console.log("Search error handler is not built")
+    }
+    
+    // SETTINGS
+    async ifSettingsCopart(notify) {
+        let settings = await defaultedSettings()
+        if (settings.searchCopart) {return COPART_S.search(this, notify)}
+    }
+    async ifSettingsIaai(notify) {
+        let settings = await defaultedSettings()
+        if (settings.searchIaai) {return IAAI_S.search(this, notify)}
+    }
+    async ifSettingsRow52(notify) {
+        let settings = await defaultedSettings()
+        if (settings.searchRow52) {return ROW52_S.search(this, notify)}
+    }
+    async ifSettingsPoctra(notify) {
+        let settings = await defaultedSettings()
+        if (settings.searchPoctra) {return POCTRA_S.search(this, notify)}
+    }
+    async ifSettingsBidfax(notify) {
+        let settings = await defaultedSettings()
+        if (settings.searchBidFax) {return BIDFAX_S.search(this, notify)}
+    }
+}
 /*------*\
   COPART  
 \*------*/

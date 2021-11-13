@@ -25,78 +25,90 @@ async function downloadImages(vehicleData) {
     }
 };
 
-const VehicleData = class {
-    constructor(data) {
-        this.tab = null              //
-        this.salvage = null          // Private. If getter works, lotNumber or lotNumberFetcher should also be set.
-        this.lotNumber = null        // Private. Get/set lotNumber instead so that data can be persisted.
-        this.imageInfo = null        // Private. Get/set imageInfo instead.
-        this.imageUrls = null        // Private. Get/set imageUrls instead.
-        if (data.tabId) {console.log("setting and removing tabId"); this.setTabId(data.tabID); delete data.tabId}
-        if (data) {console.log("setting data");this.setData(data)}
+const DownloadableVehicle = class extends BackgroundVehicle {
+    constructor(data={}) {
+        super()
+        if (data) {this.setData(data)}
     }
+    
+    // INPUT
     setData(values) {
-        if (values.salvage==="copart") {values.salvage=COPART}
-        if (values.salvage==="iaai") {values.salvage=IAAI}
+        // sort of an override for super.onMessage
+        if      (values.salvage==="copart") {values.salvage=COPART_D}
+        else if (values.salvage==="iaai"  ) {values.salvage=IAAI_D}
         Object.assign(this, values)
     }
-    getData() {
-        let data = Object.assign(new Object, this);
-        data.salvage = data.salvage.NAME;
-        return data;
+    async onMessage(message) {
+        this.setData(message.values)
+        if      (message.confirmExits) {await this.getSalvage()}
+        else if (message.download    ) {await this.getImageUrls()}
+        else if (message.findTabs    ) {await this.findTabs()}
+        else {return}
+        delete message.values
+        this.reply(message)
     }
-    async setTabId(id) {this.tab = await browser.tabs.get(id)}
+    
+    // OUTPUT
+    async findTabs() {
+        // get all salvage tabs
+        let salvageTabs = await browser.tabs.query({
+            url: [COPART_D.URL_PATTERN, IAAI_D.URL_PATTERN, POCTRA_D.URL_PATTERN, BIDFAX_D.URL_PATTERN]
+        });
+        // if any are active, discard all others
+        let activeTabs = salvageTabs.filter(t=>t.active);
+        if (activeTabs.length) { salvageTabs = activeTabs; }
+        // sort decending by ID, first element will be most recently opened
+        let tabIds = salvageTabs.map(t=>t.id).sort( (a, b)=>a-b )
+        this.tabId = tabIds.pop()
+        // TODO handle extras
+        await this.getLotNumber()
+    }
     async getSalvage() {
-        if (this.salvage) {return this.salvage}
-        if (!this.tab) {throw "no tab"}
-        if (/copart\.com/i.test(this.tab.url)) {this.salvage = COPART;}
-        else if (/iaai\.com/i.test(this.tab.url)) {this.salvage = IAAI;}
-        else if (/poctra\.com/i.test(this.tab.url)) {
-            this.setData( await poctraLotNumbersFromTabs() )
-        } else if (/bidfax\.info/i.test(this.tab.url)) {
-            this.setData( await bidfaxLotNumbersFromTabs() )
+        // This begins a cascade string of functions that allow us to jump in
+        // and fetch new data, no matter how much or how little we know about
+        // the vehicle. At minimum, we must have a valid tabId. From there, we
+        // can identify both the salvage and the lotNumber.
+        // Note that finding the salvage has the most complicated logic. The
+        // other functions in this cascade have simpler, and very similar
+        // structures. They return the value if known, or call the function
+        // "above" them if not.
+        if (Salvage.isPrototypeOf(this.salvage)) {return this.salvage}
+        
+        if (typeof this.salvage==="string"){
+            if      (this.salvage==="copart") {this.salvage = COPART_D;}
+            else if (this.salvage==="iaai"  ) {this.salvage = IAAI_D;}
+        }
+        
+        if (!this.salvage) {
+            let tab = await this.getTab()
+            if (!tab) {throw "no tab"}
+            else if (/copart\.com/i .test(tab.url)) {this.salvage = COPART_D;}
+            else if (/iaai\.com/i   .test(tab.url)) {this.salvage = IAAI_D;}
+            else if (/poctra\.com/i .test(tab.url)) {this.setData(await poctraLotNumbersFromTabs())}
+            else if (/bidfax\.info/i.test(tab.url)) {this.setData(await bidfaxLotNumbersFromTabs())}
         }
         return this.salvage;
     }
     async getLotNumber() {
-        if (this.lotNumber) {return this.lotNumber}
-        await this.getSalvage()
-        this.setData( await this.salvage.lotNumberFromTab(this) )
+        if (this.lotNumber&&this.salvage) {return this.lotNumber}
+        await this.getSalvage();
+        let values = await this.salvage.lotNumberFromTab(this);
+        this.setData(values)
         return this.lotNumber;
     }
     async getImageInfo() {
-        console.log("getImageInfo")
         if (this.imageInfo) {return this.imageInfo}
-        console.log("noImageInfo")
         await this.getLotNumber()
-        console.log("after getLotNumber() this:")
-        console.log(this)
-        let data = await this.salvage.imageInfoFromLotNumber(this)
-        console.log('data:'); console.log(data)
-        this.setData( data )
+        let values = await this.salvage.imageInfoFromLotNumber(this)
+        this.setData(values)
         return this.imageInfo;
     }
     async getImageUrls() {
-        console.log("getImageUrls()")
-        console.log('this:'); console.log(this)
         if (this.imageUrls) {return this.imageUrls}
-        console.log("no imageURLS")
         await this.getImageInfo()
-        this.setData( await this.salvage.imageUrlsFromInfo(this) )
+        let values = await this.salvage.imageUrlsFromInfo(this)
+        this.setData(values)
         return this.imageUrls;
-    }
-    async downloadImages() {
-        console.log("downloadImages()")
-        console.log('this:'); console.log(this)
-        downloadImages(this)
-    }
-    async do(message, reply) {
-        console.log("do()")
-        console.log('this:'); console.log(this)
-        let request = this[message.action];
-        let response;
-        if (message.exec) {response = request.bind(this)()}
-        if (message.resturn) {reply(response)}
     }
 }
 
