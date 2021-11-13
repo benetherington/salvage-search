@@ -1,5 +1,5 @@
 const VINREGEX   = /^[A-HJ-NPR-Z0-9]{3}[A-HJ-NPR-Z0-9]{5}[0-9X][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9]{6}$/i;
-const STOCKREGEX = /\d{7}/i;
+const LOTREGEX = /\d{8}/i;
 const DEFAULT_SETTINGS = {
     searchCopart: true,
     searchIaai: true,
