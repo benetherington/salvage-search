@@ -78,7 +78,7 @@ class GuiVehicle extends VehicleABC {
     constructor() {
         super()
         this.activate()
-        }
+    }
     activate() {
         this.searchInput = document.querySelector('#search-input');
         this.searchInput.addEventListener('input', this.onInput.bind(this))
@@ -155,7 +155,7 @@ class GuiVehicle extends VehicleABC {
         searchProgressButton.start()
         let search = true;
         this.send(this.searchPort, {search})
-    event.stopPropagation()
+        event.stopPropagation()
     }
     submitDownload(event) {
         dlProgressButton.start()
@@ -173,7 +173,7 @@ class GuiVehicle extends VehicleABC {
         let url = this.listingUrl || this.salvage.listingUrl(this.lotNumber)
         let tab = await browser.tabs.create({url})
         this.tabId = tab.id
-        }
+    }
     download() {
         this.imageUrls.forEach( (url, idx) => {
             console.log(`downloading ${idx}`)
@@ -181,12 +181,12 @@ class GuiVehicle extends VehicleABC {
                 url: url,
                 saveAs: false,
                 filename: `${this.salvage}-${idx}.jpg`
-    })
-    })
+            })
+        })
         addFeedbackMessage({
             message:`${this.imageUrls.length} images sent to downloads folder!`,
             displayAs: "success"
-})
+        })
     }
 }
 let guiVehicle
@@ -248,44 +248,22 @@ var addFeedbackMessage = (rawFeedback)=>{
     // add it to the page
     let drawer = document.querySelector("#notification-drawer");
     drawer.appendChild(notification)
-    // PERSIST
-    if (feedback.duration === -1) {
-        // copy object and add type property
-        feedbackToStore = Object.assign(feedback, {type:"feedback-message"});
-        // pack it for storage with a programmatic key
-        storable = {};
-        // time should be pretty unique
-        storable[feedback.createdAt] = feedbackToStore;
-        browser.storage.local.set(storable)
-    }
+
 
     // PREPARE FOR THE END
     closeUp = ()=>{
-        // remove this feedback object from persistance
-        browser.storage.local.remove(feedback.createdAt)
+
         // remove from drawer
         notification.remove()
         // close drawer
         if (drawer.childElementCount===0) {drawer.classList.add("hidden")}
     }
     // set removal conditions
-    if (feedback.duration !== -1) {setTimeout(closeUp, feedback.duration)}
-    if (feedback.closeable)       {notification.addEventListener("click", closeUp)}
+    notification.addEventListener("click", closeUp)
 
     // show the drawer
     drawer.classList.remove("hidden")
 }
-// restore persisted notifications
-window.addEventListener("load", async ()=>{
-    storage = await browser.storage.local.get();
-    Object.entries(storage).forEach( ([key, value])=>{
-        if (  value.hasOwnProperty("type")
-           && value.type==="feedback-message" ) {
-            browser.storage.local.remove(key)
-            addFeedbackMessage(value);
-        }
-    })
-})
 
 
 /*----------------*\
