@@ -84,7 +84,8 @@ const defaultedSettings = async () => {
 }
 const sendNotification = (message, options={}) => {
     // quick feedback notification creation with error catching
-    let value = Object.assign(options, {action: "feedback-message", message:message});
+    let value = Object.assign(options, {action: "feedback-message",
+                                        message:message});
     let values = [value]
     browser.runtime.sendMessage({type: "feedback", values})
         .catch(err=>{
@@ -93,6 +94,14 @@ const sendNotification = (message, options={}) => {
             else {console.log(err)}
         })
 }
+const notifyUntilSuccess = () => {
+    let successful = false;
+    return (message, options={})=>{ if (!successful) {
+        successful = options.displayAs==="success";
+        sendNotification(message, options)
+    }}
+}
+
 const sendProgress = (recipient, behavior, options={}) => {
     let action = `${recipient}-${behavior}`
     let value = Object.assign(options, {action:action})
