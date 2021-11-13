@@ -106,7 +106,7 @@ const COPART_S = {
             let jsn = await response.json()
             if (!jsn.data.hasOwnProperty("results")) {throw "something went wrong on their end...";}
             if (!jsn.data.results.content.length) {throw "query returned no results";}
-                let lotNumbers = jsn.data.results.content.map( (vehicle)=>vehicle.lotNumberStr )
+            let lotNumbers = jsn.data.results.content.map( (vehicle)=>vehicle.lotNumberStr )
             
             // CREATE VEHICLE
             vehicle.lotNumber = lotNumbers.pop()
@@ -119,7 +119,7 @@ const COPART_S = {
                 new BackgroundVehicle({
                     lotNumber: lotNumber,
                     salvage: COPART_S
-                    })
+                })
             )
             resolve({vehicle, extras})
         } catch (error) {
@@ -127,7 +127,7 @@ const COPART_S = {
             notify(`Copart: ${error}.`, {displayAs: "error"})
             reject()
         }})
-        }
+    }
 };
 
 
@@ -159,7 +159,7 @@ const IAAI_S = {
             if (!lotRe.test(redirectUrl)) {throw "query returned no results."}
             
             // CREATE VEHICLE
-                let lotNumber = lotRe.exec(redirectUrl)[1];
+            let lotNumber = lotRe.exec(redirectUrl)[1];
             notify(`IAAI: found a match: lot #${lotNumber}!`, {displayAs:"success"})
             vehicle.lotNumber = lotNumber;
             vehicle.listingUrl = redirectUrl;
@@ -171,7 +171,7 @@ const IAAI_S = {
             notify(`IAAI: ${error}`, {displayAs: "error"})
             reject()
         }})
-        }
+    }
 };
 
 /*-----*\
@@ -217,7 +217,7 @@ const ROW52_S = {
             } catch { throw "something looks wrong with this page, try searching by hand."}
             
             if (!vehiclePaths.length) {throw "query returned no results." }
-                let yardName = yardNameElement.innerText.trim()
+            let yardName = yardNameElement.innerText.trim()
             
             // CREATE VEHICLE
             vehicle.salvage = "Row52";
@@ -229,7 +229,7 @@ const ROW52_S = {
                 new BackgroundVehicle({
                     salvage: "row52",
                     listingUrl: "https://row52.com"+path
-                    })
+                })
             )
             
             resolve({vehicle, extras})
@@ -238,7 +238,7 @@ const ROW52_S = {
             notify(`Row52: ${error}`, {displayAs: "error"})
             reject()
         }})
-        }
+    }
 };
 
 
@@ -253,53 +253,53 @@ const POCTRA_S = {
     NAME: "poctra",
     search: (vinOrVehicle, notify=sendNotification)=>{
         let vin = vinOrVehicle.vin || vinOrVehicle;
-    return new Promise(async (resolve, reject)=>{
-        let POCTRA_REGEX = /^(?<yard>.*?) (Stock|Lot) No: (?<stock>\d*)<br>.*<br>Location: (?<location>.*)$/;
-        try {
-            // SEARCH
-            let searchUrl = `https://poctra.com/search/ajax`;
+        return new Promise(async (resolve, reject)=>{
+            let POCTRA_REGEX = /^(?<yard>.*?) (Stock|Lot) No: (?<stock>\d*)<br>.*<br>Location: (?<location>.*)$/;
+            try {
+                // SEARCH
+                let searchUrl = `https://poctra.com/search/ajax`;
                 let body = `q=${vin}&by=&asc=&page=1`;
-            let headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"};
-            let response = await fetch( searchUrl, {method: "POST", headers, body} );
-            if (!response.ok) { throw "something went wrong on their end..." }
-            // CHECK FOR RESULTS
-            let lotUrls = [];
-            let parser = new DOMParser();
-            let doc = parser.parseFromString(await response.text(), "text/html");
-            // set base URI so that relative links work
-            let base = doc.createElement("base");
-            base.href = searchUrl;
-            doc.head.append(base)
-            let searchResults = doc.querySelectorAll(".clickable-row");
-            if (!searchResults.length) {throw "search returned no results."}
-            // PARSE RESULTS
-            for (searchResult of searchResults) {
-                // FIND PAGE LINK
-                let lotLink = searchResult.querySelector("a");
-                if (!lotLink) {continue}
-                lotUrls.push(lotLink.href)
-                // NOTIFY
-                try {
-                    let detailsElement = searchResult.querySelector("p");
-                    let details = POCTRA_REGEX.exec(detailsElement.innerHTML.trim()).groups;
+                let headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"};
+                let response = await fetch( searchUrl, {method: "POST", headers, body} );
+                if (!response.ok) { throw "something went wrong on their end..." }
+                // CHECK FOR RESULTS
+                let lotUrls = [];
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(await response.text(), "text/html");
+                // set base URI so that relative links work
+                let base = doc.createElement("base");
+                base.href = searchUrl;
+                doc.head.append(base)
+                let searchResults = doc.querySelectorAll(".clickable-row");
+                if (!searchResults.length) {throw "search returned no results."}
+                // PARSE RESULTS
+                for (searchResult of searchResults) {
+                    // FIND PAGE LINK
+                    let lotLink = searchResult.querySelector("a");
+                    if (!lotLink) {continue}
+                    lotUrls.push(lotLink.href)
+                    // NOTIFY
+                    try {
+                        let detailsElement = searchResult.querySelector("p");
+                        let details = POCTRA_REGEX.exec(detailsElement.innerHTML.trim()).groups;
                         notify( `Poctra: found a match at ${details.yard}! Lot ${details.stock}.`, {displayAs: "success"} )
-                } catch {
+                    } catch {
                         notify( "Poctra: found a match!", {displayAs: "success"})
+                    }
                 }
-            }
-            if (!lotUrls.length) {throw "search returned no results"}
-            // SUCCESS!
-            resolve(()=>{
-                lotUrls.forEach( lotUrl=>{
-                    browser.tabs.create({url: lotUrl})
+                if (!lotUrls.length) {throw "search returned no results"}
+                // SUCCESS!
+                resolve(()=>{
+                    lotUrls.forEach( lotUrl=>{
+                        browser.tabs.create({url: lotUrl})
+                    })
                 })
-            })
-        } catch (error) {
-            console.log(`Poctra rejecting: ${error}`)
+            } catch (error) {
+                console.log(`Poctra rejecting: ${error}`)
                 notify(`Poctra: ${error}`, {displayAs: "error"})
-            reject()
-        }
-    })
+                reject()
+            }
+        })
     }
 };
 
@@ -312,83 +312,83 @@ const BIDFAX_S = {
     NAME: "bidfax",
     search: (vinOrVehicle, notify=sendNotification)=>{
         let vin = vinOrVehicle.vin || vinOrVehicle;
-    return new Promise(async (resolve, reject)=>{
-        try {
-            // FETCH GC TOKEN
-            let homeUrl = "https://en.bidfax.info";
-            let tokenTab = await browser.tabs.create({url:homeUrl, active:false})
-            await browser.tabs.executeScript(tokenTab.id,{code:
-                `(()=>{
-                    document.querySelector("#submit").click()
-                })()`
-            })
-            let token = await browser.tabs.executeScript(tokenTab.id, {code:
-                `(()=>{return (new URL(document.querySelector("link[rel=alternate]").href)).searchParams.get('token2');})()`
-            })[0]
-            browser.tabs.remove(tokenTab.id)
-            
-            // SEARCH
-            let searchUrl = new URL("https://en.bidfax.info/")
-            searchUrl.searchParams.append("do", "search")
-            searchUrl.searchParams.append("subaction", "search")
-                searchUrl.searchParams.append("story", vin)
-            searchUrl.searchParams.append("token2", token)
-            searchUrl.searchParams.append("action2", "search_action")
-            let response = await fetch(searchUrl);
-            if (!response.ok) { throw "something went wrong on their end..." }
-            if (response.status === 301) {
-                // Moved Permanently is returned when the GC token is invalid or
-                // missing.
-                console.log("BidFax wants a CAPTCHA check")
-                browser.tabs.create({url:homeUrl})
-                throw "CAPTCHA failed. Please click on a listing before trying again."
-            }
-            // CHECK FOR RESULTS
-            let parser = new DOMParser()
-            let doc = parser.parseFromString(await response.text(), "text/html");
-            let searchResults = doc.querySelectorAll(".thumbnail.offer");
-            if (!searchResults.length) {throw "search returned no results."}
-            // PARSE RESULTS
-            let lotUrls = [];
-            let stockNumbers = [];
-            for (searchResult of searchResults) {
-                // FIND PAGE LINK
-                let lotLinkElement = searchResult.querySelector(".caption a");
-                if (!lotLinkElement) {continue}
-                lotUrls.push(lotLinkElement.href)
-                // NOTIFY
-                try {
-                    let yardNameElement = searchResult.querySelector(".short-storyup span");
-                    let yardName = yardNameElement.innerText.trim();
-                    let stockNumberElement = searchResult.querySelector(".short-story span");
-                    let stockNumber = stockNumberElement.innerText;
-                    if (stockNumbers.includes(stockNumber)) {
-                        // Sometimes, multiple pages for the same lot number are
-                        // returned, and we don't want to include this URL after
-                        // all.
-                        lotUrls.pop(lotLinkElement.href)
-                        continue
-                    }
-                    stockNumbers.push(stockNumber)
-                        notify( `BidFax: found a match at ${yardName}! Lot ${stockNumber}.`, {displayAs: "success"} )
-                } catch {
-                        notify( "BidFax: found a match!", {displayAs: "success"})
-                }
-            }
-            if (!lotUrls.length) {throw "search returned no results"}
-            // SUCCESS!
-            resolve(()=>{
-                lotUrls.forEach( lotUrl=>{
-                    browser.tabs.create({url: lotUrl})
+        return new Promise(async (resolve, reject)=>{
+            try {
+                // FETCH GC TOKEN
+                let homeUrl = "https://en.bidfax.info";
+                let tokenTab = await browser.tabs.create({url:homeUrl, active:false})
+                await browser.tabs.executeScript(tokenTab.id,{code:
+                    `(()=>{
+                        document.querySelector("#submit").click()
+                    })()`
                 })
-            })
-        } catch (error) {
-            console.log(`BidFax rejecting: ${error}`)
+                let token = await browser.tabs.executeScript(tokenTab.id, {code:
+                    `(()=>{return (new URL(document.querySelector("link[rel=alternate]").href)).searchParams.get('token2');})()`
+                })[0]
+                browser.tabs.remove(tokenTab.id)
+                
+                // SEARCH
+                let searchUrl = new URL("https://en.bidfax.info/")
+                searchUrl.searchParams.append("do", "search")
+                searchUrl.searchParams.append("subaction", "search")
+                searchUrl.searchParams.append("story", vin)
+                searchUrl.searchParams.append("token2", token)
+                searchUrl.searchParams.append("action2", "search_action")
+                let response = await fetch(searchUrl);
+                if (!response.ok) { throw "something went wrong on their end..." }
+                if (response.status === 301) {
+                    // Moved Permanently is returned when the GC token is invalid or
+                    // missing.
+                    console.log("BidFax wants a CAPTCHA check")
+                    browser.tabs.create({url:homeUrl})
+                    throw "CAPTCHA failed. Please click on a listing before trying again."
+                }
+                // CHECK FOR RESULTS
+                let parser = new DOMParser()
+                let doc = parser.parseFromString(await response.text(), "text/html");
+                let searchResults = doc.querySelectorAll(".thumbnail.offer");
+                if (!searchResults.length) {throw "search returned no results."}
+                // PARSE RESULTS
+                let lotUrls = [];
+                let stockNumbers = [];
+                for (searchResult of searchResults) {
+                    // FIND PAGE LINK
+                    let lotLinkElement = searchResult.querySelector(".caption a");
+                    if (!lotLinkElement) {continue}
+                    lotUrls.push(lotLinkElement.href)
+                    // NOTIFY
+                    try {
+                        let yardNameElement = searchResult.querySelector(".short-storyup span");
+                        let yardName = yardNameElement.innerText.trim();
+                        let stockNumberElement = searchResult.querySelector(".short-story span");
+                        let stockNumber = stockNumberElement.innerText;
+                        if (stockNumbers.includes(stockNumber)) {
+                            // Sometimes, multiple pages for the same lot number are
+                            // returned, and we don't want to include this URL after
+                            // all.
+                            lotUrls.pop(lotLinkElement.href)
+                            continue
+                        }
+                        stockNumbers.push(stockNumber)
+                        notify( `BidFax: found a match at ${yardName}! Lot ${stockNumber}.`, {displayAs: "success"} )
+                    } catch {
+                        notify( "BidFax: found a match!", {displayAs: "success"})
+                    }
+                }
+                if (!lotUrls.length) {throw "search returned no results"}
+                // SUCCESS!
+                resolve(()=>{
+                    lotUrls.forEach( lotUrl=>{
+                        browser.tabs.create({url: lotUrl})
+                    })
+                })
+            } catch (error) {
+                console.log(`BidFax rejecting: ${error}`)
                 notify(`BidFax: ${error}`, {displayAs: "error"})
-            reject()
-        }
-    })
-}
+                reject()
+            }
+        })
+    }
 };
 
 console.log("search loaded!")
