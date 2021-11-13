@@ -61,6 +61,7 @@ class ProgressButton {
     enable() {
         this.el.className = this.el.dataset.styleOrig;
     }
+    stop() {this.enable()}
     disable() {
         this.el.className = this.el.dataset.styleOrig;
         this.el.classList.add("disabled");
