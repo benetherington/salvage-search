@@ -28,12 +28,12 @@ const VehicleABC = class {
     }
     validateVin(vin) {
         if (!vin) {return}
-        let safe = encodeURIComponent(vin.replace(/^\s+|\s+$/g, ""));
+        let safe = encodeURIComponent(vin.replace(/\s/g, ""));
         if (VINREGEX.test(safe)) {return safe}
     }
     validateLot(lot) {
         if (!lot) {return}
-        let safe = encodeURIComponent(lot.replace(/\D/g, ""));
+        let safe = encodeURIComponent(lot.replace(/\s/g, ""));
         if (LOTREGEX.test(safe)) {return safe}
     }
     
