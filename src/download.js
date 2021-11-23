@@ -338,10 +338,9 @@ let SPINCAR_D = {
             let apiUrl = "https://api.spincar.com/spin/" + spinPath;
             let headers = { "User-Agent": window.navigator.userAgent,
                         "Accept": "application/json" };
-            let jsn = await fetch( apiUrl, headers )
-                            .then( r=>r.json() );
+            let jsn = await fetch(apiUrl, headers).then(r=>r.json());
             let walkaroundCount = jsn.info.options.numImgEC;
-            let walkaroundUrls = [...Array(walkaroundCount).keys()].map(
+            let walkaroundUrls = Array.from(Array(walkaroundCount).keys()).map(
                 idx=>`https:${jsn.cdn_image_prefix}ec/0-${idx}.jpg`
             );
             let panoUrls = ['f', 'l', 'b', 'r', 'u', 'd'].map(
@@ -358,8 +357,7 @@ let SPINCAR_D = {
 // {
 //     DeepZoomInd: true
 //     Image360Ind: true
-//     Image360Url:                   "https://spins.spincar.com/iaa-rochester/000-31355822"
-//                  https://cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/2021 09 28 16 53 05.CUFD0VOL/ec/0-41.jpg
+//     Image360Url: https://cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/20210928165305.CUFD0VOL/ec/0-41.jpg
 //     UndercarriageInd: false
 //     VRDUrl: "https://mediastorageaccountprod.blob.core.windows.net/media/31819854_VES-100_1"
 //     Videos: [{…}]
