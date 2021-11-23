@@ -242,10 +242,12 @@ const ROW52_S = {
 const POCTRA_S = {
     __proto__: Archive,
     NAME: "poctra",
+    INFO_REGEX: /^(?<salvage>.*?) (Stock|Lot) No: (?<lotNumber>\d*)<br>.*<br>Location: (?<location>.*)$/,
     search: (vinOrVehicle, notify=sendNotification)=>{
         let vin = vinOrVehicle.vin || vinOrVehicle;
+        // TODO: handle this too
+        let vehicle = vinOrVehicle;
         return new Promise(async (resolve, reject)=>{
-            let POCTRA_REGEX = /^(?<yard>.*?) (Stock|Lot) No: (?<stock>\d*)<br>.*<br>Location: (?<location>.*)$/;
             try {
                 // SEARCH
                 let searchUrl = `https://poctra.com/search/ajax`;
@@ -254,7 +256,6 @@ const POCTRA_S = {
                 let response = await fetch( searchUrl, {method: "POST", headers, body} );
                 if (!response.ok) { throw "something went wrong on their end..." }
                 // CHECK FOR RESULTS
-                let lotUrls = [];
                 let parser = new DOMParser();
                 let doc = parser.parseFromString(await response.text(), "text/html");
                 // set base URI so that relative links work
@@ -262,26 +263,29 @@ const POCTRA_S = {
                 base.href = searchUrl;
                 doc.head.append(base)
                 let searchResults = doc.querySelectorAll(".clickable-row");
-                if (!searchResults.length) {throw "search returned no results."}
-                // PARSE RESULTS
-                for (searchResult of searchResults) {
-                    // FIND PAGE LINK
-                    let lotLink = searchResult.querySelector("a");
-                    if (!lotLink) {continue}
-                    lotUrls.push(lotLink.href)
-                    // NOTIFY
-                    try {
+                if (searchResults.length===0 || searchResults.length>3) {throw "search returned no results."}
+
+                // TODO: handle multiple listings
+                let searchResult = searchResults[0]
+                // FIND PAGE LINK
+                let lotLink = searchResult.querySelector("a");
+                if (!lotLink) {console.log("POCTRA found results, but no lotLink");throw "search returned no results.";}
+                vehicle.listingUrl = lotLink.href;
+                // NOTIFY
+                try {
+                    let infoElement = searchResult.querySelector("p");
+                    let infoParsed = POCTRA_S.INFO_REGEX.exec(infoElement.innerHTML.trim()).groups;
+                    vehicle.lotNumber = infoParsed.lotNumber;
+                    vehicle.location = infoParsed.location;
+                    if (infoParsed.salvage.toLowerCase()==="iaai"  ) {vehicle.salvage=IAAI_S}
+                    if (infoParsed.salvage.toLowerCase()==="copart") {vehicle.salvage=COPART_S}
                     notify( `Poctra: found a match at ${vehicle.salvage.PRETTY_NAME}! `+
                             `Lot ${vehicle.lotNumber}.`, {displayAs: "success"} )
-                    }
+                } catch {
+                    notify( "Poctra: found a match!", {displayAs: "success"})
                 }
-                if (!lotUrls.length) {throw "search returned no results"}
                 // SUCCESS!
-                resolve(()=>{
-                    lotUrls.forEach( lotUrl=>{
-                        browser.tabs.create({url: lotUrl})
-                    })
-                })
+                resolve(()=>{vehicle})
             } catch (error) {
                 console.log(`Poctra rejecting: ${error}`)
                 notify(`Poctra: ${error}`, {displayAs: "error"})
@@ -335,33 +339,31 @@ const BIDFAX_S = {
                 let parser = new DOMParser()
                 let doc = parser.parseFromString(await response.text(), "text/html");
                 let searchResults = doc.querySelectorAll(".thumbnail.offer");
-                if (!searchResults.length) {throw "search returned no results."}
+                if (!searchResults.length)  {throw "search returned no results."}
+                if (searchResults.length>3) {throw "search returned no results."}
                 // PARSE RESULTS
-                let lotUrls = [];
-                let stockNumbers = [];
-                for (searchResult of searchResults) {
-                    // FIND PAGE LINK
-                    let lotLinkElement = searchResult.querySelector(".caption a");
-                    if (!lotLinkElement) {continue}
-                    lotUrls.push(lotLinkElement.href)
-                    // NOTIFY
-                    try {
-                        let yardNameElement = searchResult.querySelector(".short-storyup span");
-                        let yardName = yardNameElement.innerText.trim();
+                searchResult = searchResults[0]
+                // FIND PAGE LINK
+                let lotLinkElement = searchResult.querySelector(".caption a");
+                if (!lotLinkElement) {throw "the website has changed. Please send Ben "+
+                                            "your search terms so he can fix it."}
+                let vehicle = {listingUrl: lotLinkElement.href}
+                // NOTIFY
+                try {
+                    let yardNameElement = searchResult.querySelector(".short-storyup span");
+                    let yardName = yardNameElement.innerText.trim();
+                    if (yardName==="iaai"  ) {vehicle.salvage=IAAI_S}
+                    if (yardName==="copart") {vehicle.salvage=COPART_S}
                     let lotNumberElement = searchResult.querySelector(".short-story span");
                     let lotNumber = stockNumberElement.innerText;
                     vehicle.lotNumber = lotNumber
                     notify( `BidFax: found a match at ${yardName}! `+
                             `Lot ${lotNumber}.`, {displayAs: "success"} )
-                    }
+                } catch {
+                    notify( "BidFax: found a match!", {displayAs: "success"})
                 }
-                if (!lotUrls.length) {throw "search returned no results"}
                 // SUCCESS!
-                resolve(()=>{
-                    lotUrls.forEach( lotUrl=>{
-                        browser.tabs.create({url: lotUrl})
-                    })
-                })
+                resolve(()=>{vehicle})
             } catch (error) {
                 console.log(`BidFax rejecting: ${error}`)
                 notify(`BidFax: ${error}`, {displayAs: "error"})
