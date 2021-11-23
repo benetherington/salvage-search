@@ -100,8 +100,8 @@ class GuiVehicle extends VehicleABC {
     // INPUTS
     onSearchMessage(message) {
         super.onMessage(message)
-        if (this.salvage) {dlProgressButton.attention(); this.openTab()}
-        searchProgressButton.stop()
+        if (message.search && this.listingUrl) {dlProgressButton.attention(); this.openTab()}
+        searchProgressButton.enable()
     }
     onDownloadMessage(message) {
         super.onMessage(message)
@@ -110,10 +110,13 @@ class GuiVehicle extends VehicleABC {
     }
     async onFocus() {
         // TODO: to request access in Chrome, we need to load a new tab
-        let clipboard = await navigator.clipboard.readText().then(s=>s.trim());
-        if (!this.testInput(clipboard)) {
-            let findTabs = true;
-            this.send(this.downloadPort, {findTabs})
+        console.log("focus")
+        if (this.vin || this.lotNumber) {return}
+        this.clipboard = await navigator.clipboard.readText().then(s=>s.trim());
+        let findTabs = true;
+        this.send(this.downloadPort, {findTabs})
+        setTimeout(()=>{this.clipboard = null;}, 500)
+    }
     loadTabOrClipboard() {
         if (this.vin) {
             this.setVin()
@@ -132,11 +135,11 @@ class GuiVehicle extends VehicleABC {
     }
     onInput() {
         let input = this.searchInput.value;
-        this.testInput(input)
+        this.fillInput(input)
     }
-    testInput(vinOrLot) {
-        if      (this.validateVin(vinOrLot)) {this.setVin(vinOrLot); return 'vin'}
-        else if (this.validateLot(vinOrLot)) {this.setLot(vinOrLot); return 'lotNumber'}
+    fillInput(vinOrLot) {
+        if      (this.validateVin(vinOrLot)) {this.setVin(vinOrLot); return 'VIN'}
+        else if (this.validateLot(vinOrLot)) {this.setLot(vinOrLot); return 'lot number'}
         else                                 {this.clear()}
     }
     setVin(newVin) {
