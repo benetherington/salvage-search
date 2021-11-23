@@ -41,22 +41,26 @@ class SearchVehicle extends BackgroundVehicle {
     async ifSettingsCopart(notify) {
         let settings = await defaultedSettings()
         if (settings.searchCopart) {return COPART_S.search(this, notify)}
+        else {return Promise.reject()}
     }
     async ifSettingsIaai(notify) {
         let settings = await defaultedSettings()
         if (settings.searchIaai) {return IAAI_S.search(this, notify)}
+        else {return Promise.reject()}
     }
     async ifSettingsRow52(notify) {
         let settings = await defaultedSettings()
         if (settings.searchRow52) {return ROW52_S.search(this, notify)}
+        else {return Promise.reject()}
     }
     async ifSettingsPoctra(notify) {
         let settings = await defaultedSettings()
         if (settings.searchPoctra) {return POCTRA_S.search(this, notify)}
+        else {return Promise.reject()}
     }
     async ifSettingsBidfax(notify) {
         let settings = await defaultedSettings()
-        if (settings.searchBidFax) {return BIDFAX_S.search(this, notify)}
+        else {return Promise.reject()}
     }
 }
 
