@@ -146,15 +146,13 @@ const IAAI_S = {
             if (!response.redirected) {throw "query returned no results.";}
             // open redirect URL in a new tab
             let redirectUrl = response.url;
-            lotRe = /itemid=(\d{8})/
-            if (!lotRe.test(redirectUrl)) {throw "query returned no results."}
+            if (!/itemid=(\d{8})/.test(redirectUrl)) {throw "query returned no results."}
             
             // CREATE VEHICLE
-            let lotNumber = lotRe.exec(redirectUrl)[1];
-            notify(`IAAI: found a match: lot #${lotNumber}!`, {displayAs:"success"})
-            vehicle.lotNumber = lotNumber;
+            await IAAI_S.getVehicleInfo(vehicle, {url:redirectUrl});
+            notify(`IAAI: found a match: lot #${vehicle.lotNumber}!`, {displayAs:"success"})
             vehicle.listingUrl = redirectUrl;
-            vehicle.salvage = "iaai";
+            vehicle.salvage = IAAI_S;
             
             resolve({vehicle})
         } catch (error) {
@@ -162,6 +160,16 @@ const IAAI_S = {
             notify(`IAAI: ${error}`, {displayAs: "error"})
             reject()
         }})
+    },
+    getVehicleInfo: async (vehicle, options)=>{
+        if (options.url) {
+            let response = await fetch(options.url);
+            if (!response.ok) {console.log("IAAI redirect URL invalid");return}
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(await response.text(), "text/html");
+            let jsn = JSON.parse(doc.querySelector("#ProductDetailsVM").innerText);
+            vehicle.lotNumber = jsn.VehicleDetailsViewModel.StockNo
+        }
     }
 };
 
