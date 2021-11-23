@@ -119,7 +119,11 @@ const COPART_D = {
         }
         return {lotNumber}
     },
-    imageInfoFromLotNumber: async (lotNumberOrVehicleData)=>{
+    lotNumberValid: async (lotNumberOrVehicle)=>{
+        let imageInfo = await COPART_D.imageInfoFromLotNumber(lotNumberOrVehicle);
+        return Object.entries(imageInfo.imageInfo.data.imagesList).length;
+    },
+    imageInfoFromLotNumber: async (lotNumberOrVehicle)=>{
         let lotNumber;
         if (lotNumberOrVehicleData instanceof DownloadableVehicle) {
             lotNumber = await lotNumberOrVehicleData.getLotNumber();
@@ -195,10 +199,14 @@ const IAAI_D = {
             throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
         }
     },
-    imageInfoFromLotNumber: async (stockNumberOrDownloadableVehicle)=>{
-        let stockNumber;
-        if (stockNumberOrDownloadableVehicle instanceof DownloadableVehicle) {
-            stockNumber = await stockNumberOrDownloadableVehicle.getLotNumber()
+    lotNumberValid: async (stockNumberOrVehicle)=>{
+        try {
+            let imageInfo = await IAAI_D.imageInfoFromLotNumber(stockNumberOrVehicle)
+            return imageInfo.imageInfo.keys.length;
+        } catch (error) {if (error==="no images found.") {
+            return 0;
+        }}
+    },
         } else {
             stockNumber = stockNumberOrDownloadableVehicle;
         }
