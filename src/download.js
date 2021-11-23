@@ -107,7 +107,8 @@ const COPART_D = {
         else if (tabOrVehicle.id) {tabId = tabOrVehicle.id;}
         else                      {tabId = tabOrVehicle;}
         
-        let lotMatch = tabId.title.match(/^(.*) for Sale/i);
+        let lotMatch = await browser.tabs.get(tabId)
+                            .then(t=>t.title.match(/^(.*) for Sale/i))
         let lotNumber;
         if (lotMatch) { lotNumber = lotMatch[0] }
         else {
