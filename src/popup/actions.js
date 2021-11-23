@@ -61,7 +61,6 @@ class ProgressButton {
     enable() {
         this.el.className = this.el.dataset.styleOrig;
     }
-    stop() {this.enable()}
     disable() {
         this.el.className = this.el.dataset.styleOrig;
         this.el.classList.add("disabled");
@@ -77,6 +76,7 @@ class ProgressButton {
 class GuiVehicle extends VehicleABC {
     constructor() {
         super()
+        this.clipboard = null;
         this.activate()
     }
     activate() {
@@ -106,9 +106,7 @@ class GuiVehicle extends VehicleABC {
     onDownloadMessage(message) {
         super.onMessage(message)
         if (message.download) {this.download()}
-        if (message.findTabs      && this.vin      ) {this.setVin()}
-        else if (message.findTabs && this.lotNumber) {this.setLot()}
-        dlProgressButton.stop()
+        if (message.findTabs) {this.loadTabOrClipboard()}
     }
     async onFocus() {
         // TODO: to request access in Chrome, we need to load a new tab
@@ -116,6 +114,20 @@ class GuiVehicle extends VehicleABC {
         if (!this.testInput(clipboard)) {
             let findTabs = true;
             this.send(this.downloadPort, {findTabs})
+    loadTabOrClipboard() {
+        if (this.vin) {
+            this.setVin()
+            addFeedbackMessage({message: `Found VIN from open tab.`})
+        }
+        else if (this.lotNumber) {
+            this.setLot()
+            addFeedbackMessage({message: `Found lot number from open tab.`})
+        }
+        else {
+            let filledValue = this.fillInput(this.clipboard)
+            if (filledValue) {
+                addFeedbackMessage({message: `Pasted ${filledValue} from clipboard.`})
+            }
         }
     }
     onInput() {
@@ -162,11 +174,9 @@ class GuiVehicle extends VehicleABC {
         let download = true;
         this.send(this.downloadPort, {download})
         event.stopPropagation()
-        // PICKUP: establish download-from-lotNumber logic. Right now, results
-        // in "no tab" error
     }
     send(port, options={}) {
-        let values =  this.serialize();
+        let values = this.serialize();
         port.postMessage({values, ...options})
     }
     async openTab() {
@@ -187,6 +197,7 @@ class GuiVehicle extends VehicleABC {
             message:`${this.imageUrls.length} images sent to downloads folder!`,
             displayAs: "success"
         })
+        dlProgressButton.enable()
     }
 }
 let guiVehicle
