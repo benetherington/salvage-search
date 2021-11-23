@@ -471,21 +471,22 @@ const POCTRA_D = {
     URL_PATTERN: "*://*.poctra.com/*/id-*/*",
     lotNumbersFromTab: async (poctraTab)=>{
         try {
-            let framesResults = await browser.tabs.executeScript(poctraTab.id, { code:`(${POCTRA_D.getLotNumber.toString()})()` });
-            return framesResults[0]
+            let code = `(${POCTRA_D.getLotNumber.toString()})()`
+            let framesResults = await browser.tabs.executeScript(poctraTab.id,{code});
+            let frameResults = framesResults[0]
+            let vehicle = {lotNumber: frameResults.lotNumber};
+            if (frameResults.copart) {vehicle.salvage = "copart"};
+            if (frameResults.iaai  ) {vehicle.salvage = "iaai"  };
+            return vehicle
         } catch (error) {throw `Poctra: ${error}`}
     },
     getLotNumber: ()=>{
         let idElement = document.querySelector("h2");
         if (!idElement) {return null}
         let idString = idElement.innerText;
-        let idMatches = /(?<type>Lot|Stock) no: (?<lotNumber>\d*)/.exec(idString);
-        let type, salvageName, lotNumber;
-        if (idMatches) {
-            ({type, lotNumber} = idMatches.groups);
-            salvageName = {lot:"copart", stock:"iaai"}[type];
-        } else {salvageName = "unknown";}
-        return {salvageName, lotNumber}
+        let idMatches = /((?<copart>Lot)|(?<iaai>Stock)) no: (?<lotNumber>\d*)/.exec(idString);
+        if (!idMatches) {return null}
+        return idMatches.groups;
     }
 }
 
@@ -496,24 +497,23 @@ const POCTRA_D = {
 const BIDFAX_D = {
     URL_PATTERN: "*://en.bidfax.info/*",
     lotNumbersFromTab: async (bidfaxTab)=>{
-        let framesResults = await browser.tabs.executeScript(bidfaxTab.id, { code:`(${BIDFAX_D.getLotNumber.toString()})()` });
-        return framesResults[0]
+        let code = `(${BIDFAX_D.getLotNumber.toString()})()`
+        let framesResults = await browser.tabs.executeScript(bidfaxTab.id,{code});
+        let frameResults = framesResults[0]
+        let vehicle = {lotNumber: frameResults.lotNumber};
+        if (frameResults.copart) {vehicle.salvage = "copart"};
+        if (frameResults.iaai  ) {vehicle.salvage = "iaai"  };
+        return vehicle;
     },
-    getLotNumber: ()=>{
+    getLotNumber: ()=>{ // TODO: update to match poctra, ie return an object with iaai/copart keys
         // GET LOT INFO
         let infoElement = document.querySelector("#aside")
-        if (!infoElement) {return null}
+        if (!infoElement) {return null;}
         // LOOK FOR CORRECT INFO
-        // we're looking for bits of text like: "Auction:  IAAI_D" and "Lot number: 31451264"
-        let yardRe = /(?<=auction:.*)iaai|copart/i;
-        let yardMatch = yardRe.exec(infoElement.innerText) || ["unknown"];
-        let salvageName = yardMatch[0].toLowerCase();
-        
-        let numberRe = /(?<=lot.*:\D*)\d+/i;
-        let numberMatch = numberRe.exec(infoElement.innerText) || [undefined];
-        let lotNumber = numberMatch[0]
-        
-        return {salvageName, lotNumber};
+        const INFO_REGEX = /Auction:\s+((?<iaai>iaai)|(?<copart>copart))(?:.*\n\n)*Lot number:\s+(?<lotNumber>\d{8})/gim;
+        let infoMatch = INFO_REGEX.exec(infoElement.innerText);
+        if (!infoMatch) {return null;}
+        return infoMatch.groups;
     }
 }
 
