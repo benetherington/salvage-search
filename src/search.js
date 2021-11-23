@@ -4,37 +4,21 @@ class SearchVehicle extends BackgroundVehicle {
         super.onMessage(message)
         if (message.search) {this.search()}
     }
-    async search() {
-        if      (this.salvage)             {await this.knowledgeableSearch()}
-        else if (this.lotNumber||this.vin) {await this.ignorantSearch()}
-        else                               {return this.error()}
-        this.reply()
-    }
-    
     // OUTPUT
-    async knowledgeableSearch() {
+    async search() {
         let notify = notifyUntilSuccess();
-        if      (this.salvage==="copart") {return COPART_S.search(this, notify)}
-        else if (this.salvage==="iaai"  ) {return IAAI_S.search(this, notify)}
-    }
-    async ignorantSearch() {
-        let notify = notifyUntilSuccess();
-        let salvagePromise = Promise.any([
+        await Promise.any([
             this.ifSettingsCopart(notify),
             this.ifSettingsIaai(notify),
             this.ifSettingsRow52(notify)
-        ])
-        return salvagePromise.catch(()=>{
+        ]).catch(()=>
             // AggrigateError, no results
-            let archivePromise = Promise.any([
+            Promise.any([
                 this.ifSettingsPoctra(notify),
                 this.ifSettingsBidfax(notify)
             ])
-            return archivePromise.catch(()=>{})
-        })
-    }
-    async error() {
-        console.log("Search error handler is not built")
+        ).catch(()=>{})
+        this.reply({search:true})
     }
     
     // SETTINGS
