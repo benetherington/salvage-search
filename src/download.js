@@ -125,9 +125,9 @@ const COPART_D = {
     },
     imageInfoFromLotNumber: async (lotNumberOrVehicle)=>{
         let lotNumber;
-        if (lotNumberOrVehicleData instanceof DownloadableVehicle) {
-            lotNumber = await lotNumberOrVehicleData.getLotNumber();
-        } else { lotNumber = lotNumberOrVehicleData; }
+        if (lotNumberOrVehicle instanceof DownloadableVehicle) {
+            lotNumber = await lotNumberOrVehicle.getLotNumber();
+        } else { lotNumber = lotNumberOrVehicle; }
         let imagesUrl = `https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`;
         let headers = { "User-Agent": window.navigator.userAgent,
                         "Accept": "application/json, text/plain, */*" }
@@ -140,7 +140,7 @@ const COPART_D = {
             browser.tabs.create({url:"https://www.copart.com"})
             throw "please complete the CAPTCHA and try again."
         }
-        return {imageInfo}
+        return {imageInfo};
     },
     imageUrlsFromInfo: async function (...imageInfosOrVehicle) {
         // Accepts a single lot number, multiple lot numbers, or an array of lot numbers.
@@ -207,8 +207,13 @@ const IAAI_D = {
             return 0;
         }}
     },
+    imageInfoFromLotNumber: async (stockNumberOrVehicle)=>{
+        let vehicle, stockNumber;
+        if (stockNumberOrVehicle instanceof DownloadableVehicle) {
+            vehicle = stockNumberOrVehicle
+            stockNumber = await vehicle.getLotNumber()
         } else {
-            stockNumber = stockNumberOrDownloadableVehicle;
+            stockNumber = stockNumberOrVehicle;
         }
         // ENSURE TYPE
         stockNumber = stockNumber.toString();
