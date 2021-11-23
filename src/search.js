@@ -64,6 +64,7 @@ browser.runtime.onConnect.addListener( async port=>{
 const COPART_S = {
     __proto__: Salvage,
     NAME: "copart",
+    PRETTY_NAME: "Copart",
     listingUrl: (lotNumber)=>`https://www.copart.com/lot/${lotNumber}`,
     search: (vinOrVehicle, notify=sendNotification)=>{
         let vin = vinOrVehicle.vin || vinOrVehicle;
@@ -126,6 +127,7 @@ const COPART_S = {
 const IAAI_S = {
     __proto__: Salvage,
     NAME: "iaai",
+    PRETTY_NAME: "IAAI",
     search: (vinOrVehicle, notify=sendNotification)=>{
         let vin = vinOrVehicle.vin || vinOrVehicle;
         // TODO: handle new vehicle creation
@@ -209,14 +211,14 @@ const ROW52_S = {
             let yardName = yardNameElement.innerText.trim()
             
             // CREATE VEHICLE
-            vehicle.salvage = "Row52";
+            vehicle.salvage = ROW52_S;
             vehicle.listingUrl = "https://row52.com"+vehiclePaths.pop()
             notify(`Row52: Found a match at ${yardName}!`, {displayAs: "success"})
             
             // HANDLE EXTRAS
             let extras = vehiclePaths.map(path=>
                 new BackgroundVehicle({
-                    salvage: "row52",
+                    salvage: ROW52_S,
                     listingUrl: "https://row52.com"+path
                 })
             )
@@ -269,11 +271,8 @@ const POCTRA_S = {
                     lotUrls.push(lotLink.href)
                     // NOTIFY
                     try {
-                        let detailsElement = searchResult.querySelector("p");
-                        let details = POCTRA_REGEX.exec(detailsElement.innerHTML.trim()).groups;
-                        notify( `Poctra: found a match at ${details.yard}! Lot ${details.stock}.`, {displayAs: "success"} )
-                    } catch {
-                        notify( "Poctra: found a match!", {displayAs: "success"})
+                    notify( `Poctra: found a match at ${vehicle.salvage.PRETTY_NAME}! `+
+                            `Lot ${vehicle.lotNumber}.`, {displayAs: "success"} )
                     }
                 }
                 if (!lotUrls.length) {throw "search returned no results"}
@@ -349,19 +348,11 @@ const BIDFAX_S = {
                     try {
                         let yardNameElement = searchResult.querySelector(".short-storyup span");
                         let yardName = yardNameElement.innerText.trim();
-                        let stockNumberElement = searchResult.querySelector(".short-story span");
-                        let stockNumber = stockNumberElement.innerText;
-                        if (stockNumbers.includes(stockNumber)) {
-                            // Sometimes, multiple pages for the same lot number are
-                            // returned, and we don't want to include this URL after
-                            // all.
-                            lotUrls.pop(lotLinkElement.href)
-                            continue
-                        }
-                        stockNumbers.push(stockNumber)
-                        notify( `BidFax: found a match at ${yardName}! Lot ${stockNumber}.`, {displayAs: "success"} )
-                    } catch {
-                        notify( "BidFax: found a match!", {displayAs: "success"})
+                    let lotNumberElement = searchResult.querySelector(".short-story span");
+                    let lotNumber = stockNumberElement.innerText;
+                    vehicle.lotNumber = lotNumber
+                    notify( `BidFax: found a match at ${yardName}! `+
+                            `Lot ${lotNumber}.`, {displayAs: "success"} )
                     }
                 }
                 if (!lotUrls.length) {throw "search returned no results"}
