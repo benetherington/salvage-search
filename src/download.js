@@ -47,32 +47,25 @@ const DownloadableVehicle = class extends BackgroundVehicle {
     async getSalvage() {
         // This begins a cascade string of functions that allow us to jump in
         // and fetch new data, no matter how much or how little we know about
-        // the vehicle. At minimum, we must have a valid tabId. From there, we
-        // can identify both the salvage and the lotNumber.
-        // Note that finding the salvage has the most complicated logic. The
-        // other functions in this cascade have simpler, and very similar
-        // structures. They return the value if known, or call the function
-        // "above" them if not.
+        // the vehicle.
         if (Salvage.isPrototypeOf(this.salvage)) {return this.salvage}
-        
         if (typeof this.salvage==="string"){
             if      (this.salvage==="copart") {this.salvage = COPART_D;}
             else if (this.salvage==="iaai"  ) {this.salvage = IAAI_D;}
-        }
-        
-        if (!this.salvage) {
+        } else if (this.tabId) {
             let tab = await this.getTab()
-            if (!tab) {throw "no tab"}
-            else if (/copart\.com/i .test(tab.url)) {this.salvage = COPART_D;}
+            if      (/copart\.com/i .test(tab.url)) {this.salvage = COPART_D;}
             else if (/iaai\.com/i   .test(tab.url)) {this.salvage = IAAI_D;}
-            else if (/poctra\.com/i .test(tab.url)) {this.setData(await poctraLotNumbersFromTabs())}
-            else if (/bidfax\.info/i.test(tab.url)) {this.setData(await bidfaxLotNumbersFromTabs())}
-        }
+            else if (/poctra\.com/i .test(tab.url)) {this.setData(await POCTRA_D.lotNumbersFromTab(tab))}
+            else if (/bidfax\.info/i.test(tab.url)) {this.setData(await BIDFAX_D.lotNumbersFromTab(tab))}
+        } else if (this.lotNumber) {
+            if (await COPART_D.lotNumberValid(this.lotNumber)   ) {this.salvage=COPART_D;}
+            else if (await IAAI_D.lotNumberValid(this.lotNumber)) {this.salvage=IAAI_D;}
+        } else {throw "not enough information to find salvage yard"}
         return this.salvage;
     }
     async getLotNumber() {
-        if (this.lotNumber&&this.salvage) {return this.lotNumber}
-        await this.getSalvage();
+        if (this.lotNumber&&await this.getSalvage()) {return this.lotNumber}
         let values = await this.salvage.lotNumberFromTab(this);
         this.setData(values)
         return this.lotNumber;
