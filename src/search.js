@@ -60,6 +60,7 @@ class SearchVehicle extends BackgroundVehicle {
     }
     async ifSettingsBidfax(notify) {
         let settings = await defaultedSettings()
+        if (settings.searchBidfax) {return BIDFAX_S.search(this, notify)}
         else {return Promise.reject()}
     }
 }
