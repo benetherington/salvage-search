@@ -37,7 +37,12 @@ const DownloadableVehicle = class extends BackgroundVehicle {
         let tabIds = salvageTabs.map(t=>t.id).sort( (a, b)=>a-b )
         this.tabId = tabIds.pop()
         // TODO handle extras
-        await this.getLotNumber()
+        try {
+            await this.getSalvage()
+            await this.getLotNumber()
+        } catch (error) {
+            if (error!=="not enough information to find salvage yard") {throw error}
+        }
     }
     async getSalvage() {
         // This begins a cascade string of functions that allow us to jump in
