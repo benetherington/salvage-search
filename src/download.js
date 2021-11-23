@@ -142,33 +142,37 @@ const COPART_D = {
         }
         return {imageInfo};
     },
-    imageUrlsFromInfo: async function (...imageInfosOrVehicle) {
-        // Accepts a single lot number, multiple lot numbers, or an array of lot numbers.
-        let imageInfos, lotNumber;
-        if (imageInfosOrVehicle[0] instanceof DownloadableVehicle) {
-            imageInfos = [await imageInfosOrVehicle[0].getImageInfo()]
-            lotNumber = imageInfosOrVehicle[0].lotNumber;
-        } else { imageInfos = imageInfosOrVehicle.flat(); }
-        if (!imageInfos.length) {throw "no lot number provided.";}
-        sendNotification(`Copart: downloading images from lot #${lotNumber},`)
+    imageUrlsFromInfo: async function (imageInfoOrVehicle) {
+        let imageInfo, vehicle;
+        if (imageInfoOrVehicle instanceof DownloadableVehicle) {
+            vehicle = imageInfoOrVehicle
+            imageInfo = await vehicle.getImageInfo();
+        } else {
+            imageInfo = imageInfoOrVehicle;
+        }
+        if (!imageInfo) {throw "no lot number provided.";}
+        
         // PROCESS
         let imageUrls = [];
-        for (let jsn of imageInfos) {
-            try {
-                if (  !jsn.hasOwnProperty("returnCode")
-                ||  jsn.returnCode!=1
-                || !jsn.hasOwnProperty("data")
-                || !jsn.data.hasOwnProperty("imagesList") )
-                    {throw "encountered a server error."}
-                if (!jsn.data.imagesList.hasOwnProperty("HIGH_RESOLUTION_IMAGE"))
-                    {throw `has no high resolution images.`}
-                // TODO: sometimes, imagesList has more images in FULL_RESOLUTION
-                // than in HIGH_RESOLUTION. We need to go over FULL and return HIGH
-                // if present, FULL if not.
-                let highResImages = jsn.data.imagesList.HIGH_RESOLUTION_IMAGE.map(image=>image.url)
-                    imageUrls.push( ...highResImages )
-            } catch (error) {throw `Copart: lot #${lotNumber} ${error}`}
-        }
+        try {
+            if (   !imageInfo.hasOwnProperty("returnCode")
+                ||  imageInfo.returnCode!=1
+                || !imageInfo.hasOwnProperty("data")
+                || !imageInfo.data.hasOwnProperty("imagesList") )
+            {throw "encountered a server error."}
+            
+            imageUrls = imageInfo.data.imagesList.FULL_IMAGE.map(full=>{
+                if (full.highRes) { // this means "a high res is present"
+                    let high = imageInfo.data.imagesList
+                                .HIGH_RESOLUTION_IMAGE
+                                .find(high=>high.sequenceNumber===full.sequenceNumber)
+                    return high.url;
+                } else {
+                    return full.url;
+                }
+            })
+                
+        } catch (error) {throw `Copart: lot #${lotNumber} ${error}`}
         return {imageUrls}
     }
 }
@@ -237,27 +241,25 @@ const IAAI_D = {
             })
         return {imageInfo}
     },
-    imageUrlsFromInfo: async function (...lotInfosOrVehicle) {
-        // accepts a single imageDetails object, multiple imageDetails objects, or
-        // an array of imageDetails objects
-        let lotDetails;
-        if (lotInfosOrVehicle[0] instanceof DownloadableVehicle) {
-            lotDetails = [await lotInfosOrVehicle[0].getImageInfo()];
+    imageUrlsFromInfo: async function (lotDetailsOrVehicle) {
+        let vehicle, lotDetails;
+        if (lotDetailsOrVehicle instanceof DownloadableVehicle) {
+            vehicle = lotDetailsOrVehicle;
+            lotDetails = await vehicle.getImageInfo();
         } else {
-            lotDetails = lotInfosOrVehicle.flat();
+            lotDetails = lotDetailsOrVehicle;
         }
         console.log("iaaiImageUrlsFromImageInfo(...)")
         console.log(lotDetails)
-        if (!lotDetails.length){return []}
+        if (!lotDetails){return []}
         // FETCH AND PROCESS
+        sendNotification(`IAAI: processing ${lotDetails.keys.length} images from lot #${vehicle.lotNumber}`)
         let processedUrls = [];
-        for (let lotDetail of lotDetails) {
-            let dezoomed = await IAAI_D.fetchAndDezoom(lotDetail.keys)
-            processedUrls.push(...dezoomed)
-            // let {walkaroundUrls, panoUrls} = await SpinCar.fetchDetails(lotDetail.cdn_image_prefix)
-            // processedUrls.push(...pano)
-            // processedUrls.push(...walkaround)
-        };
+        let dezoomed = await IAAI_D.fetchAndDezoom(lotDetails.keys)
+        processedUrls.push(...dezoomed)
+        // let {walkaroundUrls, panoUrls} = await SpinCar.fetchDetails(lotDetail.cdn_image_prefix)
+        // processedUrls.push(...pano)
+        // processedUrls.push(...walkaround)
         // DONE
         return {imageUrls: processedUrls}
     },
