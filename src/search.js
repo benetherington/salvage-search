@@ -311,6 +311,7 @@ const BIDFAX_S = {
     __proto__: Archive,
     NAME: "bidfax",
     search: (vinOrVehicle, notify=sendNotification)=>{
+        // TODO: this appears to be broken again. 1FMCU02Z58KB50453 exemplar.
         let vin = vinOrVehicle.vin || vinOrVehicle;
         return new Promise(async (resolve, reject)=>{
             try {
