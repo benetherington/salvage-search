@@ -1,6 +1,7 @@
 /*-------*\
   TOOLBAR  
 \*-------*/
+
 // handle clicks
 document.addEventListener("click", (event) =>{
     if (event.target.id === "button-settings"){
@@ -110,7 +111,6 @@ class GuiVehicle extends VehicleABC {
     }
     async onFocus() {
         // TODO: to request access in Chrome, we need to load a new tab
-        console.log("focus")
         if (this.vin || this.lotNumber) {return}
         this.clipboard = await navigator.clipboard.readText().then(s=>s.trim());
         let findTabs = true;
