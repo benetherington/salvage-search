@@ -465,7 +465,6 @@ void main() {
 
 function main() {
     // Get A WebGL context
-    /** @type {HTMLCanvasElement} */
     var canvas = document.querySelector("#pano");
     var gl = canvas.getContext("webgl");
     if (!gl) {
@@ -527,7 +526,7 @@ function main() {
             target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
             url: "images/pano_f.jpg"
         },
-    ]
+    ];
     faceInfos.forEach( faceInfo => {
         const {target, url} = faceInfo;
         
@@ -544,13 +543,13 @@ function main() {
         
         // Asynchronously load the image
         var image = new Image();
-        image.src = url;
-        image.addEventListener('load', function() {
+        image.addEventListener('load', async function() {
             // Now that the image has loaded make copy it to the texture.
             gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
             gl.texImage2D(target, level, internalFormat, format, type, image);
             requestAnimationFrame(drawScene)
         })
+        image.src = url;
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
