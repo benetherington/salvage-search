@@ -463,82 +463,93 @@ void main() {
   DISPLAY
 \*-------*/
 
-function main() {
-    // Get A WebGL context
-    var canvas = document.querySelector("#pano");
-    var gl = canvas.getContext("webgl");
-    if (!gl) {
-        return;
+class panoViewer {
+    __constructor__(faces={}) {
+        // Get A WebGL context
+        this.canvas = document.querySelector("#pano");
+        this.gl = this.canvas.getContext("webgl");
+        if (!this.gl) {
+            return;
+        }
+        
+        this.faceInfos = [
+            {
+                target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+                url: faces.pano_r || "images/pano_r.jpg"
+            }, {
+                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+                url: faces.pano_l || "images/pano_l.jpg"
+            }, {
+                target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+                url: faces.pano_u || "images/pano_u.jpg"
+            }, {
+                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                url: faces.pano_d || "images/pano_d.jpg"
+            }, {
+                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+                url: faces.pano_b || "images/pano_b.jpg"
+            }, {
+                target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+                url: faces.pano_f || "images/pano_f.jpg"
+            },
+        ];
+        this.init()
     }
-    
-    // setup GLSL program
-    var vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
-    var fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(vertex_shader, VERTEX_SHADER_SOURCE);
-    gl.shaderSource(fragment_shader, FRAGMENT_SHADER_SOURCE);
-    gl.compileShader(vertex_shader);
-    gl.compileShader(fragment_shader);
-    console.log(`vertex_shader compile status: ${gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)}`)
-    console.log(`fragment_shader compile status: ${gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)}`)
-    var program = gl.createProgram()
-    gl.attachShader(program, vertex_shader)
-    gl.attachShader(program, fragment_shader)
-    
-    gl.linkProgram(program)
-    console.log(`program link status: ${gl.getProgramParameter(program, gl.LINK_STATUS)}`)
-    
-    // look up where the vertex data needs to go.
-    var positionLocation = gl.getAttribLocation(program, "a_position");
-    // var texcoordLocation = gl.getAttribLocation(program, "a_texcoord");
-    
-    // lookup uniforms
-    var skyboxLocation = gl.getUniformLocation(program, "u_skybox");
-    var viewDirectionProjectionInverseLocation = gl.getUniformLocation(program, "u_viewDirectionProjectionInverse");
-    
-    // Create a buffer for positions
-    var positionBuffer = gl.createBuffer();
-    // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    // Put the positions in the buffer
-    setGeometry(gl);
-    
-    // create a cubemap texture
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture)
-    
-    const faceInfos = [
-        {
-            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-            url: "images/pano_r.jpg"
-        }, {
-            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-            url: "images/pano_l.jpg"
-        }, {
-            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-            url: "images/pano_u.jpg"
-        }, {
-            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-            url: "images/pano_d.jpg"
-        }, {
-            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-            url: "images/pano_b.jpg"
-        }, {
-            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-            url: "images/pano_f.jpg"
-        },
-    ];
-    faceInfos.forEach( faceInfo => {
+    init() {
+        let gl = this.gl;
+        // setup GLSL program
+        var vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
+        var fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(vertex_shader, VERTEX_SHADER_SOURCE);
+        gl.shaderSource(fragment_shader, FRAGMENT_SHADER_SOURCE);
+        gl.compileShader(vertex_shader);
+        gl.compileShader(fragment_shader);
+        console.log(`vertex_shader compile status: ${gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)}`)
+        console.log(`fragment_shader compile status: ${gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)}`)
+        var program = gl.createProgram()
+        gl.attachShader(program, vertex_shader)
+        gl.attachShader(program, fragment_shader)
+        
+        gl.linkProgram(program)
+        console.log(`program link status: ${gl.getProgramParameter(program, gl.LINK_STATUS)}`)
+        
+        // look up where the vertex data needs to go.
+        var positionLocation = gl.getAttribLocation(program, "a_position");
+        
+        // lookup uniforms
+        var skyboxLocation = gl.getUniformLocation(program, "u_skybox");
+        var viewDirectionProjectionInverseLocation = gl.getUniformLocation(program, "u_viewDirectionProjectionInverse");
+        
+        // Create a buffer for positions
+        var positionBuffer = gl.createBuffer();
+        // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        // Put the positions in the buffer
+        this.setGeometry(gl);
+        
+        // create a cubemap texture
+        var texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture)
+        
+        // add events
+        document.querySelector("#pitch").addEventListener("change", ()=>requestAnimationFrame(this.drawScene))
+        document.querySelector("#yaw"  ).addEventListener("change", ()=>requestAnimationFrame(this.drawScene))
+        document.querySelector("#zoom" ).addEventListener("change", ()=>requestAnimationFrame(this.drawScene))
+        canvas.addEventListener("mousemove", this.mouse.move)
+        requestAnimationFrame(this.drawScene)
+        
+        this.load_textures()
+    }
+    load_textures() {let gl=this.gl;this.faceInfos.forEach(faceInfo =>{
         const {target, url} = faceInfo;
         
-        // upload the canvas to the cubemap face
+        // build fake texture for immediate results
         const level = 0;
         const internalFormat = gl.RGBA;
         const width = 1712;
         const height = 1712;
         const format = gl.RGBA;
         const type = gl.UNSIGNED_BYTE;
-        
-        // setup each face so it's immediately renderable
         gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null)
         
         // Asynchronously load the image
@@ -550,50 +561,17 @@ function main() {
             requestAnimationFrame(drawScene)
         })
         image.src = url;
+        
+        // assign textures
+        // TODO: can this go outside the loop?
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    })
-    
-    var fieldOfViewRadians = degToRad(60);
-    
-    // Get the starting time.
-    // var then = 0;
-    var draw = ()=>requestAnimationFrame(drawScene);
-    document.querySelector("#pitch").addEventListener("change", draw)
-    document.querySelector("#yaw").addEventListener("change", draw)
-    document.querySelector("#zoom").addEventListener("change", draw)
-    var mouse = {
-        x:0, y:0,
-        move: (e)=>{
-            if (e.buttons && e.ctrlKey) {
-                let dz = e.y - mouse.y;
-                dz *= 0.1;
-                let zoom = document.querySelector("#zoom");
-                zoom.value = parseFloat(zoom.value) + dz;
-                draw()
-            } else if (e.buttons) {
-                let dx = e.x - mouse.x;
-                let dy = e.y - mouse.y;
-                dx *= 0.1; dy *= 0.1;
-                let pitch = document.querySelector("#pitch");
-                let yaw = document.querySelector("#yaw");
-                pitch.value = parseFloat(pitch.value) + dy % 360;
-                yaw.value   = parseFloat(yaw.value)   + dx % 360;
-                draw()
-            }
-            mouse.x = e.x;
-            mouse.y = e.y;
-        }
-    }
-    canvas.addEventListener("mousemove", mouse.move)
-    draw()
-    
-    // Draw the scene.
-    function drawScene(time) {
+    })}
+    drawScene() {
+        let gl = this.gl;
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        
         gl.enable(gl.CULL_FACE);
         gl.enable(gl.DEPTH_TEST);
         
@@ -618,8 +596,9 @@ function main() {
         gl.vertexAttribPointer( positionLocation, size, type, normalize, stride, offset);
         
         // Compute the projection matrix
-        zoom = document.querySelector("#zoom").value
-        zoomRadians = degToRad(zoom)
+        var fieldOfViewRadians = degToRad(60);
+        zoom = document.querySelector("#zoom").value;
+        zoomRadians = degToRad(zoom);
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         var projectionMatrix = perspective(fieldOfViewRadians-zoomRadians, aspect, 1, 2000);
         
@@ -629,39 +608,25 @@ function main() {
         yawRadians   = degToRad(yaw);
         pitchRadians = degToRad(pitch);
         
-        /*
         // point the camera
-        var cameraPosition = [0, 0, 0];
-        var target = [Math.sin(yawRadians)*Math.cos(pitchRadians),
-                      Math.sin(yawRadians)*Math.sin(pitchRadians),
-                      Math.cos(yawRadians)];
-        var up = [0, 1, 0];
-        // Compute the camera's matrix using look at.
-        var cameraMatrix = lookAt(cameraPosition, target, up);
-        console.log({yaw, pitch})
-        console.log(cameraMatrix)
-        */
-        
         let cameraMatrix = new Float32Array([
             -1,  0,  0,  0,
-             0,  1,  0,  0,
-             0,  0, -1,  0,
-             0,  0,  0,  1,
-        ])
+            0,  1,  0,  0,
+            0,  0, -1,  0,
+            0,  0,  0,  1,
+        ]);
         yRotate(cameraMatrix, yawRadians, cameraMatrix)
         xRotate(cameraMatrix, pitchRadians, cameraMatrix)
         // Make a view matrix from the camera matrix.
         var viewMatrix = inverse(cameraMatrix);
-        
         // We only care about direction so remove the translation
         viewMatrix[12] = 0;
         viewMatrix[13] = 0;
         viewMatrix[14] = 0;
         
+        // Set the uniforms
         var viewDirectionProjectionMatrix        = multiply(projectionMatrix, viewMatrix);
         var viewDirectionProjectionInverseMatrix = inverse(viewDirectionProjectionMatrix);
-        
-        // Set the uniforms
         gl.uniformMatrix4fv(
             viewDirectionProjectionInverseLocation, false,
             viewDirectionProjectionInverseMatrix);
@@ -674,22 +639,44 @@ function main() {
         
         // Draw the geometry.
         gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
-        
+    }
+    mouse = {
+        x:0, y:0,
+        move: (e)=>{
+            if (e.buttons && e.ctrlKey) {
+                let dz = e.y - mouse.y;
+                dz *= 0.1;
+                let zoom = document.querySelector("#zoom");
+                zoom.value = parseFloat(zoom.value) + dz;
+                draw()
+            } else if (e.buttons) {
+                let dx = e.x - mouse.x;
+                let dy = e.y - mouse.y;
+                dx *= 0.1; dy *= 0.1;
+                let pitch = document.querySelector("#pitch");
+                let yaw = document.querySelector("#yaw");
+                pitch.value = parseFloat(pitch.value) + dy % 360;
+                yaw.value   = parseFloat(yaw.value)   + dx % 360;
+                draw()
+            }
+            mouse.x = e.x;
+            mouse.y = e.y;
+        }
+    }
+    static setGeometry(gl) {
+        // Fill the buffer with the values that define a quad.
+        var positions = new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+            -1,  1,
+             1, -1,
+             1,  1,
+        ]);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
     }
 }
 
-// Fill the buffer with the values that define a quad.
-function setGeometry(gl) {
-    var positions = new Float32Array([
-        -1, -1,
-         1, -1,
-        -1,  1,
-        -1,  1,
-         1, -1,
-         1,  1,
-    ]);
-    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-}
 
 window.addEventListener('load', main)
 
