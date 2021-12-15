@@ -506,11 +506,7 @@ class PanoViewer {
         document.querySelector("#yaw"  ).addEventListener("change", this.onGuiViewChange.bind(this))
         document.querySelector("#zoom" ).addEventListener("change", this.onGuiZoomChange.bind(this))
         canvas.addEventListener("mousemove", this.onMouseMove.bind(this))
-    init() {
-        let gl = this.gl;
-        // setup GLSL program
-        var vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
-        var fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
+        canvas.addEventListener("wheel", this.onWheel.bind(this))
         this.initGl()
     }
     initGl() {let gl = this.gl;
@@ -666,9 +662,9 @@ class PanoViewer {
     }
     onGuiViewChange(e) {
         this.view[e.target.id] = e.target.value % 360;
-            mouse.x = e.x;
-            mouse.y = e.y;
-        }
+    }
+    onGuiZoomChange(e) {
+        this.view.zoom = parseFloat(e.target.value);
     }
     static setGeometry(gl) {
         // Fill the buffer with the values that define a quad.
