@@ -495,7 +495,7 @@ class PanoViewer {
         ];
         
         this.cursorPrev = {x:0, y:0, scrollY:0};
-        this.view = {pitch:0, yaw:0, zoom:0, fov:60}
+        this.view = {pitch:0, yaw:0, zoom:-20, fov:60}
         this.locations = {
             position:null,
             skybox:null,
@@ -509,6 +509,51 @@ class PanoViewer {
         canvas.addEventListener("wheel", this.onWheel.bind(this))
         this.initGl()
     }
+    goToDriver() {
+        this.view.pitch = 4;
+        this.view.yaw = 80;
+        this.render()
+    }
+    goToPassenger() {
+        this.view.pitch = 4;
+        this.view.yaw = -80;
+        this.render()
+    }
+    goToIp() {
+        this.view.pitch = 4;
+        this.view.yaw = 0;
+        this.render()
+    }
+    goToRear() {
+        this.view.pitch = -10;
+        this.view.yaw = 180;
+        this.render()
+    }
+    async getImage() {let gl=this.gl;
+        // scale canvas to full resolution
+        let height = gl.canvas.height;
+        let width = gl.canvas.width;
+        gl.canvas.height = 1944;
+        gl.canvas.width = 2592;
+        this.render()
+        // create image
+        let blobPromise = new Promise( (resolve, reject)=>{
+            gl.canvas.toBlob((blob)=>{
+                if (blob) {resolve(blob)} else {reject()}
+            })
+        });
+        let blob = await blobPromise;
+        // reset canvas
+        gl.canvas.height = height;
+        gl.canvas.width = width;
+        this.render()
+        // return image
+        let url = URL.createObjectURL(blob);
+        return url
+    }
+    
+    
+    
     initGl() {let gl = this.gl;
         // compile shaders
         let vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
@@ -563,12 +608,11 @@ class PanoViewer {
             // Now that the image has loaded make copy it to the texture.
             gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture);
             gl.texImage2D(target, level, internalFormat, format, type, image);
-            requestAnimationFrame(this.drawScene.bind(this))
+            requestAnimationFrame(this.render.bind(this))
         })
         image.src = url;
     }
-    drawScene() {let gl = this.gl;
-        
+    render() {let gl = this.gl;
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
@@ -633,7 +677,7 @@ class PanoViewer {
             let dz = e.y - this.cursorPrev.y;
             dz *= 0.1;
             this.view.zoom += dz;
-            this.drawScene()
+            this.render()
             // update page (temporary debugging)
             document.querySelector("#zoom").value = this.view.zoom;
         } else if (e.buttons) {
@@ -643,7 +687,7 @@ class PanoViewer {
             dx *= 0.1; dy *= 0.1;
             this.view.pitch = (this.view.pitch + dy) % 360;
             this.view.yaw   = (this.view.yaw   + dx) % 360;
-            this.drawScene()
+            this.render()
             // update page (temporary debugging)
             document.querySelector("#pitch").value = this.view.pitch;
             document.querySelector("#yaw").value = this.view.yaw;
@@ -657,7 +701,7 @@ class PanoViewer {
         let dScrollY = this.cursorPrev.scrollY - e.wheelDeltaY;
         dScrollY *= multiplier;
         this.view.zoom += dScrollY;
-        this.drawScene()
+        this.render()
         document.querySelector("#zoom").value = this.view.zoom;
     }
     onGuiViewChange(e) {
