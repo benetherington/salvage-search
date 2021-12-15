@@ -463,151 +463,145 @@ void main() {
   DISPLAY
 \*-------*/
 
-class panoViewer {
-    __constructor__(faces={}) {
+class PanoViewer {
+    constructor(faces={}) {
         // Get A WebGL context
-        this.canvas = document.querySelector("#pano");
-        this.gl = this.canvas.getContext("webgl");
+        let canvas = document.querySelector("#pano");
+        this.gl = canvas.getContext("webgl");
         if (!this.gl) {
             return;
         }
         
         this.faceInfos = [
             {
-                target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+                target: this.gl.TEXTURE_CUBE_MAP_POSITIVE_X,
                 url: faces.pano_r || "images/pano_r.jpg"
             }, {
-                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+                target: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
                 url: faces.pano_l || "images/pano_l.jpg"
             }, {
-                target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+                target: this.gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
                 url: faces.pano_u || "images/pano_u.jpg"
             }, {
-                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                target: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
                 url: faces.pano_d || "images/pano_d.jpg"
             }, {
-                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+                target: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
                 url: faces.pano_b || "images/pano_b.jpg"
             }, {
-                target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+                target: this.gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
                 url: faces.pano_f || "images/pano_f.jpg"
             },
         ];
-        this.init()
-    }
+        
+        this.cursorPrev = {x:0, y:0, scrollY:0};
+        this.view = {pitch:0, yaw:0, zoom:0, fov:60}
+        this.locations = {
+            position:null,
+            skybox:null,
+            viewDirectionProjectionInverse:null,
+        }
+        // add events
+        document.querySelector("#pitch").addEventListener("change", this.onGuiViewChange.bind(this))
+        document.querySelector("#yaw"  ).addEventListener("change", this.onGuiViewChange.bind(this))
+        document.querySelector("#zoom" ).addEventListener("change", this.onGuiZoomChange.bind(this))
+        canvas.addEventListener("mousemove", this.onMouseMove.bind(this))
     init() {
         let gl = this.gl;
         // setup GLSL program
         var vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
         var fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
+        this.initGl()
+    }
+    initGl() {let gl = this.gl;
+        // compile shaders
+        let vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
+        let fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(vertex_shader, VERTEX_SHADER_SOURCE);
         gl.shaderSource(fragment_shader, FRAGMENT_SHADER_SOURCE);
         gl.compileShader(vertex_shader);
         gl.compileShader(fragment_shader);
         console.log(`vertex_shader compile status: ${gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)}`)
         console.log(`fragment_shader compile status: ${gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)}`)
-        var program = gl.createProgram()
-        gl.attachShader(program, vertex_shader)
-        gl.attachShader(program, fragment_shader)
+        // attach shaders
+        this.program = gl.createProgram()
+        gl.attachShader(this.program, vertex_shader)
+        gl.attachShader(this.program, fragment_shader)
+        gl.linkProgram(this.program)
+        console.log(`program link status: ${gl.getProgramParameter(this.program, gl.LINK_STATUS)}`)
         
-        gl.linkProgram(program)
-        console.log(`program link status: ${gl.getProgramParameter(program, gl.LINK_STATUS)}`)
+        // look up memory locations
+        this.locations.position = gl.getAttribLocation(this.program, "a_position");
+        this.locations.skybox = gl.getUniformLocation(this.program, "u_skybox");
+        this.locations.viewDirectionProjectionInverse = gl.getUniformLocation(this.program, "u_viewDirectionProjectionInverse");
+
+        // create and bind a buffer for positions
+        this.positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+        // load the buffer
+        PanoViewer.setGeometry(gl);
         
-        // look up where the vertex data needs to go.
-        var positionLocation = gl.getAttribLocation(program, "a_position");
-        
-        // lookup uniforms
-        var skyboxLocation = gl.getUniformLocation(program, "u_skybox");
-        var viewDirectionProjectionInverseLocation = gl.getUniformLocation(program, "u_viewDirectionProjectionInverse");
-        
-        // Create a buffer for positions
-        var positionBuffer = gl.createBuffer();
-        // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        // Put the positions in the buffer
-        this.setGeometry(gl);
-        
-        // create a cubemap texture
-        var texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture)
-        
-        // add events
-        document.querySelector("#pitch").addEventListener("change", ()=>requestAnimationFrame(this.drawScene))
-        document.querySelector("#yaw"  ).addEventListener("change", ()=>requestAnimationFrame(this.drawScene))
-        document.querySelector("#zoom" ).addEventListener("change", ()=>requestAnimationFrame(this.drawScene))
-        canvas.addEventListener("mousemove", this.mouse.move)
-        requestAnimationFrame(this.drawScene)
-        
-        this.load_textures()
+        // create cubemap
+        this.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture)
+        // add images to cubemap
+        this.faceInfos.forEach( ({target, url})=>this.load_texture(target, url) )
+        // finish cubemap setup
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     }
-    load_textures() {let gl=this.gl;this.faceInfos.forEach(faceInfo =>{
-        const {target, url} = faceInfo;
-        
+    load_texture(target, url) {let gl=this.gl;
         // build fake texture for immediate results
-        const level = 0;
-        const internalFormat = gl.RGBA;
-        const width = 1712;
-        const height = 1712;
-        const format = gl.RGBA;
-        const type = gl.UNSIGNED_BYTE;
+        let level = 0;
+        let internalFormat = gl.RGBA;
+        let width = 1712;
+        let height = 1712;
+        let format = gl.RGBA;
+        let type = gl.UNSIGNED_BYTE;
         gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null)
         
         // Asynchronously load the image
         var image = new Image();
-        image.addEventListener('load', async function() {
+        image.addEventListener('load', ()=>{
             // Now that the image has loaded make copy it to the texture.
-            gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+            gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture);
             gl.texImage2D(target, level, internalFormat, format, type, image);
-            requestAnimationFrame(drawScene)
+            requestAnimationFrame(this.drawScene.bind(this))
         })
         image.src = url;
+    }
+    drawScene() {let gl = this.gl;
         
-        // assign textures
-        // TODO: can this go outside the loop?
-        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    })}
-    drawScene() {
-        let gl = this.gl;
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
         gl.enable(gl.DEPTH_TEST);
-        
-        // Clear the canvas AND the depth buffer.
+        // Clear canvas and depth buffer.
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        
         // Tell it to use our program (pair of shaders)
-        gl.useProgram(program);
+        gl.useProgram(this.program);
         
         // Turn on the position attribute
-        gl.enableVertexAttribArray(positionLocation);
-        
+        gl.enableVertexAttribArray(this.locations.position);
         // Bind the position buffer.
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         // Tell the position attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-        var size = 2;          // 2 components per iteration
-        var type = gl.FLOAT;   // the data is 32bit floats
-        var normalize = false; // don't normalize the data
-        var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-        var offset = 0;        // start at the beginning of the buffer
-        gl.vertexAttribPointer( positionLocation, size, type, normalize, stride, offset);
+        let size = 2;          // 2 components per iteration
+        let type = gl.FLOAT;   // the data is 32bit floats
+        let normalize = false; // don't normalize the data
+        let stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        let offset = 0;        // start at the beginning of the buffer
+        gl.vertexAttribPointer(this.locations.position, size, type, normalize, stride, offset);
         
         // Compute the projection matrix
-        var fieldOfViewRadians = degToRad(60);
-        zoom = document.querySelector("#zoom").value;
-        zoomRadians = degToRad(zoom);
-        var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        var projectionMatrix = perspective(fieldOfViewRadians-zoomRadians, aspect, 1, 2000);
-        
+        let fieldOfViewRadians = degToRad(this.view.fov);
+        let zoomRadians = degToRad(this.view.zoom);
+        let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        let projectionMatrix = perspective(fieldOfViewRadians-zoomRadians, aspect, 1, 2000);
         // find camera angle
-        yaw   = document.querySelector("#yaw")  .value % 360;
-        pitch = document.querySelector("#pitch").value % 360;
-        yawRadians   = degToRad(yaw);
-        pitchRadians = degToRad(pitch);
-        
+        let yawRadians   = degToRad(this.view.yaw);
+        let pitchRadians = degToRad(this.view.pitch);
         // point the camera
         let cameraMatrix = new Float32Array([
             -1,  0,  0,  0,
@@ -618,47 +612,60 @@ class panoViewer {
         yRotate(cameraMatrix, yawRadians, cameraMatrix)
         xRotate(cameraMatrix, pitchRadians, cameraMatrix)
         // Make a view matrix from the camera matrix.
-        var viewMatrix = inverse(cameraMatrix);
+        let viewMatrix = inverse(cameraMatrix);
         // We only care about direction so remove the translation
         viewMatrix[12] = 0;
         viewMatrix[13] = 0;
         viewMatrix[14] = 0;
         
         // Set the uniforms
-        var viewDirectionProjectionMatrix        = multiply(projectionMatrix, viewMatrix);
-        var viewDirectionProjectionInverseMatrix = inverse(viewDirectionProjectionMatrix);
+        let viewDirectionProjectionMatrix        = multiply(projectionMatrix, viewMatrix);
+        let viewDirectionProjectionInverseMatrix = inverse(viewDirectionProjectionMatrix);
         gl.uniformMatrix4fv(
-            viewDirectionProjectionInverseLocation, false,
+            this.locations.viewDirectionProjectionInverse, false,
             viewDirectionProjectionInverseMatrix);
-        
         // Tell the shader to use texture unit 0 for u_skybox
-        gl.uniform1i(skyboxLocation, 0);
-        
+        gl.uniform1i(this.locations.skybox, 0);
         // let our quad pass the depth test at 1.0
         gl.depthFunc(gl.LEQUAL)
-        
         // Draw the geometry.
         gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
     }
-    mouse = {
-        x:0, y:0,
-        move: (e)=>{
-            if (e.buttons && e.ctrlKey) {
-                let dz = e.y - mouse.y;
-                dz *= 0.1;
-                let zoom = document.querySelector("#zoom");
-                zoom.value = parseFloat(zoom.value) + dz;
-                draw()
-            } else if (e.buttons) {
-                let dx = e.x - mouse.x;
-                let dy = e.y - mouse.y;
-                dx *= 0.1; dy *= 0.1;
-                let pitch = document.querySelector("#pitch");
-                let yaw = document.querySelector("#yaw");
-                pitch.value = parseFloat(pitch.value) + dy % 360;
-                yaw.value   = parseFloat(yaw.value)   + dx % 360;
-                draw()
-            }
+    onMouseMove(e) {
+        if (e.buttons && e.ctrlKey) {
+            // zoom
+            let dz = e.y - this.cursorPrev.y;
+            dz *= 0.1;
+            this.view.zoom += dz;
+            this.drawScene()
+            // update page (temporary debugging)
+            document.querySelector("#zoom").value = this.view.zoom;
+        } else if (e.buttons) {
+            // pan
+            let dx = e.x - this.cursorPrev.x;
+            let dy = e.y - this.cursorPrev.y;
+            dx *= 0.1; dy *= 0.1;
+            this.view.pitch = (this.view.pitch + dy) % 360;
+            this.view.yaw   = (this.view.yaw   + dx) % 360;
+            this.drawScene()
+            // update page (temporary debugging)
+            document.querySelector("#pitch").value = this.view.pitch;
+            document.querySelector("#yaw").value = this.view.yaw;
+        }
+        this.cursorPrev.x = e.x;
+        this.cursorPrev.y = e.y;
+    }
+    onWheel(e) {
+        let multiplier = 0.01;
+        if (e.shiftKey) {multiplier = 0.1;}
+        let dScrollY = this.cursorPrev.scrollY - e.wheelDeltaY;
+        dScrollY *= multiplier;
+        this.view.zoom += dScrollY;
+        this.drawScene()
+        document.querySelector("#zoom").value = this.view.zoom;
+    }
+    onGuiViewChange(e) {
+        this.view[e.target.id] = e.target.value % 360;
             mouse.x = e.x;
             mouse.y = e.y;
         }
@@ -677,6 +684,6 @@ class panoViewer {
     }
 }
 
-
-window.addEventListener('load', main)
+var pv;
+window.addEventListener('load', ()=>{pv=new PanoViewer();})
 
