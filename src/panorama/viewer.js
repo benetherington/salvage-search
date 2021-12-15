@@ -593,10 +593,10 @@ class PanoViewer {
         // Compute the projection matrix
         let fieldOfViewRadians = degToRad(this.view.fov);
         let zoomRadians = degToRad(this.view.zoom);
-        let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        let aspect = -gl.canvas.clientWidth / gl.canvas.clientHeight;
         let projectionMatrix = perspective(fieldOfViewRadians-zoomRadians, aspect, 1, 2000);
         // find camera angle
-        let yawRadians   = degToRad(this.view.yaw);
+        let yawRadians   = degToRad(-this.view.yaw);
         let pitchRadians = degToRad(this.view.pitch);
         // point the camera
         let cameraMatrix = new Float32Array([
