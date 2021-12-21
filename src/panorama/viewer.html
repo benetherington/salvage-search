@@ -3,24 +3,37 @@
 
     <head>
         <meta charset="utf-8">
-        <link rel="stylesheet" href="actions.css"/>
+        <link rel="stylesheet" href="viewer.css"/>
         <!-- <script src="../browser-polyfill.js"></script> -->
         <script src="../shared-assets.js"></script>
         <script src="../panorama/viewer.js"></script>
     </head>
     <body>
 
-        <canvas id="pano" width="800" height="600"></canvas>
-        <br>
-        <label for="yaw">Yaw</label>
-        <input type="number" step="5.0" id="yaw" value="0.0">
-        <br>
-        <label for="pitch">Pitch</label>
-        <input type="number" step="5.0" id="pitch" value="0.0">
-        <br>
-        <label for="pitch">Zoom</label>
-        <input type="number" step="1.0" id="zoom" value="0.0">
-
+        <div class="grouped has-sidebar-right" id="active">
+                <div class="pano-container">
+                    <canvas is="pano-viewer">
+                </div>
+                <div class="grouped vertical toolbar">
+                    <button>Button 1</button>
+                    <button>Button 3</button>
+                    <button>Button 3</button>
+                    <hr>
+                    <button>Button 4</button>
+                    <button>Button 5</button>
+                </div>
+        </div>
+        <div id="thumbs" class="grouped horizontal">
+            <div class="pano-container">
+                <canvas is="pano-viewer">
+            </div>
+            <div class="pano-container">
+                <canvas is="pano-viewer">
+            </div>
+            <div class="pano-container">
+                <canvas is="pano-viewer">
+            </div>
+        </div>
     </body>
 </html>
 
