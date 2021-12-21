@@ -463,36 +463,19 @@ void main() {
   DISPLAY
 \*-------*/
 
-class PanoViewer {
+class PanoViewer extends HTMLCanvasElement{
+    static get observedAttributes() { return [
+                        'pano_r', 'pano_l', 'pano_u',
+                        'pano_d', 'pano_b', 'pano_f',
+                        'style']; }
     constructor(faces={}) {
+        let canvas = super();
+        this.canvas = canvas;
         // Get A WebGL context
-        let canvas = document.querySelector("#pano");
-        this.gl = canvas.getContext("webgl");
-        if (!this.gl) {
+        let gl = this.canvas.getContext("webgl");
+        if (!gl) {
             return;
         }
-        
-        this.faceInfos = [
-            {
-                target: this.gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-                url: faces.pano_r || "images/pano_r.jpg"
-            }, {
-                target: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-                url: faces.pano_l || "images/pano_l.jpg"
-            }, {
-                target: this.gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-                url: faces.pano_u || "images/pano_u.jpg"
-            }, {
-                target: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-                url: faces.pano_d || "images/pano_d.jpg"
-            }, {
-                target: this.gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-                url: faces.pano_b || "images/pano_b.jpg"
-            }, {
-                target: this.gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-                url: faces.pano_f || "images/pano_f.jpg"
-            },
-        ];
         
         this.cursorPrev = {x:0, y:0, scrollY:0};
         this.view = {pitch:0, yaw:0, zoom:-20, fov:60}
@@ -501,13 +484,46 @@ class PanoViewer {
             skybox:null,
             viewDirectionProjectionInverse:null,
         }
-        // add events
-        document.querySelector("#pitch").addEventListener("change", this.onGuiViewChange.bind(this))
-        document.querySelector("#yaw"  ).addEventListener("change", this.onGuiViewChange.bind(this))
-        document.querySelector("#zoom" ).addEventListener("change", this.onGuiZoomChange.bind(this))
-        canvas.addEventListener("mousemove", this.onMouseMove.bind(this))
-        canvas.addEventListener("wheel", this.onWheel.bind(this))
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+    }
+    connectedCallback() {
+        // add GUI events
+        this.canvas.addEventListener("mousemove", this.onMouseMove.bind(this))
+        this.canvas.addEventListener("wheel", this.onWheel.bind(this))
+        // if we get resized, we'll still generate the same pixels, and they'll
+        // be mushed onto the canvas in the wrong resultion at best, and skewed
+        // at worst. A ResizeObserver can trigger updates for us.
+        let resizeObserver = new ResizeObserver((entries, observer)=>{
+            this.height = entries[0].contentBoxSize[0].blockSize;
+            this.width  = entries[0].contentBoxSize[0].inlineSize;
+            this.render()
+        })
+        resizeObserver.observe(this)
         this.initGl()
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+        switch (name) {
+            case "pano_r":
+                this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X, newValue || "images/pano_r.jpg")
+                break;
+            case "pano_l":
+                this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, newValue || "images/pano_l.jpg")
+                break;
+            case "pano_u":
+                this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, newValue || "images/pano_u.jpg")
+                break;
+            case "pano_d":
+                this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, newValue || "images/pano_d.jpg")
+                break;
+            case "pano_b":
+                this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, newValue || "images/pano_b.jpg")
+                break;
+            case "pano_f":
+                this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, newValue || "images/pano_f.jpg")
+                break;
+        }
+        this.render()
     }
     goToDriver() {
         this.view.pitch = 4;
@@ -529,7 +545,7 @@ class PanoViewer {
         this.view.yaw = 180;
         this.render()
     }
-    async getImage() {let gl=this.gl;
+    async getImage() {let gl = this.getContext("webgl");
         // scale canvas to full resolution
         let height = gl.canvas.height;
         let width = gl.canvas.width;
@@ -552,9 +568,7 @@ class PanoViewer {
         return url
     }
     
-    
-    
-    initGl() {let gl = this.gl;
+    initGl() {let gl = this.getContext("webgl");
         // compile shaders
         let vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
         let fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -586,13 +600,18 @@ class PanoViewer {
         this.texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture)
         // add images to cubemap
-        this.faceInfos.forEach( ({target, url})=>this.load_texture(target, url) )
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X, this.pano_r || "images/pano_r.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, this.pano_l || "images/pano_l.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, this.pano_u || "images/pano_u.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, this.pano_d || "images/pano_d.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, this.pano_b || "images/pano_b.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, this.pano_f || "images/pano_f.jpg")
         // finish cubemap setup
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     }
-    load_texture(target, url) {let gl=this.gl;
+    loadTexture(target, url) {let gl = this.getContext("webgl");
         // build fake texture for immediate results
         let level = 0;
         let internalFormat = gl.RGBA;
@@ -612,7 +631,7 @@ class PanoViewer {
         })
         image.src = url;
     }
-    render() {let gl = this.gl;
+    render() {let gl = this.getContext("webgl");
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
@@ -678,8 +697,6 @@ class PanoViewer {
             dz *= 0.1;
             this.view.zoom += dz;
             this.render()
-            // update page (temporary debugging)
-            document.querySelector("#zoom").value = this.view.zoom;
         } else if (e.buttons) {
             // pan
             let dx = e.x - this.cursorPrev.x;
@@ -688,9 +705,6 @@ class PanoViewer {
             this.view.pitch = (this.view.pitch + dy) % 360;
             this.view.yaw   = (this.view.yaw   + dx) % 360;
             this.render()
-            // update page (temporary debugging)
-            document.querySelector("#pitch").value = this.view.pitch;
-            document.querySelector("#yaw").value = this.view.yaw;
         }
         this.cursorPrev.x = e.x;
         this.cursorPrev.y = e.y;
@@ -702,7 +716,6 @@ class PanoViewer {
         dScrollY *= multiplier;
         this.view.zoom += dScrollY;
         this.render()
-        document.querySelector("#zoom").value = this.view.zoom;
     }
     onGuiViewChange(e) {
         this.view[e.target.id] = e.target.value % 360;
@@ -724,6 +737,6 @@ class PanoViewer {
     }
 }
 
-var pv;
-window.addEventListener('load', ()=>{pv=new PanoViewer();})
+window.customElements.define("pano-viewer", PanoViewer, {extends:"canvas"})
 
+// use document.createElement("canvas", {is:"pano-viewer"}) to create new instances
