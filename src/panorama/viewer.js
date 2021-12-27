@@ -463,12 +463,47 @@ void main() {
   DISPLAY
 \*-------*/
 
-class PanoViewer extends HTMLCanvasElement{
-    static get observedAttributes() { return [
-                        'pano_r', 'pano_l', 'pano_u',
-                        'pano_d', 'pano_b', 'pano_f',
-                        'style']; }
-    constructor(faces={}) {
+class PanoContainer extends HTMLDivElement {
+    constructor() {
+        let div = super();
+        div.classList.add("pano-container")
+        
+        let floater = document.createElement("div");
+        floater.classList.add("icon-floater")
+        div.append(floater)
+    }
+    connectedCallback() {
+        if (this.hasAttribute("default-name")) {
+            this.addPano({
+                name: this.getAttribute("default-name"),
+                faces: {}
+            })
+        }
+    }
+    addPano(elements) {
+        if (elements.panoViewer) {
+            this.panoViewer = elements.panoViewer
+        } else {
+            this.panoViewer = document.createElement("canvas", {is:"pano-viewer"});
+            this.panoViewer.setAttribute("name", elements.name);
+            this.panoViewer.updateFaces(elements.faces)
+        }
+        if (this.querySelector("canvas")) {
+            this.querySelector("canvas").remove()
+        }
+        this.append(this.panoViewer)
+    }
+    goToDriver()    {this.panoViewer.goToDriver()}
+    goToPassenger() {this.panoViewer.goToPassenger()}
+    goToIp()        {this.panoViewer.goToIp()}
+    goToRear()      {this.panoViewer.goToRear()}
+}
+window.customElements.define("pano-container", PanoContainer, {extends:"div"})
+
+
+class PanoViewer extends HTMLCanvasElement {
+    static get observedAttributes() { return ['name']; }
+    constructor() {
         let canvas = super();
         this.canvas = canvas;
         // Get A WebGL context
@@ -477,6 +512,7 @@ class PanoViewer extends HTMLCanvasElement{
             return;
         }
         
+        this.initiated = false;
         this.cursorPrev = {x:0, y:0, scrollY:0};
         this.view = {pitch:0, yaw:0, zoom:-20, fov:60}
         this.locations = {
@@ -485,12 +521,21 @@ class PanoViewer extends HTMLCanvasElement{
             viewDirectionProjectionInverse:null,
         }
     }
-    attributeChangedCallback(name, oldValue, newValue) {
-    }
     connectedCallback() {
-        // add GUI events
+        if (this.initiated) {return}
+        // add title element to pano-container
+        this.titleEl = document.createElement("input");
+        this.titleEl.value = this.getAttribute("name") + ".png";
+        this.parentElement.appendChild(this.titleEl)
+        // add title element events
+        this.titleEl.addEventListener("click", this.onTitleClick.bind(this))
+        this.titleEl.addEventListener("blur", this.onTitleBlur.bind(this))
+        // add pan/zoom events
         this.canvas.addEventListener("mousemove", this.onMouseMove.bind(this))
         this.canvas.addEventListener("wheel", this.onWheel.bind(this))
+        // enable keyboard listening (for ctrl cursor change)
+        this.canvas.addEventListener("mouseenter", this.onMouseEnter.bind(this))
+        this.canvas.addEventListener("mouseleave", this.onMouseLeave.bind(this))
         // if we get resized, we'll still generate the same pixels, and they'll
         // be mushed onto the canvas in the wrong resultion at best, and skewed
         // at worst. A ResizeObserver can trigger updates for us.
@@ -501,28 +546,25 @@ class PanoViewer extends HTMLCanvasElement{
         })
         resizeObserver.observe(this)
         this.initGl()
+        this.initiated = true;
     }
-    attributeChangedCallback(name, oldValue, newValue) {
-        switch (name) {
-            case "pano_r":
-                this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X, newValue || "images/pano_r.jpg")
-                break;
-            case "pano_l":
-                this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, newValue || "images/pano_l.jpg")
-                break;
-            case "pano_u":
-                this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, newValue || "images/pano_u.jpg")
-                break;
-            case "pano_d":
-                this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, newValue || "images/pano_d.jpg")
-                break;
-            case "pano_b":
-                this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, newValue || "images/pano_b.jpg")
-                break;
-            case "pano_f":
-                this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, newValue || "images/pano_f.jpg")
-                break;
+    
+    // INTERFACE
+    attributeChangedCallback(attrName, oldValue, newValue) {
+        if (attrName==="name" && this.titleEl) {
+            while (newValue.endsWith(".png")) {
+                newValue = newValue.slice(0,-4);
+            }
+            this.titleEl.value = newValue + ".png";
         }
+    }
+    updateFaces(faces) {let gl = this.getContext("webgl");
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X, faces.pano_r || "images/pano_r.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, faces.pano_l || "images/pano_l.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, faces.pano_u || "images/pano_u.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, faces.pano_d || "images/pano_d.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, faces.pano_b || "images/pano_b.jpg")
+        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, faces.pano_f || "images/pano_f.jpg")
         this.render()
     }
     goToDriver() {
@@ -545,6 +587,79 @@ class PanoViewer extends HTMLCanvasElement{
         this.view.yaw = 180;
         this.render()
     }
+    
+    // EVENT HANDLERS
+    onMouseMove(e) {
+        // freeze view if we're in thumbnails
+        if (this.closest("#thumbs")) {return}
+        
+        if (e.ctrlKey && e.buttons) {
+            // ctrl-drag => zoom
+            let dz = e.y - this.cursorPrev.y;
+            dz *= 0.1;
+            this.view.zoom += dz;
+            this.render()
+        } else if (e.buttons) {
+            // drag => pan
+            let dx = e.x - this.cursorPrev.x;
+            let dy = e.y - this.cursorPrev.y;
+            dx *= 0.1; dy *= 0.1;
+            this.view.pitch = (this.view.pitch + dy) % 360;
+            this.view.yaw   = (this.view.yaw   + dx) % 360;
+            this.render()
+        }
+        this.cursorPrev.x = e.x;
+        this.cursorPrev.y = e.y;
+    }
+    onMouseEnter(e) {
+        // add keypress listeners to change the cursor style for zooming
+        this.keyListener = this.onKey.bind(this);
+        document.addEventListener("keydown", this.keyListener)
+        document.addEventListener("keyup", this.keyListener)
+    }
+    onMouseLeave(e) {
+        // remove keypress listeners
+        document.removeEventListener("keydown", this.keyListener)
+        document.removeEventListener("keyup", this.keyListener)
+    }
+    onKey(e) {
+        // ctrl => show zoom cursor
+        if (e.ctrlKey) {this.style = "cursor: ns-resize;";}
+        else {this.style = "";}
+    }
+    onWheel(e) {
+        // zoom in or out
+        let multiplier = 0.01;
+        // shift => fast zoom
+        if (e.shiftKey) {multiplier = 0.1;}
+        let dScrollY = this.cursorPrev.scrollY - e.wheelDeltaY;
+        dScrollY *= multiplier;
+        this.view.zoom += dScrollY;
+        this.render()
+    }
+    onGuiViewChange(e) {
+        this.view[e.target.id] = e.target.value % 360;
+    }
+    onGuiZoomChange(e) {
+        this.view.zoom = parseFloat(e.target.value);
+    }
+    onTitleClick(e) {
+        let start = e.target.selectionStart;
+        let end = e.target.selectionEnd;
+        let name = this.getAttribute("name");
+        e.target.value = name;
+        e.target.setSelectionRange(start, end)
+    }
+    onTitleBlur(e) {
+        let name = e.target.value;
+        while (name.endsWith(".png")) {
+            name = name.slice(0,-4);
+        }
+        e.target.value = name + ".png";
+        this.setAttribute("name", name)
+    }
+    
+    // WEB GRAPHICS LIBRARY
     async getImage() {let gl = this.getContext("webgl");
         // scale canvas to full resolution
         let height = gl.canvas.height;
@@ -689,39 +804,6 @@ class PanoViewer extends HTMLCanvasElement{
         gl.depthFunc(gl.LEQUAL)
         // Draw the geometry.
         gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
-    }
-    onMouseMove(e) {
-        if (e.buttons && e.ctrlKey) {
-            // zoom
-            let dz = e.y - this.cursorPrev.y;
-            dz *= 0.1;
-            this.view.zoom += dz;
-            this.render()
-        } else if (e.buttons) {
-            // pan
-            let dx = e.x - this.cursorPrev.x;
-            let dy = e.y - this.cursorPrev.y;
-            dx *= 0.1; dy *= 0.1;
-            this.view.pitch = (this.view.pitch + dy) % 360;
-            this.view.yaw   = (this.view.yaw   + dx) % 360;
-            this.render()
-        }
-        this.cursorPrev.x = e.x;
-        this.cursorPrev.y = e.y;
-    }
-    onWheel(e) {
-        let multiplier = 0.01;
-        if (e.shiftKey) {multiplier = 0.1;}
-        let dScrollY = this.cursorPrev.scrollY - e.wheelDeltaY;
-        dScrollY *= multiplier;
-        this.view.zoom += dScrollY;
-        this.render()
-    }
-    onGuiViewChange(e) {
-        this.view[e.target.id] = e.target.value % 360;
-    }
-    onGuiZoomChange(e) {
-        this.view.zoom = parseFloat(e.target.value);
     }
     static setGeometry(gl) {
         // Fill the buffer with the values that define a quad.
