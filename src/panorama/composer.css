@@ -60,97 +60,11 @@ p {
 }
 
 /* CONTAINERS */
-.pano-container {
-    /* Allow corner snipping */
-    overflow: hidden;
-    /* Style container */
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    /* Style title */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    
-}
 .toolbar {
     padding: 5%;
-}
-
-/* COMPONENTS */
-canvas {
-    box-sizing: border-box;
-    width: 100%;
-    aspect-ratio: 800/600;
-}
-.pano-container > input {
-    box-sizing: border-box;
-    width: 100%;
-    font-size: 1.5em;
-    padding: 0 20px;
-    /* override FX defaults */
-    outline: none;
-    border: none;
-    /* add invisible border for jump-free existance */
-    border-bottom: 2px solid rgba(0,0,0,0);
-}
-.pano-container > input:hover {
-    background-color: #d3dce0;
-}
-.pano-container > input:focus {
-    border-bottom: 2px solid #32728C;
-    background-color: #d5f3ff;
 }
 .toolbar > hr {
     width:80%;
     margin-top: 12px;
     color: #223945;
-}
-
-/* COMPONENT ROLES */
-#active canvas {
-    cursor: all-scroll;
-}
-
-#thumbs > .pano-container {
-    position: relative;
-    cursor: pointer;
-}
-#thumbs > .pano-container:hover {
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12),
-                0 1px 2px rgba(0,0,0,0.24),
-                0 0   4px #32728C;
-}
-#thumbs .icon-floater {
-    width: 100%;
-    aspect-ratio: 800/600;
-    top: 0;
-    left: 0;
-    
-    z-index: 1;
-    
-    position:absolute;
-}
-#thumbs .icon-floater:hover::before {
-    /* take up entire size of pano-container */
-    content: "";
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    left: 0;
-    z-index: 1;
-    
-    /* add a "promote" arrow when hovering */
-    background-image: url("/icons/arrow-up-square.svg");
-    background-size: 50%;
-    background-position: 50%;
-    background-repeat: no-repeat;
-}
-#thumbs .icon-floater:hover ~ canvas {
-    /* blur while hovering to highlight "promote" arrow */
-    filter: blur(1.1px) opacity(75%);
-}
-#thumbs input {
-    font-size: 1em;
 }

@@ -1,58 +1,62 @@
-function addMain(faces={}, name) {
-    let panoContainer = createPanoContainer(faces, name)
-    document.querySelector("div #pano-active").append(panoContainer)
-}
+/*-----*\
+  SETUP
+\*-----*/
 
-function addThumbnail(faces={}, name) {
-    let panoContainer = createPanoContainer(faces, name)
+function createThumbnail(faces={}, name) {
+    let panoContainer = document.createElement("pano-container");
+    panoContainer.classList.add("thumbnail")
+    panoContainer.addPano({faces, name})
     document.querySelector("#thumbs").append(panoContainer)
 }
 
-function createPanoContainer(faces={}, name) {
-    let panoContainer = document.createElement("div", {is:"pano-container"});
-    panoContainer.addPano({faces, name})
-    switch (name) {
-        case "driver":
-            panoContainer.goToDriver()
-            break;
-        case "passenger":
-            panoContainer.goToPassenger()
-            break;
-        case "ip":
-            panoContainer.goToIp()
-            break;
-        case "rear":
-            panoContainer.goToRear()
-    }
-    return panoContainer;
-}
-
-let port = browser.runtime.connect({name:"panorama"});
-
-port.onMessage.addListener(messageHandler)
-
-function messageHandler(message) {
-    addMain(message.faces, "driver")
-    addThumbnail(message.faces, "passenger")
-    addThumbnail(message.faces, "ip")
-    addThumbnail(message.faces, "rear")
-    document
-        .querySelectorAll(".icon-floater")
-        .forEach(floater=>
-            floater.addEventListener("click", swapThumb)
-        )
-}
-
-function swapThumb(e) {
-    let thumb = e.target.parentElement;
-    let main = document.querySelector("#pano-active .pano-container");
+/*------------------------*\
+  THUMBNAIL PROMOTE/DEMOTE
+\*------------------------*/
+function cloneToMain(panoContainer) {
+    // clone
+    let newContainer = panoContainer.getClone();
     
-    main.remove()
-    thumb.remove()
-    document.querySelector("#pano-active").append(thumb)
-    document.querySelector("#thumbs").append(main)
+    newContainer.classList.remove("thumbnail")
+    newContainer.classList.remove("focused")
+    document.querySelector("#stage").replaceChildren(newContainer)
+    // style
+    panoContainer.classList.add("focused")
+}
+function swapThumb(e) {
+    if (e.target.classList.contains("focused")) {
+        // don't grab clicks on focused PanoContainers
+        return
+    }
+    
+    // pull demotedContainer out of stage, replace focusedContainer
+    let focusedContainer = document.querySelector("#thumbs .focused");
+    let demotedContainer = document.querySelector("#stage pano-container");
+    demotedContainer.classList.add("thumbnail")
+    focusedContainer.replaceWith(demotedContainer)
+    // clone floter's container to stage
+    cloneToMain(e.target)
 }
 
+
+/*---------------*\
+  POPUP MESSAGING
+\*---------------*/
+let port = browser.runtime.connect({name:"panorama"});
+port.onMessage.addListener(messageHandler)
+function messageHandler(message) {
+    // create thumbnail set
+    createThumbnail(message.faces, "driver")
+    createThumbnail(message.faces, "passenger")
+    createThumbnail(message.faces, "ip")
+    createThumbnail(message.faces, "rear")
+    // push first thumbnail up to main
+    cloneToMain(document.querySelector("#thumbs .pano-container"))
+    // add events
+    document.querySelector("#thumbs").addEventListener("swap", swapThumb)
+}
+
+
+// FAKE LOADING FROM POPUP
 window.addEventListener("load", ()=>{
     messageHandler({
         faces: {

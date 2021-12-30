@@ -435,7 +435,7 @@ function degToRad(d) {
   SHADER GLSL
 \*-----------*/
 
-VERTEX_SHADER_SOURCE = `
+const VERTEX_SHADER_SOURCE = `
 attribute vec4 a_position;
 varying vec4 v_position;
 void main() {
@@ -443,7 +443,7 @@ void main() {
     gl_Position = a_position;
     gl_Position.z = 1.0;
 }`;
-FRAGMENT_SHADER_SOURCE = `
+const FRAGMENT_SHADER_SOURCE = `
 precision mediump float;
 
 uniform samplerCube u_skybox;
@@ -456,97 +456,268 @@ void main() {
     gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
 }`;
 
+const PANO_CONTAINER_STYLE = `<style>
+        
+/* ELEMENT DEFAULTS */
+:host {
+    /* Allow corner snipping */
+    overflow: hidden;
+    /* Style container */
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    /* Align contents */
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+}
+canvas {
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 800/600;
+}
+input {
+    box-sizing: border-box;
+    width: 100%;
+    font-size: 1.5em;
+    padding: 0 20px;
+    /* override FX defaults */
+    outline: none;
+    border: none;
+    /* add invisible border for jump-free existance */
+    border-bottom: 2px solid rgba(0,0,0,0);
+}
 
+/* STAGED */
+:host(:not(.thumbnail)) canvas {
+    cursor: all-scroll;
+}
+
+/* UNFOCUSED INPUT */
+:host( :not(.focused) ) input:hover {
+    background-color: #d3dce0;
+}
+:host( :not(.focused) ) input:focus {
+    border-bottom: 2px solid #32728C;
+    background-color: #d5f3ff;
+}
+
+/* THUMBNAILS */
+:host( .thumbnail ) input {
+    font-size: 1em;
+}
+
+/* THUMBNAIL HOVERS */
+:host( .thumbnail:not(.focused):hover ) {
+    /* Highlight on container hover */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12),
+    0 1px 2px rgba(0,0,0,0.24),
+    0 0   4px #32728C;
+}
+:host( .thumbnail ) .icon-floater {
+    /* Align floater above canvas */
+    width: 100%;
+    aspect-ratio: 800/600;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    position:absolute;
+}
+:host( .thumbnail ) .icon-floater::before {
+    /* Align floater ::before to fill canvas area */
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+:host( .thumbnail ) .icon-floater:hover::before {
+    /* Add a "promote" arrow when hovering */
+    background-image: url("/icons/arrow-up-square.svg");
+    background-size: 50%;
+    background-position: 50%;
+    background-repeat: no-repeat;
+}
+:host( .thumbnail:not(.focused) ) .icon-floater:hover ~ canvas {
+    /* blur canvas while hovering  */
+    filter: blur(1.1px) opacity(75%);
+}
+
+/* FOCUSED STATE */
+:host( .thumbnail.focused) .icon-floater::before {
+    /* Add a "promoted" arrow */
+    color: white;
+    background-image: url("/icons/arrow-up-square-fill.svg");
+    background-size: 50%;
+    background-position: 50%;
+    background-repeat: no-repeat;
+}
+:host( .thumbnail.focused ) canvas,
+:host( .thumbnail.focused ) input {
+    /* Blur while focused */
+    filter: blur(2px) opacity(60%);
+    pointer-events: none;
+}
+</style>`
 
 
 /*-------*\
   DISPLAY
 \*-------*/
 
-class PanoContainer extends HTMLDivElement {
+class PanoContainer extends HTMLElement {
     constructor() {
-        let div = super();
-        div.classList.add("pano-container")
-        
-        let floater = document.createElement("div");
-        floater.classList.add("icon-floater")
-        div.append(floater)
+        super()
+        this.attachShadow({mode:"open"});
+        this.shadowRoot.innerHTML = PANO_CONTAINER_STYLE;
     }
     connectedCallback() {
-        if (this.hasAttribute("default-name")) {
-            this.addPano({
-                name: this.getAttribute("default-name"),
-                faces: {}
-            })
+        if (!this.isConnected) {
+            // don't continue if disconnecting
+            return
         }
+        if (this.shadowRoot.childElementCount>1) {
+            // don't continue if shadow contains more than style
+            return
+        }
+
+        // style self, attach shadowDOM
+        this.classList.add("pano-container");
+        // add icon floater
+        let floater = document.createElement("div");
+        floater.classList.add("icon-floater")
+        this.shadowRoot.append(floater)
+        // add floater event
+        floater.onclick = ()=>{this.dispatchEvent(
+            new Event("swap", {bubbles:true})
+        )}
+        // add panoviewer
+        this.shadowRoot.append(this.getPano())
+        // add title input
+        let titleEl = document.createElement("input");
+        titleEl.value = this.getAttribute("name") + ".png"
+        this.shadowRoot.appendChild(titleEl)
+        // add input events
+        titleEl.addEventListener("click", e=>{
+            if (e.target.getRootNode().host.classList.contains("focused")){
+                e.preventDefault(); return;
+            }
+            let start = e.target.selectionStart;
+            let end = e.target.selectionEnd;
+            let name = e.target.getRootNode().host.getAttribute("name");
+            e.target.value = name;
+            e.target.setSelectionRange(start, end)
+        })
+        titleEl.addEventListener("blur", e=>{
+            let name = e.target.value;
+            while (name.endsWith(".png")) {
+                name = name.slice(0,-4);
+            }
+            e.target.value = name + ".png";
+            e.target.getRootNode().host.setAttribute("name", name)
+        })
     }
     addPano(elements) {
-        if (elements.panoViewer) {
-            this.panoViewer = elements.panoViewer
-        } else {
-            this.panoViewer = document.createElement("canvas", {is:"pano-viewer"});
-            this.panoViewer.setAttribute("name", elements.name);
-            this.panoViewer.updateFaces(elements.faces)
-        }
-        if (this.querySelector("canvas")) {
-            this.querySelector("canvas").remove()
-        }
-        this.append(this.panoViewer)
+        this.setAttribute("name", elements.name||"untitled");
+        this.getPano().updateFaces(elements.faces)
+        // TODO: this is hacky af, can we build this into connectedCallback?
+        setTimeout((name, pv)=>{
+            switch (name) {
+                case "driver":
+                    pv.goToDriver()
+                    break;
+                case "passenger":
+                    pv.goToPassenger()
+                    break;
+                case "ip":
+                    pv.goToIp()
+                    break;
+                case "rear":
+                    pv.goToRear()
+            }
+        }, 1, elements.name, this.panoViewer)
     }
-    goToDriver()    {this.panoViewer.goToDriver()}
-    goToPassenger() {this.panoViewer.goToPassenger()}
-    goToIp()        {this.panoViewer.goToIp()}
-    goToRear()      {this.panoViewer.goToRear()}
+    getPano() {
+        if (this.panoViewer) {
+            return this.panoViewer
+        } else if (this.querySelector("canvas")) {
+            // find PanoViewer
+            this.panoViewer = this.querySelector("canvas");
+        } else {
+            // build PanoViewer
+            this.panoViewer = document.createElement("canvas", {is:"pano-viewer"})
+        }
+        return this.panoViewer
+    }
+    getClone() {
+        let clone = this.cloneNode(true);
+        clone.panoViewer = this.panoViewer.cloneNode(true);
+        return clone;
+    }
 }
-window.customElements.define("pano-container", PanoContainer, {extends:"div"})
+customElements.define("pano-container", PanoContainer)
 
 
 class PanoViewer extends HTMLCanvasElement {
-    static get observedAttributes() { return ['name']; }
     constructor() {
         let canvas = super();
-        this.canvas = canvas;
         // Get A WebGL context
-        let gl = this.canvas.getContext("webgl");
+        let gl = canvas.getContext("webgl");
         if (!gl) {
             return;
         }
         
         this.initiated = false;
         this.cursorPrev = {x:0, y:0, scrollY:0};
-        this.view = {pitch:0, yaw:0, zoom:-20, fov:60}
+        this.view = {pitch:0, yaw:0, zoom:-20, fov:60};
         this.locations = {
             position:null,
             skybox:null,
             viewDirectionProjectionInverse:null,
-        }
+        };
     }
     connectedCallback() {
-        if (this.initiated) {return}
-        // add title element to pano-container
-        this.titleEl = document.createElement("input");
-        this.titleEl.value = this.getAttribute("name") + ".png";
-        this.parentElement.appendChild(this.titleEl)
-        // add title element events
-        this.titleEl.addEventListener("click", this.onTitleClick.bind(this))
-        this.titleEl.addEventListener("blur", this.onTitleBlur.bind(this))
-        // add pan/zoom events
-        this.canvas.addEventListener("mousemove", this.onMouseMove.bind(this))
-        this.canvas.addEventListener("wheel", this.onWheel.bind(this))
-        // enable keyboard listening (for ctrl cursor change)
-        this.canvas.addEventListener("mouseenter", this.onMouseEnter.bind(this))
-        this.canvas.addEventListener("mouseleave", this.onMouseLeave.bind(this))
-        // if we get resized, we'll still generate the same pixels, and they'll
-        // be mushed onto the canvas in the wrong resultion at best, and skewed
-        // at worst. A ResizeObserver can trigger updates for us.
-        let resizeObserver = new ResizeObserver((entries, observer)=>{
-            this.height = entries[0].contentBoxSize[0].blockSize;
-            this.width  = entries[0].contentBoxSize[0].inlineSize;
-            this.render()
-        })
-        resizeObserver.observe(this)
-        this.initGl()
-        this.initiated = true;
+        if (!this.initiated) {
+            // This is a new or cloned CustomElement
+            // patch in dataset values for cloning purposes
+            if (!this.dataset.pitch){
+                this.dataset.pitch = 0;
+                this.dataset.yaw   = 0;
+                this.dataset.zoom  = -20;
+                this.dataset.fov   = 60;
+            }
+            let dataset = this.dataset;
+            this.view = {
+                get pitch() {return Number(dataset.pitch)},
+                get yaw()   {return Number(dataset.yaw)},
+                get zoom()  {return Number(dataset.zoom)},
+                get fov()   {return Number(dataset.fov)},
+                
+                set pitch(value) {dataset.pitch = value},
+                set yaw(value)   {dataset.yaw = value},
+                set zoom(value)  {dataset.zoom = value},
+                set fov(value)   {dataset.fov = value},
+            }
+            // if we get resized, we'll still generate the same pixels, and they'll
+            // be mushed onto the canvas in the wrong resultion at best, and skewed
+            // at worst. A ResizeObserver can trigger updates for us.
+            let resizeObserver = new ResizeObserver((entries, observer)=>{
+                this.height = entries[0].contentBoxSize[0].blockSize;
+                this.width  = entries[0].contentBoxSize[0].inlineSize;
+                this.render()
+            })
+            resizeObserver.observe(this)
+            // add pan/zoom events
+            this.addEventListener("mousemove", this.onMouseMove.bind(this))
+            this.addEventListener("wheel", this.onWheel.bind(this))
+            // enable keyboard listening (for ctrl cursor change)
+            this.addEventListener("mouseenter", this.onMouseEnter.bind(this))
+            this.addEventListener("mouseleave", this.onMouseLeave.bind(this))
+            this.initGl()
+            this.initiated = true;
+        }
     }
     
     // INTERFACE
@@ -643,21 +814,6 @@ class PanoViewer extends HTMLCanvasElement {
     onGuiZoomChange(e) {
         this.view.zoom = parseFloat(e.target.value);
     }
-    onTitleClick(e) {
-        let start = e.target.selectionStart;
-        let end = e.target.selectionEnd;
-        let name = this.getAttribute("name");
-        e.target.value = name;
-        e.target.setSelectionRange(start, end)
-    }
-    onTitleBlur(e) {
-        let name = e.target.value;
-        while (name.endsWith(".png")) {
-            name = name.slice(0,-4);
-        }
-        e.target.value = name + ".png";
-        this.setAttribute("name", name)
-    }
     
     // WEB GRAPHICS LIBRARY
     async getImage() {let gl = this.getContext("webgl");
@@ -691,14 +847,14 @@ class PanoViewer extends HTMLCanvasElement {
         gl.shaderSource(fragment_shader, FRAGMENT_SHADER_SOURCE);
         gl.compileShader(vertex_shader);
         gl.compileShader(fragment_shader);
-        console.log(`vertex_shader compile status: ${gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)}`)
-        console.log(`fragment_shader compile status: ${gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)}`)
+        console.debug(`vertex_shader compile status: ${gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)}`)
+        console.debug(`fragment_shader compile status: ${gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)}`)
         // attach shaders
         this.program = gl.createProgram()
         gl.attachShader(this.program, vertex_shader)
         gl.attachShader(this.program, fragment_shader)
         gl.linkProgram(this.program)
-        console.log(`program link status: ${gl.getProgramParameter(this.program, gl.LINK_STATUS)}`)
+        console.debug(`program link status: ${gl.getProgramParameter(this.program, gl.LINK_STATUS)}`)
         
         // look up memory locations
         this.locations.position = gl.getAttribLocation(this.program, "a_position");
