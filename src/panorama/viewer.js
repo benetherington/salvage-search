@@ -572,6 +572,14 @@ class PanoContainer extends HTMLElement {
         super()
         this.attachShadow({mode:"open"});
         this.shadowRoot.innerHTML = PANO_CONTAINER_STYLE;
+        this.addEventListener("download", this.onDownload)
+        this.addEventListener("reset", this.onReset)
+        this.addEventListener("remove", this.onRemove)
+    }
+    static get observedAttributes() {return ["name"]}
+    attributeChangedCallback(attrName, oldValue, newValue) {
+        let titleEl = this.shadowRoot.querySelector("input");
+        if (titleEl) {titleEl.value = newValue + ".png"}
     }
     connectedCallback() {
         if (!this.isConnected) {
@@ -597,9 +605,14 @@ class PanoContainer extends HTMLElement {
         this.shadowRoot.append(this.getPano())
         // add title input
         let titleEl = document.createElement("input");
-        titleEl.value = this.getAttribute("name") + ".png"
+        titleEl.value = (this.origName || this.getAttribute("name")) + ".png"
         this.shadowRoot.appendChild(titleEl)
         // add input events
+        this.attributeChangedCallback = (attrName, oldValue, newValue)=>{
+            if (attrName==="name") {
+                this.titlEl.value = newValue + ".png";
+            }
+        }
         titleEl.addEventListener("click", e=>{
             if (e.target.getRootNode().host.classList.contains("focused")){
                 e.preventDefault(); return;
@@ -619,25 +632,45 @@ class PanoContainer extends HTMLElement {
             e.target.getRootNode().host.setAttribute("name", name)
         })
     }
+    async onDownload(e) {
+        let url = await this.getPano().getImage();
+        let filename = `interior/${this.getAttribute('name')}.png`;
+        let saveAs = false;
+        browser.downloads.download({url, filename, saveAs})
+    }
+    onReset(e) {
+        if (!this.origName) {return}
+        this.resetName();
+        this.resetView();
+    }
+    resetName() {
+        this.setAttribute("name", this.origName)
+    }
+    resetView() {
+        switch (this.origName) {
+            case "driver":
+                this.getPano().goToDriver()
+                break;
+            case "passenger":
+                this.getPano().goToPassenger()
+                break;
+            case "ip":
+                this.getPano().goToIp()
+                break;
+            case "rear":
+                this.getPano().goToRear()
+        }
+    }
+    onRemove(e) {
+        console.log("remove")
+    }
     addPano(elements) {
-        this.setAttribute("name", elements.name||"untitled");
+        this.origName = elements.name || "untitled";
+        this.setAttribute("name", this.origName);
         this.getPano().updateFaces(elements.faces)
-        // TODO: this is hacky af, can we build this into connectedCallback?
-        setTimeout((name, pv)=>{
-            switch (name) {
-                case "driver":
-                    pv.goToDriver()
-                    break;
-                case "passenger":
-                    pv.goToPassenger()
-                    break;
-                case "ip":
-                    pv.goToIp()
-                    break;
-                case "rear":
-                    pv.goToRear()
-            }
-        }, 1, elements.name, this.panoViewer)
+        // Almost certainly will be called before connecting,
+        // but just in case we wind up swapping things...
+        if (this.isConnected) {this.onReset()}
     }
     getPano() {
         if (this.panoViewer) {
@@ -654,6 +687,7 @@ class PanoContainer extends HTMLElement {
     getClone() {
         let clone = this.cloneNode(true);
         clone.panoViewer = this.panoViewer.cloneNode(true);
+        clone.origName = this.origName;
         return clone;
     }
 }
@@ -816,12 +850,12 @@ class PanoViewer extends HTMLCanvasElement {
     }
     
     // WEB GRAPHICS LIBRARY
-    async getImage() {let gl = this.getContext("webgl");
+    async getImage(height=1944, width=2592) {let gl = this.getContext("webgl");
         // scale canvas to full resolution
-        let height = gl.canvas.height;
-        let width = gl.canvas.width;
-        gl.canvas.height = 1944;
-        gl.canvas.width = 2592;
+        let origHeight = gl.canvas.height;
+        let origWidth = gl.canvas.width;
+        gl.canvas.height = height;
+        gl.canvas.width = width;
         this.render()
         // create image
         let blobPromise = new Promise( (resolve, reject)=>{
@@ -831,8 +865,8 @@ class PanoViewer extends HTMLCanvasElement {
         });
         let blob = await blobPromise;
         // reset canvas
-        gl.canvas.height = height;
-        gl.canvas.width = width;
+        gl.canvas.height = origHeight;
+        gl.canvas.width = origWidth;
         this.render()
         // return image
         let url = URL.createObjectURL(blob);

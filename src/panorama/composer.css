@@ -1,16 +1,17 @@
 
+body * {
+    font-family: 'Roboto', sans-serif;
+}
+
 .grouped {
     box-sizing: border-box;
-    margin: 1%;
-    padding: 0 2% 2%; /* pad the bottom and sides. >* gets top margin for equal vertical spacing */
+    margin: 0.5vh;
+    padding: 0 1vh 1vh; /* pad the bottom and sides. >* gets top margin for equal vertical spacing */
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
 .grouped > * {
-    margin-top: 2%; /* margin top doesn't overlap .grouped padding */
-}
-.ungrouped {
-    margin: 3%; /* match width of .grouped content */
+    margin-top: 1vh; /* margin top doesn't overlap .grouped padding */
 }
 .hidden {
     display: none;
@@ -37,7 +38,8 @@ button.disabled, button.disabled:hover {
 
 /* TEXT ELEMENTS */
 p {
-    font-size: 1.5em;
+    align-self: center;
+    font-size: 1em;
     margin-block-start: 0.5em; /* Override Firefox */
     margin-block-end:   0.5em;
 }
@@ -55,8 +57,11 @@ p {
 }
 .has-sidebar-right {
     display: grid;
-    grid-template-columns: 80vw 10vw;
+    grid-template-columns: 80vw 13vw;
     column-gap: 2vw;
+}
+.has-sidebar-right > * {
+    margin-top: 1vh
 }
 
 /* CONTAINERS */
