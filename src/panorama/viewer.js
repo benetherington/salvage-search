@@ -579,7 +579,10 @@ class PanoContainer extends HTMLElement {
     static get observedAttributes() {return ["name"]}
     attributeChangedCallback(attrName, oldValue, newValue) {
         let titleEl = this.shadowRoot.querySelector("input");
-        if (titleEl) {titleEl.value = newValue + ".png"}
+        if (titleEl) {
+            titleEl.value = newValue + ".png";
+            this.dispatchEvent(new Event("namechange", {bubbles:true}))
+        }
     }
     connectedCallback() {
         if (!this.isConnected) {
@@ -702,10 +705,8 @@ class PanoViewer extends HTMLCanvasElement {
         if (!gl) {
             return;
         }
-        
         this.initiated = false;
         this.cursorPrev = {x:0, y:0, scrollY:0};
-        this.view = {pitch:0, yaw:0, zoom:-20, fov:60};
         this.locations = {
             position:null,
             skybox:null,
@@ -713,54 +714,47 @@ class PanoViewer extends HTMLCanvasElement {
         };
     }
     connectedCallback() {
-        if (!this.initiated) {
-            // This is a new or cloned CustomElement
-            // patch in dataset values for cloning purposes
-            if (!this.dataset.pitch){
-                this.dataset.pitch = 0;
-                this.dataset.yaw   = 0;
-                this.dataset.zoom  = -20;
-                this.dataset.fov   = 60;
-            }
-            let dataset = this.dataset;
-            this.view = {
-                get pitch() {return Number(dataset.pitch)},
-                get yaw()   {return Number(dataset.yaw)},
-                get zoom()  {return Number(dataset.zoom)},
-                get fov()   {return Number(dataset.fov)},
-                
-                set pitch(value) {dataset.pitch = value},
-                set yaw(value)   {dataset.yaw = value},
-                set zoom(value)  {dataset.zoom = value},
-                set fov(value)   {dataset.fov = value},
-            }
-            // if we get resized, we'll still generate the same pixels, and they'll
-            // be mushed onto the canvas in the wrong resultion at best, and skewed
-            // at worst. A ResizeObserver can trigger updates for us.
-            let resizeObserver = new ResizeObserver((entries, observer)=>{
-                this.height = entries[0].contentBoxSize[0].blockSize;
-                this.width  = entries[0].contentBoxSize[0].inlineSize;
-                this.render()
-            })
-            resizeObserver.observe(this)
-            // add pan/zoom events
-            this.addEventListener("mousemove", this.onMouseMove.bind(this))
-            this.addEventListener("wheel", this.onWheel.bind(this))
-            // enable keyboard listening (for ctrl cursor change)
-            this.addEventListener("mouseenter", this.onMouseEnter.bind(this))
-            this.addEventListener("mouseleave", this.onMouseLeave.bind(this))
-            this.initGl()
-            this.initiated = true;
+        if (this.initiated) {
+            // Only add event listeners, etc once
+            return;
         }
+        // patch in dataset values for cloning purposes
+        if (!this.hasAttribute("pitch")){
+            this.setAttribute("pitch", 0)
+            this.setAttribute("yaw",   0)
+            this.setAttribute("zoom",  -20)
+            this.setAttribute("fov",   60)
+        }
+        // if we get resized, we'll still generate the same pixels, and they'll
+        // be mushed onto the canvas in the wrong resultion at best, and skewed
+        // at worst. A ResizeObserver can trigger updates for us.
+        let resizeObserver = new ResizeObserver((entries, observer)=>{
+            this.height = entries[0].contentBoxSize[0].blockSize;
+            this.width  = entries[0].contentBoxSize[0].inlineSize;
+            this.render()
+        })
+        resizeObserver.observe(this)
+        // add pan/zoom events
+        this.addEventListener("mousemove", this.onMouseMove.bind(this))
+        this.addEventListener("wheel", this.onWheel.bind(this))
+        // enable keyboard listening (for ctrl cursor change)
+        this.addEventListener("mouseenter", this.onMouseEnter.bind(this))
+        this.addEventListener("mouseleave", this.onMouseLeave.bind(this))
+        this.initGl()
+        this.initiated = true;
     }
     
     // INTERFACE
+    static get observedAttributes() {return ["pitch", "yaw", "zoom", "fov", "name"]}
     attributeChangedCallback(attrName, oldValue, newValue) {
         if (attrName==="name" && this.titleEl) {
             while (newValue.endsWith(".png")) {
                 newValue = newValue.slice(0,-4);
             }
             this.titleEl.value = newValue + ".png";
+        }
+        if (["pitch", "yaw", "zoom", "fov"].includes(attrName)) {
+            this.render()
         }
     }
     updateFaces(faces) {let gl = this.getContext("webgl");
@@ -773,23 +767,31 @@ class PanoViewer extends HTMLCanvasElement {
         this.render()
     }
     goToDriver() {
-        this.view.pitch = 4;
-        this.view.yaw = 80;
+        this.setAttribute("pitch",  4);
+        this.setAttribute("yaw",    80);
+        this.setAttribute("zoom",  -20);
+        this.setAttribute("fov",    60);
         this.render()
     }
     goToPassenger() {
-        this.view.pitch = 4;
-        this.view.yaw = -80;
+        this.setAttribute("pitch",  4);
+        this.setAttribute("yaw",   -80);
+        this.setAttribute("zoom",  -20);
+        this.setAttribute("fov",    60);
         this.render()
     }
     goToIp() {
-        this.view.pitch = 4;
-        this.view.yaw = 0;
+        this.setAttribute("pitch",  4);
+        this.setAttribute("yaw",    0);
+        this.setAttribute("zoom",  -20);
+        this.setAttribute("fov",    60);
         this.render()
     }
     goToRear() {
-        this.view.pitch = -10;
-        this.view.yaw = 180;
+        this.setAttribute("pitch", -10);
+        this.setAttribute("yaw",    180);
+        this.setAttribute("zoom",  -20);
+        this.setAttribute("fov",    60);
         this.render()
     }
     
@@ -802,19 +804,34 @@ class PanoViewer extends HTMLCanvasElement {
             // ctrl-drag => zoom
             let dz = e.y - this.cursorPrev.y;
             dz *= 0.1;
-            this.view.zoom += dz;
+            let prevZoom = Number(this.getAttribute("zoom"));
+            this.setAttribute("zoom", prevZoom+dz);
             this.render()
         } else if (e.buttons) {
             // drag => pan
             let dx = e.x - this.cursorPrev.x;
             let dy = e.y - this.cursorPrev.y;
             dx *= 0.1; dy *= 0.1;
-            this.view.pitch = (this.view.pitch + dy) % 360;
-            this.view.yaw   = (this.view.yaw   + dx) % 360;
+            let prevPitch = Number(this.getAttribute("pitch"));
+            let prevYaw   = Number(this.getAttribute("yaw"));
+            this.setAttribute("pitch", (prevPitch + dy) % 360);
+            this.setAttribute("yaw",   (prevYaw   + dx) % 360);
             this.render()
         }
+        // save data for next time
         this.cursorPrev.x = e.x;
         this.cursorPrev.y = e.y;
+    }
+    onWheel(e) {
+        // zoom in or out
+        let multiplier = 0.01;
+        // shift => fast zoom
+        if (e.shiftKey) {multiplier = 0.1;}
+        let dScrollY = this.cursorPrev.scrollY - e.wheelDeltaY;
+        dScrollY *= multiplier;
+        let prevZoom = Number(this.getAttribute("zoom"))
+        this.setAttribute("zoom", prevZoom+dScrollY);
+        this.render()
     }
     onMouseEnter(e) {
         // add keypress listeners to change the cursor style for zooming
@@ -832,22 +849,12 @@ class PanoViewer extends HTMLCanvasElement {
         if (e.ctrlKey) {this.style = "cursor: ns-resize;";}
         else {this.style = "";}
     }
-    onWheel(e) {
-        // zoom in or out
-        let multiplier = 0.01;
-        // shift => fast zoom
-        if (e.shiftKey) {multiplier = 0.1;}
-        let dScrollY = this.cursorPrev.scrollY - e.wheelDeltaY;
-        dScrollY *= multiplier;
-        this.view.zoom += dScrollY;
-        this.render()
-    }
-    onGuiViewChange(e) {
-        this.view[e.target.id] = e.target.value % 360;
-    }
-    onGuiZoomChange(e) {
-        this.view.zoom = parseFloat(e.target.value);
-    }
+    // onGuiViewChange(e) {
+    //     this.view[e.target.id] = e.target.value % 360;
+    // }
+    // onGuiZoomChange(e) {
+    //     this.view.zoom = parseFloat(e.target.value);
+    // }
     
     // WEB GRAPHICS LIBRARY
     async getImage(height=1944, width=2592) {let gl = this.getContext("webgl");
@@ -958,14 +965,20 @@ class PanoViewer extends HTMLCanvasElement {
         let offset = 0;        // start at the beginning of the buffer
         gl.vertexAttribPointer(this.locations.position, size, type, normalize, stride, offset);
         
+        // lookup view attributes
+        let pitch = Number(this.getAttribute("pitch"));
+        let yaw   = Number(this.getAttribute("yaw"));
+        let zoom  = Number(this.getAttribute("zoom"));
+        let fov   = Number(this.getAttribute("fov"));
+        
         // Compute the projection matrix
-        let fieldOfViewRadians = degToRad(this.view.fov);
-        let zoomRadians = degToRad(this.view.zoom);
+        let fieldOfViewRadians = degToRad(fov);
+        let zoomRadians = degToRad(zoom);
         let aspect = -gl.canvas.clientWidth / gl.canvas.clientHeight;
         let projectionMatrix = perspective(fieldOfViewRadians-zoomRadians, aspect, 1, 2000);
         // find camera angle
-        let yawRadians   = degToRad(-this.view.yaw);
-        let pitchRadians = degToRad(this.view.pitch);
+        let yawRadians   = degToRad(-yaw);
+        let pitchRadians = degToRad(pitch);
         // point the camera
         let cameraMatrix = new Float32Array([
             -1,  0,  0,  0,
@@ -994,6 +1007,10 @@ class PanoViewer extends HTMLCanvasElement {
         gl.depthFunc(gl.LEQUAL)
         // Draw the geometry.
         gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
+
+        // send out an event to let everyone know a new view is ready
+        this.dispatchEvent(new Event("render", {bubbles:true,
+                                                composed:true}))
     }
     static setGeometry(gl) {
         // Fill the buffer with the values that define a quad.

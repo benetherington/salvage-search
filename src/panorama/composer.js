@@ -73,7 +73,29 @@ window.addEventListener("load", ()=>{
         }
     })
     
-    // DOWNLOAD
+    // THUMBNAIL ECHOS STAGE
+    document.querySelector("#stage").addEventListener("render", (e)=>{
+        // get view attributes
+        let panoViewer = e.target.getPano();
+        let pitch = panoViewer.getAttribute("pitch");
+        let yaw   = panoViewer.getAttribute("yaw");
+        let zoom  = panoViewer.getAttribute("zoom");
+        let fov   = panoViewer.getAttribute("fov");
+        // update thumbnail
+        let thumb = document.querySelector(".focused").getPano();
+        thumb.setAttribute("pitch", pitch)
+        thumb.setAttribute("yaw", yaw)
+        thumb.setAttribute("zoom", zoom)
+        thumb.setAttribute("fov", fov)
+    })
+    document.querySelector("#stage").addEventListener("namechange", (e)=>{
+        // get name attribute
+        let name = e.target.getAttribute("name");
+        // update thumbnail
+        document.querySelector(".focused")
+                .setAttribute("name", name)
+    })
+    // TOOLBAR: DOWNLOAD
     document.querySelector("#dl-this").addEventListener("click", (e)=>{
         // send download event to staged PanoContainer
         document
@@ -89,7 +111,7 @@ window.addEventListener("load", ()=>{
             })
     })
     
-    // RESET
+    // TOOLBAR: RESET
     document.querySelector("#rst-this").addEventListener("click", (e)=>{
         let target = document.querySelector("#thumbs .focused");
         // send reset event to focused thumbnail
@@ -106,7 +128,7 @@ window.addEventListener("load", ()=>{
             })
     })
     
-    // VIEWS
+    // TOOLBAR: VIEWS
     document.querySelector("#add-view").addEventListener("click", (e)=>{
         // add new thumbnail, swap it to stage
         let target = createThumbnail(FACES, "interior");
