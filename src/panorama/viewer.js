@@ -521,7 +521,7 @@ input {
     top: 0;
     left: 0;
     z-index: 1;
-    position:absolute;
+    position: absolute;
 }
 :host( .thumbnail ) .icon-floater::before {
     /* Align floater ::before to fill canvas area */

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="composer.css"/>
+        <script src="../shared-assets.js"></script>
+        <script src="../walkaround/viewer.js"></script>
+        <script src="../walkaround/composer.js"></script>
+    </head>
+    <body>
+
+        <!-- Main viewer and buttons -->
+        <div class="ungrouped has-hover">
+            <walkaround-viewer id="stage"></walkaround-viewer>
+            <button id="save-view" class="hover bottom right"></button>
+        </div>
+        </div> 
+        
+        <!-- Thumbnails -->
+        <div id="thumbs" class="grouped has-hover horizontal">
+            <button id="dl-all" class="hover bottom right"></button>
+            <p class="placeholder">Click the camera button to add a snapshot...</p>
+        </div>
+    
+    <p class="hidden">
+        Step 1: Rotate the big car to find each view that you want to download. You can:
+        -- Click and drag on the big car to rotate it.
+        -- Use the left and right arrow keys to rotate the big car.
+        -- Use the scroll wheel to rotate the big car.
+        -- Hold the shift button to rotate the car faster.
+        Step 2: Once the big car is in a position you like, put the image in the
+        shopping cart. You can:
+        -- Click the "save view" button to put the current view in the cart.
+        -- Double-click on the big car to put the current view in the cart.
+        -- Press the enter button to put the current view in the cart.
+        Step 3: When you've collected all the views you want to download, click
+        the "download cart" button to download all images in the cart at once.
+        If the big car image is not in the cart, it won't be downloaded.
+    </p>
+    </body>
+</html>
+
