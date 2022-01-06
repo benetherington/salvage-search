@@ -1,16 +1,3 @@
-/*----------*\
-  PANO SETUP
-\*----------*/
-
-function createThumbnail(faces={}, name) {
-    let panoContainer = document.createElement("pano-container");
-    panoContainer.classList.add("thumbnail")
-    panoContainer.addPano({faces, name})
-    document.querySelector("#thumbs").append(panoContainer)
-    return panoContainer;
-}
-
-
 /*------------------------*\
   THUMBNAIL PROMOTE/DEMOTE
 \*------------------------*/
@@ -20,16 +7,16 @@ function saveThumb(e) {
     // add thumbnail to tray
     document.querySelector("#thumbs").append(thumbnail)
 }
-function cloneToMain(panoContainer) {
-    // clone
-    let newContainer = panoContainer.getClone();
+// function cloneToMain(panoContainer) {
+//     // clone
+//     let newContainer = panoContainer.getClone();
     
-    newContainer.classList.remove("thumbnail")
-    newContainer.classList.remove("focused")
-    document.querySelector("#stage").replaceChildren(newContainer)
-    // style
-    panoContainer.classList.add("focused")
-}
+//     newContainer.classList.remove("thumbnail")
+//     newContainer.classList.remove("focused")
+//     document.querySelector("#stage").replaceChildren(newContainer)
+//     // style
+//     panoContainer.classList.add("focused")
+// }
 function downloadAll() {
     document.querySelectorAll("#thumbs img")
     .forEach((img, idx)=>{
