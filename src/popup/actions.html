@@ -18,24 +18,24 @@
 
 
 <!-- SLIDING PAGES -->
-        <div class="slider" id="slider"><div class="slider-holder">
+        <div id="slider" class="slider"><div class="slider-holder">
 
         <!-- MAIN PAGE -->
-            <div class="slider-page active" id="main">
+            <div id="main" class="slider-page active">
                 <div class="grouped">
-                    <input type="text" id="input-vin" class="input-big" size="17" placeholder="VIN"><br>
-                    <div id= "button-search" class="button disabled" data-style-orig="button">Search</div>
+                    <input id="search-input" type="text" class="input-big" size="17" placeholder="VIN OR LOT">
+                    <div id="search-button" class="button disabled" data-style-orig="button">Search</div>
                 </div>
-                <div id="button-download" data-style-orig="button ungrouped" class="button ungrouped disabled">Download Images</div>
+                <div id="download-button" class="button ungrouped disabled" data-style-orig="button ungrouped">Download Images</div>
             </div>
 
         <!-- SETTINGS PAGE -->
-            <div class="slider-page" id="settings">
+            <div id="settings" class="slider-page">
                 <div class="settings-grid grouped">
                     <div class="settings-title">Salvage search:</div>
 
                     <div class="toggle-cover"><div class="toggle">
-                        <input type="checkbox" class="checkbox" id="copart">
+                        <input id="copart" type="checkbox" class="checkbox">
                         <div class="knobs">
                             <span></span>
                         </div>
@@ -44,7 +44,7 @@
                     <div class="settings-label">Copart.com</div>
 
                     <div class="toggle-cover"><div class="toggle">
-                        <input type="checkbox" class="checkbox" id="iaai">
+                        <input id="iaai" type="checkbox" class="checkbox">
                         <div class="knobs">
                             <span></span>
                         </div>
@@ -53,7 +53,7 @@
                     <div class="settings-label">IAAI.com</div>
 
                     <div class="toggle-cover"><div class="toggle">
-                        <input type="checkbox" class="checkbox" id="row52">
+                        <input id="row52" type="checkbox" class="checkbox">
                         <div class="knobs">
                             <span></span>
                         </div>
@@ -62,13 +62,23 @@
                     <div class="settings-label">Row52.com</div>
 
                     <div class="toggle-cover"><div class="toggle">
-                        <input type="checkbox" class="checkbox" id="poctra">
+                        <input id="poctra" type="checkbox" class="checkbox">
                         <div class="knobs">
                             <span></span>
                         </div>
                         <div class="layer"></div>
                     </div></div>
                     <div class="settings-label">Poctra.com</div>
+
+                    <div class="toggle-cover"><div class="toggle">
+                        <input id="bidfax" type="checkbox" class="checkbox">
+                        <div class="knobs">
+                            <span></span>
+                        </div>
+                        <div class="layer"></div>
+                    </div></div>
+                    <div class="settings-label">BidFax.info</div>
+
 
                     <!-- <input type="text" id="zip" class="input-small" size="5" maxlength="5">
                     <div class="settings-label">ZIP for fallback searches</div>
@@ -96,7 +106,7 @@
                     </span> -->
 
                 </div>
-                <p class="tiny ungrouped" id="version">vX.X</p>
+                <p id="version" class="tiny ungrouped">vX.X</p>
             </div>
 
 <!-- END SLIDING PAGES -->

@@ -1,6 +1,7 @@
 /*-------*\
   TOOLBAR  
 \*-------*/
+
 // handle clicks
 document.addEventListener("click", (event) =>{
     if (event.target.id === "button-settings"){
@@ -39,7 +40,7 @@ class ProgressButton {
     }
     start(total=0) {
         this.el.className = this.el.dataset.styleOrig;
-        this.el.classList.add("feedback-download");
+        this.el.classList.add("feedback-busy");
         this.total = total;
         // If we got a total, set progress at zero. If not, set it at 1 so that
         // we start full color, ie 100%
@@ -73,90 +74,146 @@ class ProgressButton {
     }
 }
 
-// SEARCH //
-// VIN textbox
-window.addEventListener("load", () => {
-    // validate VIN
-    let inputVin = document.getElementById('input-vin')
-    let inputSearch = document.getElementById('button-search')
-    inputVin.addEventListener('input', ()=>{
-        if (VINREGEX.test(inputVin.value)) {
-            searchProgressButton.enable()
-        } else {
-            searchProgressButton.disable()
-        }
-    });
-})
-window.addEventListener("focus", async () => {
-    // auto-fill
-    let clipboardContents = await navigator.clipboard.readText();
-    // TODO: this fails on Chrome?
-    // TODO: to request access, we need to load actions.html in a new tab
-    if (VINREGEX.test(clipboardContents.trim())) {
-        document.getElementById('input-vin').value = clipboardContents.trim()
-        document.getElementById('button-search').classList.remove('disabled')
+class GuiVehicle extends VehicleABC {
+    constructor() {
+        super()
+        this.clipboard = null;
+        this.activate()
     }
-})
-// search ProgressButton
-let searchProgressButton = new ProgressButton();
-let onSearchClick = (event) => {
-    let vinInput = document.getElementById("input-vin");
-    if (VINREGEX.test(vinInput.value)) {
-        // that VIN looks good, let's run a search
-        browser.runtime.sendMessage(
-            { type: "popup-action",
-              values: [{
-                action: "search",
-                vin: vinInput.value }]}
-        );
-    } else {
-        // that VIN looks bad, and somehow you were still able to click the button.
-        // wiggle the text input
-        vinField = document.getElementById("input-vin")
-        vinField.classList.remove("error-attention"); // in case it's already moving
-        vinField.classList.add("error-attention");
-        // hide the error message after 4 seconds
-        addFeedbackMessage({message: "That VIN doesn't look right.", displayAs: "error"})
-    };
-    event.stopPropagation()
-};
-window.addEventListener("load", () => {
-    searchProgressButton.el = document.querySelector("#button-search");
-    searchProgressButton.el.addEventListener("click", onSearchClick)
-})
-
-// DOWNLOAD //
-// ProgressButton
-let dlProgressButton = new ProgressButton();
-dlProgressButton.status = "disabled"
-window.addEventListener("load", async () => {
-    dlProgressButton.el = document.querySelector("#button-download");
-    dlProgressButton.el.addEventListener("click", onDownloadClick)
-    // activate or deactivate download button
-    let salvageTabs = await browser.tabs.query(
-        {active: true,
-        url: [
-            "*://*.iaai.com/*ehicle*etails*", // i miss blobs
-            "*://*.copart.com/lot/*",
-            "*://*.poctra.com/*/id-*/*"
-        ]}
-    );
-    if (salvageTabs.length) {
-        console.log("found a tab!")
+    activate() {
+        this.searchInput = document.querySelector('#search-input');
+        this.searchInput.addEventListener('input', this.onInput.bind(this))
+        window.addEventListener("focus", this.onFocus.bind(this))
+        
+        this.searchButton = document.querySelector("#search-button");
+        searchProgressButton.el = this.searchButton;
+        this.searchButton.addEventListener("click", this.submitSearch.bind(this))
+        this.searchPort = browser.runtime.connect({name:"search"});
+        this.searchPort.onMessage.addListener(this.onSearchMessage.bind(this))
+        
+        this.downloadButton = document.querySelector("#download-button");
+        dlProgressButton.el = this.downloadButton;
+        this.downloadButton.addEventListener("click", this.submitDownload.bind(this))
+        this.downloadPort = browser.runtime.connect({name:"download"});
+        this.downloadPort.onMessage.addListener(this.onDownloadMessage.bind(this))
+    }
+    
+    // INPUTS
+    onSearchMessage(message) {
+        super.onMessage(message)
+        if (message.search && this.listingUrl) {dlProgressButton.attention(); this.openTab()}
+        searchProgressButton.enable()
+    }
+    onDownloadMessage(message) {
+        super.onMessage(message)
+        if (message.download) {this.download()}
+        if (message.findTabs) {this.loadTabOrClipboard()}
+    }
+    async onFocus() {
+        // TODO: to request access in Chrome, we need to load a new tab
+        if (this.vin || this.lotNumber) {return}
+        this.clipboard = await navigator.clipboard.readText().then(s=>s.trim());
+        let findTabs = true;
+        this.send(this.downloadPort, {findTabs})
+        setTimeout(()=>{this.clipboard = null;}, 500)
+    }
+    loadTabOrClipboard() {
+        if (this.vin) {
+            this.setVin()
+            addFeedbackMessage({message: `Found VIN from open tab.`})
+        }
+        else if (this.lotNumber) {
+            this.setLot()
+            addFeedbackMessage({message: `Found lot number from open tab.`})
+        }
+        else {
+            let filledValue = this.fillInput(this.clipboard)
+            if (filledValue) {
+                addFeedbackMessage({message: `Pasted ${filledValue} from clipboard.`})
+            }
+        }
+    }
+    onInput() {
+        let input = this.searchInput.value;
+        this.fillInput(input)
+    }
+    fillInput(vinOrLot) {
+        if      (this.validateVin(vinOrLot)) {this.setVin(vinOrLot); return 'VIN'}
+        else if (this.validateLot(vinOrLot)) {this.setLot(vinOrLot); return 'lot number'}
+        else                                 {this.clear()}
+    }
+    setVin(newVin) {
+        if (newVin) {
+            this.vin = newVin;
+            this.lotNumber = null;
+        }
+        this.searchInput.value = this.vin
+        searchProgressButton.enable()
+    }
+    setLot(newLot) {
+        if (newLot) {
+            this.vin = null;
+            this.lotNumber = newLot;
+        }
+        this.searchInput.value = this.lotNumber
         dlProgressButton.enable()
-    } else {
+    }
+    clear() {
+        this.vin = null;
+        this.lotNumber = null;
+        searchProgressButton.disable()
         dlProgressButton.disable()
     }
+    
+    // OUTPUTS
+    submitSearch(event) {
+        searchProgressButton.start()
+        let search = true;
+        this.send(this.searchPort, {search})
+        event.stopPropagation()
+    }
+    submitDownload(event) {
+        dlProgressButton.start()
+        let download = true;
+        this.send(this.downloadPort, {download})
+        event.stopPropagation()
+    }
+    send(port, options={}) {
+        let values = this.serialize();
+        port.postMessage({values, ...options})
+    }
+    async openTab() {
+        let url = this.listingUrl || this.salvage.listingUrl(this.lotNumber)
+        let tab = await browser.tabs.create({url})
+        this.tabId = tab.id
+    }
+    download() {
+        this.imageUrls.forEach( (url, idx) => {
+            console.log(`downloading ${idx}`)
+            browser.downloads.download({
+                url: url,
+                saveAs: false,
+                filename: `${this.salvage}-${idx}.jpg`
+            })
+        })
+        addFeedbackMessage({
+            message:`${this.imageUrls.length} images sent to downloads folder!`,
+            displayAs: "success"
+        })
+        dlProgressButton.enable()
+    }
+}
+let guiVehicle
+window.addEventListener("load", ()=>{
+    guiVehicle = new GuiVehicle
 })
-let onDownloadClick = (event) =>{
-    dlProgressButton.start()
-    browser.runtime.sendMessage(
-        { type: "popup-action",
-            values: [{
-                action: "download" }] }
-    )
-    event.stopPropagation()
-};
+
+// SEARCH //
+let searchProgressButton = new ProgressButton();
+
+// DOWNLOAD //
+let dlProgressButton = new ProgressButton();
+
 
 /*--------*\
   FEEDBACK  
@@ -168,30 +225,6 @@ browser.runtime.onMessage.addListener((message)=>{
             switch (value.action) {
                 case "feedback-message":
                     addFeedbackMessage(value)
-                    break;
-                case "download-attention":
-                    dlProgressButton.attention()
-                    break;
-                case "download-start":
-                    dlProgressButton.start(value.total)
-                    break;
-                case "download-increment":
-                    dlProgressButton.increment()
-                    break;
-                case "download-end":
-                    dlProgressButton.enable()
-                    break;
-                case "download-abort":
-                    dlProgressButton.disable()
-                    break;
-                case "search-start":
-                    searchProgressButton.start(value.total)
-                    break;
-                case "search-increment":
-                    searchProgressButton.increment()
-                    break;
-                case "search-end":
-                    searchProgressButton.enable()
                     break;
             }
         }
@@ -229,44 +262,22 @@ var addFeedbackMessage = (rawFeedback)=>{
     // add it to the page
     let drawer = document.querySelector("#notification-drawer");
     drawer.appendChild(notification)
-    // PERSIST
-    if (feedback.duration === -1) {
-        // copy object and add type property
-        feedbackToStore = Object.assign(feedback, {type:"feedback-message"});
-        // pack it for storage with a programmatic key
-        storable = {};
-        // time should be pretty unique
-        storable[feedback.createdAt] = feedbackToStore;
-        browser.storage.local.set(storable)
-    }
+
 
     // PREPARE FOR THE END
     closeUp = ()=>{
-        // remove this feedback object from persistance
-        browser.storage.local.remove(feedback.createdAt)
+
         // remove from drawer
         notification.remove()
         // close drawer
         if (drawer.childElementCount===0) {drawer.classList.add("hidden")}
     }
     // set removal conditions
-    if (feedback.duration !== -1) {setTimeout(closeUp, feedback.duration)}
-    if (feedback.closeable)       {notification.addEventListener("click", closeUp)}
+    notification.addEventListener("click", closeUp)
 
     // show the drawer
     drawer.classList.remove("hidden")
 }
-// restore persisted notifications
-window.addEventListener("load", async ()=>{
-    storage = await browser.storage.local.get();
-    Object.entries(storage).forEach( ([key, value])=>{
-        if (  value.hasOwnProperty("type")
-           && value.type==="feedback-message" ) {
-            browser.storage.local.remove(key)
-            addFeedbackMessage(value);
-        }
-    })
-})
 
 
 /*----------------*\
@@ -277,50 +288,33 @@ var preferences = {
     iaaiCheckEl: undefined,
     row52CheckEl: undefined,
     poctraCheckEl: undefined,
-    zipTextEl: undefined,
-    fallbackCheckEl: undefined,
+    bidfaxCheckEl: undefined,
     fetchStoredSettings: async ()=>{
-        let storage = await browser.storage.local.get("settings");
-        let settings = storage.settings || DEFAULT_SETTINGS; // defined in shared-assets.js
+        let settings = await defaultedSettings() // defined in shared-assets.js
         
         preferences.copartCheckEl.checked   = settings.searchCopart;
         preferences.iaaiCheckEl.checked     = settings.searchIaai;
         preferences.row52CheckEl.checked    = settings.searchRow52;
         preferences.poctraCheckEl.checked    = settings.searchPoctra;
-        // preferences.zipTextEl.value         = settings.fallbackZipCode;
-        // preferences.fallbackCheckEl.checked = settings.openFallbacks;
-
-        // re-store settings in case defaults were used
-        preferences.setStoredSettings()
+        preferences.bidfaxCheckEl.checked    = settings.searchBidfax;
     },
     setElementCallbacks: ()=>{
         [ preferences.copartCheckEl,
           preferences.iaaiCheckEl,
           preferences.row52CheckEl,
-          preferences.poctraCheckEl ]
-        //   preferences.zipTextEl,
-        //   preferences.fallbackCheckEl ]
+          preferences.poctraCheckEl,
+          preferences.bidfaxCheckEl ]
         .forEach(element=>{
             element.addEventListener("change", preferences.setStoredSettings)
         })
-        // let enableZip = ()=>{
-        //     if (preferences.fallbackCheckEl.checked) {
-        //         preferences.zipTextEl.classList.remove("disabled")
-        //     } else {
-        //         preferences.zipTextEl.classList.add("disabled")
-        //     }
-        // };
-        // enableZip()
-        // preferences.fallbackCheckEl.addEventListener("change", enableZip)
     },
     setStoredSettings: async (event=null)=>{
         let settings = Object.assign(DEFAULT_SETTINGS);
-        settings.searchCopart    = preferences.copartCheckEl.checked;
-        settings.searchIaai      = preferences.iaaiCheckEl.checked;
-        settings.searchRow52     = preferences.row52CheckEl.checked;
-        settings.searchPoctra    = preferences.poctraCheckEl.checked
-        // settings.fallbackZipCode = preferences.zipTextEl.value;
-        // settings.openFallbacks   = preferences.fallbackCheckEl.checked;
+        settings.searchCopart   = preferences.copartCheckEl.checked;
+        settings.searchIaai     = preferences.iaaiCheckEl.checked;
+        settings.searchRow52    = preferences.row52CheckEl.checked;
+        settings.searchPoctra   = preferences.poctraCheckEl.checked;
+        settings.searchBidfax   = preferences.bidfaxCheckEl.checked;
         browser.storage.local.set({settings})
     }
 }
@@ -330,13 +324,12 @@ window.addEventListener("load", async ()=>{
     preferences.iaaiCheckEl     = document.querySelector(".settings-grid input#iaai")
     preferences.row52CheckEl    = document.querySelector(".settings-grid input#row52")
     preferences.poctraCheckEl   = document.querySelector(".settings-grid input#poctra")
-    // preferences.zipTextEl       = document.querySelector(".settings-grid input#zip")
-    // preferences.fallbackCheckEl = document.querySelector(".settings-grid input#fallback")
+    preferences.bidfaxCheckEl   = document.querySelector(".settings-grid input#bidfax")
     // load and display stored preferences
     await preferences.fetchStoredSettings()
     preferences.setElementCallbacks()
     // set version display
-    let versionName = browser.runtime.getManifest().version_name
+    let versionName = browser.runtime.getManifest().version
     document.querySelector("#version").textContent = 'v' + versionName;
 })
 

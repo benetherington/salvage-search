@@ -134,7 +134,7 @@ body {
   ------ MAIN PAGE ------  
 \*-----------------------*/
 /* user feedback */
-.feedback-download, .feedback-progress {
+.feedback-busy, .feedback-progress {
     position: relative;
     pointer-events: none;
     font-weight: 700;
@@ -156,7 +156,7 @@ body {
     from { background-position: 141px center; } /* same as background size for */
     to   { background-position: 0     center; } /* smooth animation */
 }
-.feedback-download::before, .feedback-progress::before {
+.feedback-busy::before, .feedback-progress::before {
     position: absolute;
     top: 0;
     left: 0;
@@ -197,7 +197,7 @@ input {
 .input-big {
     /* styling */
     text-transform: uppercase;
-    font-size: 2em;
+    font-size: 1.8em;
 }
 .input-small {
     font-size: 1em;
@@ -220,10 +220,10 @@ input.disabled, input.disabled:hover {
 }
 
 /* BUTTONS */
-#button-search {         background-color: #61A690; }
-#button-search:hover {   background-color: #8BACA9; }
-#button-download {       background-color: #61A690; }
-#button-download:hover { background-color: #8BACA9; }
+#search-button {         background-color: #61A690; }
+#search-button:hover {   background-color: #8BACA9; }
+#download-button {       background-color: #61A690; }
+#download-button:hover { background-color: #8BACA9; }
 
 
 /*---------------------------*\
