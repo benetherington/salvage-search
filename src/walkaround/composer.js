@@ -26,7 +26,7 @@ function downloadAll() {
 function download(img, idx) {
     browser.downloads.download({
         url:img.src,
-        filename:idx+".jpg",
+        filename:`walkaround/${idx}.jpg`,
         saveAs: false
     })
 }

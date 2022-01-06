@@ -712,7 +712,10 @@ class PanoContainer extends HTMLElement {
         divHover.append(spanDelete)
         // add the current image
         let img = document.createElement("img");
-        img.src = await this.getPano().getImage();
+        img.src = "/icons/hourglass-split.svg";
+        new Promise(async ()=>{
+            img.src = await this.getPano().getImage();
+        })
         div.append(img)
         // save view data
         let view = {
@@ -777,6 +780,7 @@ class PanoViewer extends HTMLCanvasElement {
         // add pan/zoom events
         this.addEventListener("mousemove", this.onMouseMove.bind(this))
         this.addEventListener("wheel", this.onWheel.bind(this))
+        document.addEventListener("keydown", this.onKeyDown.bind(this))
         // enable keyboard listening (for ctrl cursor change)
         this.addEventListener("mouseenter", this.onMouseEnter.bind(this))
         this.addEventListener("mouseleave", this.onMouseLeave.bind(this))
@@ -907,19 +911,53 @@ class PanoViewer extends HTMLCanvasElement {
     }
     onMouseEnter(e) {
         // add keypress listeners to change the cursor style for zooming
-        this.keyListener = this.onKey.bind(this);
-        document.addEventListener("keydown", this.keyListener)
-        document.addEventListener("keyup", this.keyListener)
+        this.ctrlKeyListener = this.ctrlKeyController.bind(this);
+        document.addEventListener("keydown", this.ctrlKeyListener)
+        document.addEventListener("keyup", this.ctrlKeyListener)
     }
     onMouseLeave(e) {
         // remove keypress listeners
-        document.removeEventListener("keydown", this.keyListener)
-        document.removeEventListener("keyup", this.keyListener)
+        document.removeEventListener("keydown", this.ctrlKeyListener)
+        document.removeEventListener("keyup", this.ctrlKeyListener)
     }
-    onKey(e) {
+    ctrlKeyController(e) {
         // ctrl => show zoom cursor
         if (e.ctrlKey) {this.style = "cursor: ns-resize;";}
         else {this.style = "";}
+    }
+    onKeyDown(e) {
+        if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"]
+             .includes(e.key)) {return;}
+        
+        let moveAmount = 1;
+        if (e.shiftKey) {moveAmount = 5;}
+        
+        if (e.ctrlKey) {
+            let zoom = Number(this.getAttribute("zoom"));
+            switch (e.key) {
+                case "ArrowUp":
+                    zoom += moveAmount; break
+                case "ArrowDown":
+                    zoom -= moveAmount; break
+            }
+            this.setAttribute("zoom", zoom)
+        } else {
+            let pitch = Number(this.getAttribute("pitch"));
+            let yaw = Number(this.getAttribute("yaw"));
+            switch (e.key) {
+                case "ArrowLeft":
+                    yaw += moveAmount; break;
+                case "ArrowRight":
+                    yaw -= moveAmount; break;
+                case "ArrowUp":
+                    pitch += moveAmount; break;
+                case "ArrowDown":
+                    pitch -= moveAmount; break;
+            }
+            this.setAttribute("pitch", pitch)
+            this.setAttribute("yaw", yaw)
+        }
+        this.render()
     }
     
     // WEB GRAPHICS LIBRARY
@@ -1077,9 +1115,10 @@ class PanoViewer extends HTMLCanvasElement {
         // Draw the geometry.
         gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
 
-        // send out an event to let everyone know a new view is ready
-        gl.finish()
+        // hacky way to allow some level of asynchronicity without making the
+        // entire thing an async function
         if (callback) {
+            gl.finish()
             callback();
         }
     }

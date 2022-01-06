@@ -9,7 +9,13 @@ async function saveThumb(e) {
 }
 
 function downloadImages(e) {
-    
+    document.querySelectorAll("#thumbs img").forEach((img, idx)=>{
+        browser.downloads.download({
+            url:img.src,
+            filename: `panorama/${idx}.jpg`,
+            saveAs:false
+        })
+    })
 }
 
 /*---------------*\
@@ -47,4 +53,9 @@ window.addEventListener("load", ()=>{
     // BUTTONS
     document.querySelector("#save-view").addEventListener("click", saveThumb)
     document.querySelector("#dl-all").addEventListener("click", downloadImages)
+    
+    // STAGE
+    document.querySelector("#stage").addEventListener("click", (e)=>{
+        if (e.detail===2) {saveThumb()}
+    })
 })
