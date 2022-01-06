@@ -11,26 +11,15 @@
     <body>
 
         <!-- Main viewer and buttons -->
-        <div class="grouped has-sidebar-right">
-            <div id="stage"></div>
-            <div class="grouped vertical toolbar">
-                <button id="dl-this">Download This</button>
-                <button id="dl-all">Download All</button>
-                <hr>
-                <button id="rst-this">Reset This</button>
-                <button id="rst-all">Reset All</button>
-                <hr>
-                <button id="add-view">Add view</button>
-                <button id="remove-view">Remove this</button>
-            </div>
+        <div class="ungrouped has-hover">
+            <pano-container id="stage"></pano-container>
+            <button id="save-view" class="hover bottom right"></button>
         </div>
         
         <!-- Thumbnails -->
-        <div id="thumbs" class="grouped horizontal">
-            <!-- <div class="pano-container">
-                <div class="icon-floater"></div>
-                <canvas is="pano-viewer" name="passenger">
-            </div>
+        <div id="thumbs" class="grouped has-hover horizontal">
+            <button id="dl-all" class="hover bottom right"></button>
+            <p class="placeholder">Click the camera button to add a snapshot...</p>
         </div>
     </body>
 </html>

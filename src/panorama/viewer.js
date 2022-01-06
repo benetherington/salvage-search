@@ -566,24 +566,27 @@ input {
 /*-------*\
   DISPLAY
 \*-------*/
-
 class PanoContainer extends HTMLElement {
     constructor() {
         super()
         this.attachShadow({mode:"open"});
         this.shadowRoot.innerHTML = PANO_CONTAINER_STYLE;
-        this.addEventListener("download", this.onDownload)
-        this.addEventListener("reset", this.onReset)
-        this.addEventListener("remove", this.onRemove)
+        this.titleEl = new Object();
+        // this.addEventListener("download", this.onDownload)
+        // this.addEventListener("reset", this.onReset)
+        // this.addEventListener("remove", this.onRemove)
     }
-    static get observedAttributes() {return ["name"]}
-    attributeChangedCallback(attrName, oldValue, newValue) {
-        let titleEl = this.shadowRoot.querySelector("input");
-        if (titleEl) {
-            titleEl.value = newValue + ".png";
-            this.dispatchEvent(new Event("namechange", {bubbles:true}))
-        }
-    }
+    // static get observedAttributes() {return ["name"]}
+    // attributeChangedCallback(attrName, oldValue, newValue) {
+    //     let titleEl = this.shadowRoot.querySelector("input");
+    //     if (titleEl) {
+    //         while (newValue.endsWith(".png")) {
+    //             newValue = newValue.slice(0,-4);
+    //         }
+    //         titleEl.value = newValue + ".png";
+    //         this.dispatchEvent(new Event("namechange", {bubbles:true}))
+    //     }
+    // }
     connectedCallback() {
         if (!this.isConnected) {
             // don't continue if disconnecting
@@ -607,73 +610,68 @@ class PanoContainer extends HTMLElement {
         // add panoviewer
         this.shadowRoot.append(this.getPano())
         // add title input
-        let titleEl = document.createElement("input");
-        titleEl.value = (this.origName || this.getAttribute("name")) + ".png"
-        this.shadowRoot.appendChild(titleEl)
+        // let titleEl = document.createElement("input");
+        // titleEl.value = (this.origName || this.getAttribute("name")) + ".png"
+        // this.shadowRoot.appendChild(titleEl)
         // add input events
-        this.attributeChangedCallback = (attrName, oldValue, newValue)=>{
-            if (attrName==="name") {
-                this.titlEl.value = newValue + ".png";
-            }
-        }
-        titleEl.addEventListener("click", e=>{
-            if (e.target.getRootNode().host.classList.contains("focused")){
-                e.preventDefault(); return;
-            }
-            let start = e.target.selectionStart;
-            let end = e.target.selectionEnd;
-            let name = e.target.getRootNode().host.getAttribute("name");
-            e.target.value = name;
-            e.target.setSelectionRange(start, end)
-        })
-        titleEl.addEventListener("blur", e=>{
-            let name = e.target.value;
-            while (name.endsWith(".png")) {
-                name = name.slice(0,-4);
-            }
-            e.target.value = name + ".png";
-            e.target.getRootNode().host.setAttribute("name", name)
-        })
+        // this.attributeChangedCallback = (attrName, oldValue, newValue)=>{
+        //     if (attrName==="name") {
+        //         this.titlEl.value = newValue + ".png";
+        //     }
+        // }
+        // titleEl.addEventListener("click", e=>{
+        //     if (e.target.getRootNode().host.classList.contains("focused")){
+        //         e.preventDefault(); return;
+        //     }
+        //     let start = e.target.selectionStart;
+        //     let end = e.target.selectionEnd;
+        //     let name = e.target.getRootNode().host.getAttribute("name");
+        //     e.target.value = name;
+        //     e.target.setSelectionRange(start, end)
+        // })
+        // titleEl.addEventListener("blur", e=>{
+        //     let name = e.target.value;
+        //     while (name.endsWith(".png")) {
+        //         name = name.slice(0,-4);
+        //     }
+        //     e.target.value = name + ".png";
+        //     e.target.getRootNode().host.setAttribute("name", name)
+        // })
     }
     async onDownload(e) {
-        let url = await this.getPano().getImage();
-        let filename = `interior/${this.getAttribute('name')}.png`;
-        let saveAs = false;
-        browser.downloads.download({url, filename, saveAs})
+        // let url = await this.getPano().getImage();
+        // let filename = `interior/${this.getAttribute('name')}.png`;
+        // let saveAs = false;
+        // browser.downloads.download({url, filename, saveAs})
     }
     onReset(e) {
-        if (!this.origName) {return}
-        this.resetName();
-        this.resetView();
+        // if (!this.origName) {return}
+        // this.resetName();
+        // this.resetView();
     }
     resetName() {
-        this.setAttribute("name", this.origName)
+        // this.setAttribute("name", this.origName)
     }
     resetView() {
-        switch (this.origName) {
-            case "driver":
-                this.getPano().goToDriver()
-                break;
-            case "passenger":
-                this.getPano().goToPassenger()
-                break;
-            case "ip":
-                this.getPano().goToIp()
-                break;
-            case "rear":
-                this.getPano().goToRear()
-        }
+        // switch (this.origName) {
+        //     case "driver":
+        //         this.getPano().goToDriver()
+        //         break;
+        //     case "passenger":
+        //         this.getPano().goToPassenger()
+        //         break;
+        //     case "ip":
+        //         this.getPano().goToIp()
+        //         break;
+        //     case "rear":
+        //         this.getPano().goToRear()
+        // }
     }
     onRemove(e) {
         console.log("remove")
     }
-    addPano(elements) {
-        this.origName = elements.name || "untitled";
-        this.setAttribute("name", this.origName);
-        this.getPano().updateFaces(elements.faces)
-        // Almost certainly will be called before connecting,
-        // but just in case we wind up swapping things...
-        if (this.isConnected) {this.onReset()}
+    addPano(faces) {
+        return this.getPano().updateFaces(faces)
     }
     getPano() {
         if (this.panoViewer) {
@@ -692,6 +690,48 @@ class PanoContainer extends HTMLElement {
         clone.panoViewer = this.panoViewer.cloneNode(true);
         clone.origName = this.origName;
         return clone;
+    }
+    async getThumbnail() {
+        // create a container
+        let div = document.createElement("div");
+        div.classList.add("thumb-container")
+        // create hover toolbar
+        let divHover = document.createElement("div");
+        divHover.classList.add("hover-bar")
+        div.append(divHover)
+        // create toolbar buttons
+        let spanEdit = document.createElement("span");
+        spanEdit.classList.add("hover-icon")
+        spanEdit.classList.add("edit-icon")
+        spanEdit.addEventListener("click", this.restoreFrom.bind(this))
+        divHover.append(spanEdit)
+        let spanDelete = document.createElement("span");
+        spanDelete.classList.add("hover-icon")
+        spanDelete.classList.add("delete-icon")
+        spanDelete.addEventListener("click", e=>div.remove())
+        divHover.append(spanDelete)
+        // add the current image
+        let img = document.createElement("img");
+        img.src = await this.getPano().getImage();
+        div.append(img)
+        // save view data
+        let view = {
+            pitch: Number(this.getPano().getAttribute("pitch")),
+            yaw:   Number(this.getPano().getAttribute("yaw")),
+            zoom:  Number(this.getPano().getAttribute("zoom")),
+            fov:   Number(this.getPano().getAttribute("fov")),
+        }
+        spanEdit.setAttribute("view", JSON.stringify(view))
+        return div
+    }
+    restoreFrom(e) {
+        // restore view
+        let view = JSON.parse(e.target.getAttribute("view"))
+        this.getPano().setAttribute("pitch", view.pitch)
+        this.getPano().setAttribute("yaw", view.yaw)
+        this.getPano().setAttribute("zoom", view.zoom)
+        this.getPano().setAttribute("fov", view.fov)
+        e.target.closest(".thumb-container").remove()
     }
 }
 customElements.define("pano-container", PanoContainer)
@@ -747,52 +787,84 @@ class PanoViewer extends HTMLCanvasElement {
     // INTERFACE
     static get observedAttributes() {return ["pitch", "yaw", "zoom", "fov", "name"]}
     attributeChangedCallback(attrName, oldValue, newValue) {
-        if (attrName==="name" && this.titleEl) {
-            while (newValue.endsWith(".png")) {
-                newValue = newValue.slice(0,-4);
-            }
-            this.titleEl.value = newValue + ".png";
-        }
+        // if (attrName==="name" && this.titleEl) {
+        //     while (newValue.endsWith(".png")) {
+        //         newValue = newValue.slice(0,-4);
+        //     }
+        //     this.titleEl.value = newValue + ".png";
+        // }
         if (["pitch", "yaw", "zoom", "fov"].includes(attrName)) {
             this.render()
         }
     }
     updateFaces(faces) {let gl = this.getContext("webgl");
-        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X, faces.pano_r || "images/pano_r.jpg")
-        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, faces.pano_l || "images/pano_l.jpg")
-        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, faces.pano_u || "images/pano_u.jpg")
-        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, faces.pano_d || "images/pano_d.jpg")
-        this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, faces.pano_b || "images/pano_b.jpg")
-        this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, faces.pano_f || "images/pano_f.jpg")
+        let texPromises = []
+        texPromises.push(
+            this.loadTexture(
+                gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+                faces.pano_r || "images/pano_r.jpg"
+            )
+        )
+        texPromises.push(
+            this.loadTexture(
+                gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+                faces.pano_l || "images/pano_l.jpg"
+            )
+        )
+        texPromises.push(
+            this.loadTexture(
+                gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+                faces.pano_u || "images/pano_u.jpg"
+            )
+        )
+        texPromises.push(
+            this.loadTexture(
+                gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                faces.pano_d || "images/pano_d.jpg"
+            )
+        )
+        texPromises.push(
+            this.loadTexture(
+                gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+                faces.pano_b || "images/pano_b.jpg"
+            )
+        )
+        texPromises.push(
+            this.loadTexture(
+                gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+                faces.pano_f || "images/pano_f.jpg"
+            )
+        )
         this.render()
+        return Promise.all(texPromises)
     }
     goToDriver() {
         this.setAttribute("pitch",  4);
         this.setAttribute("yaw",    80);
         this.setAttribute("zoom",  -20);
         this.setAttribute("fov",    60);
-        this.render()
+        return new Promise(resolve=>this.render(resolve))
     }
     goToPassenger() {
         this.setAttribute("pitch",  4);
         this.setAttribute("yaw",   -80);
         this.setAttribute("zoom",  -20);
         this.setAttribute("fov",    60);
-        this.render()
+        return new Promise(resolve=>this.render(resolve))
     }
     goToIp() {
         this.setAttribute("pitch",  4);
         this.setAttribute("yaw",    0);
         this.setAttribute("zoom",  -20);
         this.setAttribute("fov",    60);
-        this.render()
+        return new Promise(resolve=>this.render(resolve))
     }
     goToRear() {
         this.setAttribute("pitch", -10);
         this.setAttribute("yaw",    180);
         this.setAttribute("zoom",  -20);
         this.setAttribute("fov",    60);
-        this.render()
+        return new Promise(resolve=>this.render(resolve))
     }
     
     // EVENT HANDLERS
@@ -849,12 +921,6 @@ class PanoViewer extends HTMLCanvasElement {
         if (e.ctrlKey) {this.style = "cursor: ns-resize;";}
         else {this.style = "";}
     }
-    // onGuiViewChange(e) {
-    //     this.view[e.target.id] = e.target.value % 360;
-    // }
-    // onGuiZoomChange(e) {
-    //     this.view.zoom = parseFloat(e.target.value);
-    // }
     
     // WEB GRAPHICS LIBRARY
     async getImage(height=1944, width=2592) {let gl = this.getContext("webgl");
@@ -934,16 +1000,19 @@ class PanoViewer extends HTMLCanvasElement {
         gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null)
         
         // Asynchronously load the image
-        var image = new Image();
-        image.addEventListener('load', ()=>{
-            // Now that the image has loaded make copy it to the texture.
-            gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture);
-            gl.texImage2D(target, level, internalFormat, format, type, image);
-            requestAnimationFrame(this.render.bind(this))
+        let image = new Image();
+        let imageLoadedPromise = new Promise((resolve)=>{
+            image.addEventListener('load', ()=>{
+                // Now that the image has loaded make copy it to the texture.
+                gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture);
+                gl.texImage2D(target, level, internalFormat, format, type, image);
+                    requestAnimationFrame(this.render.bind(this, resolve))
+                })
         })
         image.src = url;
+        return imageLoadedPromise;
     }
-    render() {let gl = this.getContext("webgl");
+    render(callback) {let gl = this.getContext("webgl");
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
@@ -1009,8 +1078,10 @@ class PanoViewer extends HTMLCanvasElement {
         gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
 
         // send out an event to let everyone know a new view is ready
-        this.dispatchEvent(new Event("render", {bubbles:true,
-                                                composed:true}))
+        gl.finish()
+        if (callback) {
+            callback();
+        }
     }
     static setGeometry(gl) {
         // Fill the buffer with the values that define a quad.

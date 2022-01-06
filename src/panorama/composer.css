@@ -3,26 +3,57 @@ body * {
     font-family: 'Roboto', sans-serif;
 }
 
+/* LAYOUT */
+.horizontal {
+    display: grid;
+    grid-template-columns: repeat(5, 3fr);
+    column-gap: 1vw;
+    row-gap: 1vw;
+}
 .grouped {
     box-sizing: border-box;
     margin: 0.5vh;
-    padding: 0 1vh 1vh; /* pad the bottom and sides. >* gets top margin for equal vertical spacing */
+    padding: 1vh;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
-.grouped > * {
-    margin-top: 1vh; /* margin top doesn't overlap .grouped padding */
+.ungrouped {
+    box-sizing: border-box;
+    margin: 0.5vh;
+    padding: 1vh;
 }
+.has-hover {
+    position: relative;
+}
+.hover {
+    position: absolute;
+    z-index: 1;
+}
+    .hover::after {
+        position:absolute;
+        content: "";
+        height: 100%;
+        width: 100%;
+        left: 0;
+        top: 0;
+        box-shadow: 0 0 10px rgba(1,1,1,0.3);
+    }
+    .hover.left   {left:   5px;}
+    .hover.right  {right:  5px;}
+    .hover.top    {top:    5px;}
+    .hover.bottom {bottom: 5px;}
 .hidden {
     display: none;
 }
+
+/* ELEMENTS */
 button {
     padding: 4px;
     text-align: center;
     font-size: 1em;
     font-weight: 500;
     color: #eee;
-    background: #508a77;
+    background: #32728C;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     cursor: pointer;
     border: initial;
@@ -35,41 +66,106 @@ button.disabled, button.disabled:hover {
     box-shadow: 0px 0px 2px 1px grey;
 }
 
-
-/* TEXT ELEMENTS */
-p {
-    align-self: center;
-    font-size: 1em;
-    margin-block-start: 0.5em; /* Override Firefox */
-    margin-block-end:   0.5em;
-}
-
-
-/* LAYOUT */
-.vertical {
-    display: flex;
-    flex-direction: column;
-}
-.horizontal {
-    display: grid;
-    grid-template-columns: repeat(4, 3fr);
-    column-gap: 2vw;
-}
-.has-sidebar-right {
-    display: grid;
-    grid-template-columns: 80vw 13vw;
-    column-gap: 2vw;
-}
-.has-sidebar-right > * {
-    margin-top: 1vh
-}
-
 /* CONTAINERS */
-.toolbar {
-    padding: 5%;
+#thumbs {
+    /* height is based on square grid elements:min-height:
+    thumbs width is 20vw less 0.5vh padding, and each column
+    has a 1vw gap. Appears right, probably right for the wrong reason? */
+    min-height: calc(20vw - 0.5vh + 1vw);
 }
-.toolbar > hr {
-    width:80%;
-    margin-top: 12px;
-    color: #223945;
+.thumb-container {
+    position: relative;
 }
+.thumb-container img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    display: flex;
+}
+
+/* THUMBNAIL TOOLBAR */
+#thumbs:not(:hover) .hover-bar {visibility: hidden;}
+.hover-bar {
+    /* style */
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    border-radius: 4px;
+    /* size and position */
+    height: 40px;
+    position: absolute;
+    display: flex;
+    right: -5px;
+    top: -5px;
+}
+.hover-icon {
+    /* style */
+    transition: background-color .1s;
+    /* size */
+    height: 100%;
+    aspect-ratio: 1/1;
+    background-size: 70%;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    box-sizing: border-box;
+}
+.hover-icon:hover {background-color: lightgrey;}
+/* add a little border between items */
+.hover-icon:not(:last-child) {box-shadow: 2px 0 2px -1px rgba(0,0,0,0.24);}
+
+.edit-icon          {background-image: url("/icons/pencil-square.svg");}
+.delete-icon        {background-image: url("/icons/x-circle-fill.svg");}
+.delete-icon:hover  {background-color: lightpink;}
+
+/* SPECIFIC ITEMS */
+#save-view {
+    height: 60px;
+    aspect-ratio: 1/1;
+    border-radius: 100%;
+    
+    background-image: url("/icons/camera-fill.svg");
+    background-size: 69%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+    #save-view::after {
+        border-radius: 100%;
+    }
+#thumbs > .placeholder {
+    /* appearance */
+    color: grey;
+    font-size: 2em;
+    /* alignment */
+    padding: 10%;
+    padding-right: calc(10% + 30px); /* leave room for dl button */
+    position: absolute;
+    align-self: center;
+    justify-self: center;
+    text-align: center;
+}
+.placeholder:not(:last-child) {
+    /* Because thumbnails get added to the end of #thumbs,
+    the placeholder can hide itself when there's anything
+    below it. */
+    visibility: hidden;
+}
+#dl-all {
+    height: 60px;
+    aspect-ratio: 1/1;
+    border-radius: 100%;
+    
+    background-image: url("/icons/download.svg");
+    background-size: 69%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+    #dl-all::after {
+        border-radius: 100%;
+    }
+
+
+
+
