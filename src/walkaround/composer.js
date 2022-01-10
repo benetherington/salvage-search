@@ -35,21 +35,20 @@ function download(img, idx) {
 /*---------------*\
   POPUP MESSAGING
 \*---------------*/
-let port = browser.runtime.connect({name:"walkaround"});
-port.onMessage.addListener(messageHandler)
-function messageHandler(message) {
-    document.querySelector("#stage").setAngles(message.angles)
-}
+
+let messageHandler = message=>{console.log(message); document.querySelector("#stage").setAngles(message)}
+let connectHandler = port=>{console.log(port); port.onMessage.addListener(messageHandler)}
+browser.runtime.onConnect.addListener(connectHandler);
 
 /*---------------*\
   EVENT LISTENERS
 \*---------------*/
 window.addEventListener("load", ()=>{
     // FAKE LOADING FROM POPUP
-    let angles = Array.from(Array(64).keys()).map(idx=>
-        "/walkaround/images/"+idx+".jpg"
-    )
-    messageHandler({angles})
+    // let angles = Array.from(Array(64).keys()).map(idx=>
+    //     "/walkaround/images/"+idx+".jpg"
+    // )
+    // messageHandler({angles})
     
     // TOOLBAR: DOWNLOAD
     document.querySelector("#dl-all").addEventListener("click", downloadAll)

@@ -16,16 +16,13 @@ const DownloadableVehicle = class extends BackgroundVehicle {
     }
     async onMessage(message) {
         this.setData(message.values)
-        if      (message.confirmExits) {await this.getSalvage()}
-        else if (message.download    ) {await this.getImageUrls()}
-        else if (message.findTabs    ) {await this.findTabs()}
-        else {return}
-        delete message.values
-        this.reply(message)
+        if      (message.findTabs    ) {await this.findTabs(true)}
+        else if (message.confirmExits) {await this.getSalvage(true)}
+        else if (message.download    ) {await this.getImageUrls(true)}
     }
     
     // OUTPUT
-    async findTabs() {
+    async findTabs(findTabs=false) {
         // get all salvage tabs
         let salvageTabs = await browser.tabs.query({
             url: [COPART_D.URL_PATTERN, IAAI_D.URL_PATTERN, POCTRA_D.URL_PATTERN, BIDFAX_D.URL_PATTERN]
@@ -43,8 +40,9 @@ const DownloadableVehicle = class extends BackgroundVehicle {
         } catch (error) {
             if (error!=="not enough information to find salvage yard") {throw error}
         }
+        this.reply({findTabs})
     }
-    async getSalvage() {
+    async getSalvage(confirmExists=false) {
         // This begins a cascade string of functions that allow us to jump in
         // and fetch new data, no matter how much or how little we know about
         // the vehicle.
@@ -62,7 +60,7 @@ const DownloadableVehicle = class extends BackgroundVehicle {
             if (await COPART_D.lotNumberValid(this.lotNumber)   ) {this.salvage=COPART_D;}
             else if (await IAAI_D.lotNumberValid(this.lotNumber)) {this.salvage=IAAI_D;}
         } else {throw "not enough information to find salvage yard"}
-        return this.salvage;
+        this.reply({confirmExists})
     }
     async getLotNumber() {
         if (this.lotNumber&&await this.getSalvage()) {return this.lotNumber}
@@ -77,12 +75,20 @@ const DownloadableVehicle = class extends BackgroundVehicle {
         this.setData(values)
         return this.imageInfo;
     }
-    async getImageUrls() {
+    async getImageUrls(download=false) {
         if (this.imageUrls) {return this.imageUrls}
         await this.getImageInfo()
-        let values = await this.salvage.imageUrlsFromInfo(this)
-        this.setData(values)
-        return this.imageUrls;
+        
+        // (async ()=>{
+        //     let values = await this.salvage.imageUrlsFromInfo(this);
+        //     this.setData(values)
+        //     this.reply({download, new:"images"})
+        // })()
+        // (async ()=>{
+            let values = await this.salvage.interactiveUrlsFromInfo(this);
+            this.setData(values)
+            this.reply({download, new:"interactive"})
+        // })()
     }
 }
 
@@ -136,7 +142,7 @@ const COPART_D = {
         if (response.headers.get("content-type").startsWith("application/json")) {
             imageInfo = await response.json();
         } else {
-            console.log("Copart wants a CAPTCHA check")
+            console.debug("Copart wants a CAPTCHA check")
             browser.tabs.create({url:"https://www.copart.com"})
             throw "please complete the CAPTCHA and try again."
         }
@@ -171,9 +177,11 @@ const COPART_D = {
                     return full.url;
                 }
             })
-                
         } catch (error) {throw `Copart: lot #${lotNumber} ${error}`}
         return {imageUrls}
+    },
+    interactiveUrlsFromInfo: async function (lotDetailsOrVehicle) {
+        return;
     }
 }
 
@@ -221,7 +229,7 @@ const IAAI_D = {
         }
         // ENSURE TYPE
         stockNumber = stockNumber.toString();
-        console.log(`iaaiFetchImageInfoFromLotNumber(${stockNumber})`)
+        console.debug(`iaaiFetchImageInfoFromLotNumber(${stockNumber})`)
         // BUILD REQUEST
         let getLotDetailsUrl = new URL("https://iaai.com/Images/GetJsonImageDimensions");
         getLotDetailsUrl.searchParams.append(
@@ -249,19 +257,27 @@ const IAAI_D = {
         } else {
             lotDetails = lotDetailsOrVehicle;
         }
-        console.log("iaaiImageUrlsFromImageInfo(...)")
-        console.log(lotDetails)
+        console.debug("iaaiImageUrlsFromImageInfo(...)")
+        console.debug(lotDetails)
         if (!lotDetails){return []}
         // FETCH AND PROCESS
         sendNotification(`IAAI: processing ${lotDetails.keys.length} images from lot #${vehicle.lotNumber}`)
         let processedUrls = [];
         let dezoomed = await IAAI_D.fetchAndDezoom(lotDetails.keys)
         processedUrls.push(...dezoomed)
-        // let {walkaroundUrls, panoUrls} = await SpinCar.fetchDetails(lotDetail.cdn_image_prefix)
-        // processedUrls.push(...pano)
-        // processedUrls.push(...walkaround)
         // DONE
         return {imageUrls: processedUrls}
+    },
+    interactiveUrlsFromInfo: async function (lotDetailsOrVehicle) {
+        let vehicle, lotDetails;
+        if (lotDetailsOrVehicle instanceof DownloadableVehicle) {
+            vehicle = lotDetailsOrVehicle;
+            lotDetails = await vehicle.getImageInfo();
+        } else {
+            lotDetails = lotDetailsOrVehicle;
+        }
+        let {walkaroundUrls, panoUrls} = await SPINCAR_D.interactiveUrlsFromUrl(lotDetails.Image360Url);
+        return {walkaroundUrls, panoUrls};
     },
     countImages: function (...imageDetails) {
         imageDetails = imageDetails.flat()
@@ -274,8 +290,8 @@ const IAAI_D = {
         // Accepts a single keys object, multiple keys objects, or an array of keys
         // objects.
         imageKeys = imageKeys.flat()
-        console.log("iaaiFetchAndDezoom(...)")
-        console.log(imageKeys)
+        console.debug("iaaiFetchAndDezoom(...)")
+        console.debug(imageKeys)
         let canvas = document.createElement("canvas");
         let ctx = canvas.getContext("2d")
         let processedPromises = [];
@@ -307,7 +323,7 @@ const IAAI_D = {
                 })
                 let dataURL = canvas.toDataURL("image/jpeg");
                 let objectURL = IAAI_D.dataURLtoObjectURL(dataURL);
-                console.log(`${key.K} processed`)
+                console.debug(`${key.K} processed`)
                 sendProgress("download", "increment")
                 resolve(objectURL)
             }))
@@ -331,24 +347,22 @@ const IAAI_D = {
 }
 let SPINCAR_D = {
     __proto__: Salvage,
-    fetchDetails: function (...spinUrls) {
-        spinUrls = spinUrls.flat()
-        let spinPromises = spinUrls.map( async spinUrl=>{
-            let spinPath = /com\/(.*)/.exec(spinUrl)[1];
-            let apiUrl = "https://api.spincar.com/spin/" + spinPath;
-            let headers = { "User-Agent": window.navigator.userAgent,
-                        "Accept": "application/json" };
-            let jsn = await fetch(apiUrl, headers).then(r=>r.json());
-            let walkaroundCount = jsn.info.options.numImgEC;
-            let walkaroundUrls = Array.from(Array(walkaroundCount).keys()).map(
-                idx=>`https:${jsn.cdn_image_prefix}ec/0-${idx}.jpg`
-            );
-            let panoUrls = ['f', 'l', 'b', 'r', 'u', 'd'].map(
-                dir=>`https:${jsn.cdn_image_prefix}pano/pano_${dir}.jpg`
-            );
-            return {walkaroundUrls, panoUrls}
-        })
-        return Promise.all(spinPromises)
+    interactiveUrlsFromUrl: async (spinUrl)=>{
+        let spinPath = /com\/(.*)/.exec(spinUrl)[1];
+        let apiUrl = "https://api.spincar.com/spin/" + spinPath;
+        let headers = { "User-Agent": window.navigator.userAgent,
+                    "Accept": "application/json" };
+        let jsn = await fetch(apiUrl, headers).then(r=>r.json());
+        let walkaroundCount = jsn.info.options.numImgEC;
+        let walkaroundUrls = Array.from(Array(walkaroundCount).keys()).map(
+            idx=>`https:${jsn.cdn_image_prefix}ec/0-${idx}.jpg`
+        );
+        let panoUrls = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'].map(
+            pano_dir=>({pano_dir:`https:${jsn.cdn_image_prefix}pano/${pano_dir}.jpg`})
+        );
+        panoUrls.cubemap = true;
+        panoUrls.equirectangular = false;
+        return {walkaroundUrls, panoUrls}
     }
 }
 
@@ -518,4 +532,4 @@ const BIDFAX_D = {
 }
 
 
-console.log("download-background loaded")
+console.debug("download-background loaded")

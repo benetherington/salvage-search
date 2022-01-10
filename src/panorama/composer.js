@@ -21,13 +21,16 @@ function downloadImages(e) {
 /*---------------*\
   POPUP MESSAGING
 \*---------------*/
-let port = browser.runtime.connect({name:"panorama"});
+let port = browser.runtime.connect();
 port.onMessage.addListener(messageHandler)
 async function messageHandler(message) {
+    console.log('message:'); console.log(message)
     // create thumbnail set, point them in the correct direction
     let stage = document.querySelector("#stage");
-    stage.addEventListener("render", e=>{console.log("render")})
-    await stage.addPano(message.faces);
+    
+    if (message.cubemap) {
+        await stage.addPano(message.faces);
+    }
     await stage.getPano().goToDriver();    await saveThumb();
     await stage.getPano().goToRear();      await saveThumb();
     await stage.getPano().goToPassenger(); await saveThumb();
@@ -39,16 +42,16 @@ async function messageHandler(message) {
 \*---------------*/
 window.addEventListener("load", ()=>{
     // FAKE LOADING FROM POPUP
-    messageHandler({
-        faces: {
-            pano_r: "images/pano_r.jpg",
-            pano_l: "images/pano_l.jpg",
-            pano_u: "images/pano_u.jpg",
-            pano_d: "images/pano_d.jpg",
-            pano_b: "images/pano_b.jpg",
-            pano_f: "images/pano_f.jpg"
-        }
-    })
+    // messageHandler({
+    //     faces: {
+    //         pano_r: "images/pano_r.jpg",
+    //         pano_l: "images/pano_l.jpg",
+    //         pano_u: "images/pano_u.jpg",
+    //         pano_d: "images/pano_d.jpg",
+    //         pano_b: "images/pano_b.jpg",
+    //         pano_f: "images/pano_f.jpg"
+    //     }
+    // })
     
     // BUTTONS
     document.querySelector("#save-view").addEventListener("click", saveThumb)

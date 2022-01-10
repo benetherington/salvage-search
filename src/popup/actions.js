@@ -106,8 +106,8 @@ class GuiVehicle extends VehicleABC {
     }
     onDownloadMessage(message) {
         super.onMessage(message)
-        if (message.download) {this.download()}
         if (message.findTabs) {this.loadTabOrClipboard()}
+        if (message.download) {this.download(message.new)}
     }
     async onFocus() {
         // TODO: to request access in Chrome, we need to load a new tab
@@ -187,20 +187,41 @@ class GuiVehicle extends VehicleABC {
         let tab = await browser.tabs.create({url})
         this.tabId = tab.id
     }
-    download() {
-        this.imageUrls.forEach( (url, idx) => {
-            console.log(`downloading ${idx}`)
-            browser.downloads.download({
-                url: url,
-                saveAs: false,
-                filename: `${this.salvage}-${idx}.jpg`
+    download(newData) {
+        if (newData==="images") {
+            this.imageUrls.forEach( (url, idx) => {
+                console.debug(`downloading ${idx}`)
+                browser.downloads.download({
+                    url: url,
+                    saveAs: false,
+                    filename: `${this.salvage}-${idx}.jpg`
+                })
             })
-        })
-        addFeedbackMessage({
-            message:`${this.imageUrls.length} images sent to downloads folder!`,
-            displayAs: "success"
-        })
-        dlProgressButton.enable()
+            addFeedbackMessage({
+                message:`${this.imageUrls.length} images sent to downloads folder!`,
+                displayAs: "success"
+            })
+            dlProgressButton.enable()
+        } else if (newData==="interactive") {
+            this.openWalkaroundTab()
+            this.openPanoTab()
+            addFeedbackMessage({
+                message:`Interactive images available!`,
+                displayAs: "success"
+            })
+        }
+    }
+    async openWalkaroundTab() {
+        if (!this.walkaroundUrls) {return;}
+        let walkTab = await browser.tabs.create({url:"/walkaround/composer.html"})
+        let walkPort = browser.tabs.connect(walkTab.id);
+        walkPort.postMessage(this.walkaroundUrls)
+    }
+    async openPanoTab() {
+        if (!this.panoUrls) {return;}
+        let panoTab = await browser.tabs.create({url:"/pano/composer.html"})
+        let panoPort = browser.tabs.connect(panoTab.id);
+        panoPort.postMessage(this.panoUrls)
     }
 }
 let guiVehicle
@@ -252,7 +273,7 @@ var addFeedbackMessage = (rawFeedback)=>{
         feedback.closeable = closeable;
         feedback.displayAs = displayAs;
         feedback.createdAt = performance.now().toString();
-    } else {console.log("empty message");return;}
+    } else {console.debug("empty message");return;}
 
     // CREATE ELEMENT
     let notification = document.createElement("div");
@@ -333,4 +354,4 @@ window.addEventListener("load", async ()=>{
     document.querySelector("#version").textContent = 'v' + versionName;
 })
 
-console.log("popup action loaded!")
+console.debug("popup action loaded!")
