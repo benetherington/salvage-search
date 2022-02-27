@@ -146,7 +146,7 @@ const IAAI_S = {
             if (!response.redirected) {throw "query returned no results.";}
             // open redirect URL in a new tab
             let redirectUrl = response.url;
-            if (!/itemid=(\d{8})/.test(redirectUrl)) {throw "query returned no results."}
+            if (!/(itemid|vehicledetails).(\d{8})/.test(redirectUrl)) {throw "query returned no results."}
             
             // CREATE VEHICLE
             await IAAI_S.getVehicleInfo(vehicle, {url:redirectUrl});
