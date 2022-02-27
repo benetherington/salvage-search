@@ -263,6 +263,10 @@ const IAAI_D = {
         // DONE
         return {imageUrls: processedUrls}
     },
+    interactiveUrlsFromInfo: async function (lotDetailsOrVehicle) {
+        let {walkaroundUrls, panoUrls} = await SPINCAR_D.interactiveUrlsFromImageInfo(lotDetailsOrVehicle);
+        return {walkaroundUrls, panoUrls};
+    },
     countImages: function (...imageDetails) {
         imageDetails = imageDetails.flat()
         return imageDetails.reduce((total, details)=>{
@@ -331,25 +335,58 @@ const IAAI_D = {
 }
 let SPINCAR_D = {
     __proto__: Salvage,
-    fetchDetails: function (...spinUrls) {
-        spinUrls = spinUrls.flat()
-        let spinPromises = spinUrls.map( async spinUrl=>{
-            let spinPath = /com\/(.*)/.exec(spinUrl)[1];
-            let apiUrl = "https://api.spincar.com/spin/" + spinPath;
-            let headers = { "User-Agent": window.navigator.userAgent,
-                        "Accept": "application/json" };
-            let jsn = await fetch(apiUrl, headers).then(r=>r.json());
-            let walkaroundCount = jsn.info.options.numImgEC;
-            let walkaroundUrls = Array.from(Array(walkaroundCount).keys()).map(
-                idx=>`https:${jsn.cdn_image_prefix}ec/0-${idx}.jpg`
-            );
-            let panoUrls = ['f', 'l', 'b', 'r', 'u', 'd'].map(
-                dir=>`https:${jsn.cdn_image_prefix}pano/pano_${dir}.jpg`
-            );
-            return {walkaroundUrls, panoUrls}
-        })
-        return Promise.all(spinPromises)
-    }
+    interactiveUrlsFromImageInfo: async (imageInfoOrVehicle)=>{
+        // TODO: add error catching to Spincar functions
+        let imageInfo;
+        if (imageInfoOrVehicle instanceof DownloadableVehicle) {
+            imageInfo = await imageInfoOrVehicle.getImageInfo();
+        } else {
+            imageInfo = imageInfoOrVehicle;
+        }
+        if (!imageInfo.Image360Ind) {console.log("no 360 indicated");return;}
+        
+        let spinUrl = imageInfo.Image360Url;
+        let spinPath = /com\/(.*)/.exec(spinUrl)[1];
+        let apiUrl = "https://api.spincar.com/spin/" + spinPath;
+        let headers = { "User-Agent": window.navigator.userAgent,
+                    "Accept": "application/json" };
+        let spinInfo = await fetch(apiUrl, headers).then(r=>r.json());
+        let walkaroundUrls = SPINCAR_D.walkaroundObjectUrlsFromImageInfo(spinInfo);
+        let panoUrls = SPINCAR_D.panoObjectUrlsFromImageInfo(spinInfo);
+        walkaroundUrls = await walkaroundUrls;
+        panoUrls = await panoUrls;
+        return {walkaroundUrls, panoUrls}
+    },
+    walkaroundObjectUrlsFromImageInfo: async (spinInfo) =>{
+        let walkaroundCount = spinInfo.info.options.numImgEC;
+        let walkaroundUrls = Array.from(Array(walkaroundCount).keys()).map(
+            idx=>`https:${spinInfo.cdn_image_prefix}ec/0-${idx}.jpg`
+        );
+        let walkPromises = walkaroundUrls.map(imageUrl=>{
+            return fetch(imageUrl)
+                .then(response=>response.blob())
+                .then(blob=>URL.createObjectURL(blob))
+        });
+        let walkSettled = await Promise.allSettled(walkPromises);
+        return walkSettled.map(p=>p.value||"TODO: add rejected image")
+    },
+    panoObjectUrlsFromImageInfo: async (spinInfo) =>{
+        let panoUrls = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'].map(
+            pano_dir=>({pano_dir:`https:${spinInfo.cdn_image_prefix}pano/${pano_dir}.jpg`})
+        );
+        let panoPromises = panoUrls.map(imageUrl=>{
+            return fetch(imageUrl)
+                .then(response=>response.blob())
+                .then(blob=>URL.createObjectURL(blob))
+        });
+        let panoSettled = await Promise.allSettled(panoPromises);
+        let panoObjectUrls = panoSettled.map(p=>p.value||"TODO: add rejected image");
+        return {
+            cubemap: true,
+            equirectangular: false,
+            urls: panoObjectUrls
+        }
+    },
 }
 
 // FOR REFERENCE
