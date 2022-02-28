@@ -14,7 +14,9 @@ const VehicleABC = class {
                     "lotNumber",
                     "listingUrl",
                     "imageInfo",
-                    "imageUrls"]
+                    "imageUrls",
+                    "walkaroundUrls",
+                    "panoUrls"]
     constructor(values=null) {
         this.TO_SERIALIZE.forEach(k=> this[k]=null)
         if (values) {Object.assign(this, values)}

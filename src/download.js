@@ -253,19 +253,15 @@ const IAAI_D = {
         console.log(lotDetails)
         if (!lotDetails){return []}
         // FETCH AND PROCESS
-        sendNotification(`IAAI: processing ${lotDetails.keys.length} images from lot #${vehicle.lotNumber}`)
-        let processedUrls = [];
-        let dezoomed = await IAAI_D.fetchAndDezoom(lotDetails.keys)
-        processedUrls.push(...dezoomed)
-        // let {walkaroundUrls, panoUrls} = await SpinCar.fetchDetails(lotDetail.cdn_image_prefix)
-        // processedUrls.push(...pano)
-        // processedUrls.push(...walkaround)
-        // DONE
-        return {imageUrls: processedUrls}
-    },
-    interactiveUrlsFromInfo: async function (lotDetailsOrVehicle) {
+        if (vehicle) {
+            sendNotification(`IAAI: processing ${lotDetails.keys.length} images from lot #${vehicle.lotNumber}`)
+        } else {
+            sendNotification(`IAAI: processing ${lotDetails.keys.length} images.`)
+        }
+        let imageUrls = await IAAI_D.fetchAndDezoom(lotDetails.keys)
         let {walkaroundUrls, panoUrls} = await SPINCAR_D.interactiveUrlsFromImageInfo(lotDetailsOrVehicle);
-        return {walkaroundUrls, panoUrls};
+        // DONE
+        return {imageUrls, walkaroundUrls, panoUrls}
     },
     countImages: function (...imageDetails) {
         imageDetails = imageDetails.flat()
@@ -351,10 +347,9 @@ let SPINCAR_D = {
         let headers = { "User-Agent": window.navigator.userAgent,
                     "Accept": "application/json" };
         let spinInfo = await fetch(apiUrl, headers).then(r=>r.json());
-        let walkaroundUrls = SPINCAR_D.walkaroundObjectUrlsFromImageInfo(spinInfo);
-        let panoUrls = SPINCAR_D.panoObjectUrlsFromImageInfo(spinInfo);
-        walkaroundUrls = await walkaroundUrls;
-        panoUrls = await panoUrls;
+        let walkaroundUrls = await SPINCAR_D.walkaroundObjectUrlsFromImageInfo(spinInfo);
+        let panoImageInfo = await SPINCAR_D.panoObjectUrlsFromImageInfo(spinInfo);
+        panoUrls = panoImageInfo.urls;
         return {walkaroundUrls, panoUrls}
     },
     walkaroundObjectUrlsFromImageInfo: async (spinInfo) =>{
@@ -372,7 +367,7 @@ let SPINCAR_D = {
     },
     panoObjectUrlsFromImageInfo: async (spinInfo) =>{
         let panoUrls = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'].map(
-            pano_dir=>({pano_dir:`https:${spinInfo.cdn_image_prefix}pano/${pano_dir}.jpg`})
+            cubeFace=>(`https:${spinInfo.cdn_image_prefix}pano/${cubeFace}.jpg`)
         );
         let panoPromises = panoUrls.map(imageUrl=>{
             return fetch(imageUrl)
