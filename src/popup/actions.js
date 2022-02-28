@@ -191,15 +191,41 @@ class GuiVehicle extends VehicleABC {
         this.imageUrls.forEach( (url, idx) => {
             console.log(`downloading ${idx}`)
             browser.downloads.download({
-                url: url,
-                saveAs: false,
-                filename: `${this.salvage}-${idx}.jpg`
+                url, saveAs: false,
+                filename: `${this.salvage}-${this.lotNumber}/${this.salvage}-${idx}.jpg`
             })
         })
         addFeedbackMessage({
             message:`${this.imageUrls.length} images sent to downloads folder!`,
             displayAs: "success"
         })
+        if (this.walkaroundUrls) {
+            this.walkaroundUrls.forEach( (url, idx) => {
+                console.log(`downloading walkaround ${idx}`)
+                browser.downloads.download({
+                    url, saveAs: false,
+                    filename: `${this.salvage}-${this.lotNumber}/walkaround/${idx}.jpg`
+                })
+            })
+            addFeedbackMessage({
+                message:`${this.walkaroundUrls.length} walkaround images sent to downloads folder!`,
+                displayAs: "success"
+            })
+        }
+        if (this.panoUrls) {
+            const names = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'];
+            this.panoUrls.forEach( (url, idx) => {
+                console.log(`downloading pano ${names[idx]}`)
+                browser.downloads.download({
+                    url, saveAs: false,
+                    filename: `${this.salvage}-${this.lotNumber}/pano/${names[idx]}.jpg`
+                })
+            })
+            addFeedbackMessage({
+                message:`Panoramic images sent to downloads folder!`,
+                displayAs: "success"
+            })
+        }
         dlProgressButton.enable()
     }
 }
