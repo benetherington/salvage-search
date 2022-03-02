@@ -27,6 +27,11 @@
     "scripts": [
       "browser-polyfill.js",
       "shared-assets.js",
+      "salvage_api/copart.js",
+      "salvage_api/iaai.js",
+      "salvage_api/row52.js",
+      "archive_api/poctra.js",
+      "archive_api/bidfax.js",
       "search.js",
       "download.js",
       "background.js"
