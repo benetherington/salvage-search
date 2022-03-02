@@ -1,5 +1,5 @@
 const VINREGEX   = /^[A-HJ-NPR-Z0-9]{3}[A-HJ-NPR-Z0-9]{5}[0-9X][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9][A-HJ-NPR-Z0-9]{6}$/i;
-const LOTREGEX = /\d{8}/i;
+const LOTREGEX = /^\d{8}$/i;
 const DEFAULT_SETTINGS = {
     searchCopart: true,
     searchIaai: true,
@@ -7,6 +7,18 @@ const DEFAULT_SETTINGS = {
     searchPoctra: true,
     searchBidfax: true
 }
+
+const validateVin = (vin)=>{
+    if (!vin) {return}
+    let safe = encodeURIComponent(vin.replace(/\s/g, ""));
+    if (VINREGEX.test(safe)) {return safe}
+}
+const validateLot = (lot)=>{
+    if (!lot) {return}
+    let safe = encodeURIComponent(lot.replace(/\s/g, ""));
+    if (LOTREGEX.test(safe)) {return safe}
+}
+
 const VehicleABC = class {
     TO_SERIALIZE = ["tabId",
                     "vin",
@@ -27,16 +39,6 @@ const VehicleABC = class {
         message.values.vin       = this.validateVin(message.values.vin)
         message.values.lotNumber = this.validateLot(message.values.lotNumber)
         Object.assign(this, message.values)
-    }
-    validateVin(vin) {
-        if (!vin) {return}
-        let safe = encodeURIComponent(vin.replace(/\s/g, ""));
-        if (VINREGEX.test(safe)) {return safe}
-    }
-    validateLot(lot) {
-        if (!lot) {return}
-        let safe = encodeURIComponent(lot.replace(/\s/g, ""));
-        if (LOTREGEX.test(safe)) {return safe}
     }
     
     // OUTPUT
@@ -69,7 +71,7 @@ class BackgroundVehicle extends VehicleABC {
     
 }
 
-let Unserializable = {}
+let Unserializable = new Object;
 let Salvage = {__proto__:Unserializable};
 let Archive = {__proto__:Unserializable};
 
@@ -97,11 +99,14 @@ const sendNotification = (message, options={}) => {
         })
 }
 const notifyUntilSuccess = () => {
+    // Sends notifications until one is successful, then blocks the rest.
     let successful = false;
-    return (message, options={})=>{ if (!successful) {
-        successful = options.displayAs==="success";
-        sendNotification(message, options)
-    }}
+    return (message, options={})=>{
+        if (!successful) {
+            successful = options.displayAs==="success";
+            sendNotification(message, options)
+        }
+    }
 }
 
 const sendProgress = (recipient, behavior, options={}) => {
