@@ -7,6 +7,7 @@
         <script src="/browser-polyfill.js"></script>
         <script src="/shared-assets.js"></script>
         <script src="/popup/actions.js"></script>
+        <script src="/popup/progressButton.js"></script>
     </head>
     <body>
 <!-- STATIC TOOLBAR -->
@@ -24,9 +25,16 @@
             <div id="main" class="slider-page active">
                 <div class="grouped">
                     <input id="search-input" type="text" class="input-big" size="17" placeholder="VIN OR LOT">
-                    <div id="search-button" class="button disabled" data-style-orig="button">Search</div>
+                    <input id="salvage-input" hidden>
+                    <div id="search-button" is="progress-button"
+                         class="button disabled" data-style-orig="button">
+                        Search
+                    </div>
                 </div>
-                <div id="download-button" class="button ungrouped disabled" data-style-orig="button ungrouped">Download Images</div>
+                <div id="download-button" is="progress-button"
+                     class="button ungrouped disabled" data-style-orig="button ungrouped">
+                    Download Images
+                </div>
             </div>
 
         <!-- SETTINGS PAGE -->
