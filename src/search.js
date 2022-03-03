@@ -68,7 +68,17 @@ const searchArchives = async (vin, notify)=>{
         Promise.reject()
     ]);
 }
-
+const openTabAndSendMessage = (searchResults)=>{
+    // Open new tab to the listing page
+    browser.tabs.create({url: message.listingUrl})
+    
+    // Send success message, updating button states
+    port.postMessage({
+        complete: true,
+        found: true,
+        ...searchResults
+    })
+};
 
 
 /*---------------*\
@@ -87,31 +97,36 @@ const search = async (message)=>{
     }
     */
     
-    
     // Create a notifier tunnel
-    const notify = notifyUntilSuccess();
+    const notify = notifyUntilSuccess(port);
     
     // Search primaries
     try {
-        // PICKUP: sort out messaging, make sure the popup does what we want.
-        return await searchPrimaries(message.vin, notify);
+        const searchResults = await searchPrimaries(message.vin, notify);
+        openTabAndSendMessage(searchResults)
+        return;
     } catch (AggrigateError) {
         console.log("primary searches empty, trying archives")
     }
     
     // Search archives
     try {
-        return await searchArchives(message.vin, notify);
+        const searchResults = await searchArchives(message.vin, notify);
+        openTabAndSendMessage(searchResults)
+        return;
     } catch (AggrigateError) {
+        
+        // Primaries and archives both failed.
         console.log("archive searches empty")
-        return {
+        port.postMessage({
             feedback: {
                 action: "feedback-message",
                 message: "Search complete. No results found.",
                 displayAs: "error"
             },
             complete: true
-        }
+        })
+        return;
     }
 };
 
@@ -120,8 +135,10 @@ const search = async (message)=>{
 /*----*\
   PORT
 \*----*/
-browser.runtime.onConnect.addListener( async port=>{
-    if (port.name!=="search") return;
+let port;
+browser.runtime.onConnect.addListener( async connectingPort=>{
+    if (connectingPort.name!=="search") return;
+    port = connectingPort;
     port.onMessage.addListener(search)
 })
 

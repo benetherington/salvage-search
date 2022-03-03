@@ -17,7 +17,7 @@ const COPART_S = {
                 resolve(searchResults)
             } catch (error) {
                 console.log(`Copart rejecting: ${error}`)
-                notify(`Copart: ${error}.`, {displayAs: "error"})
+                notify(`Copart: ${error}.`, {displayAs: "status"})
                 reject()
             }
         })
@@ -41,7 +41,7 @@ const COPART_S = {
         });
         
         // Fetch search results
-        let response = await fetch(searchUrl, {method, headers, body});
+        const response = await fetch(searchUrl, {method, headers, body});
         
         // Check status
         if (!response.ok) throw `something went wrong on their end: ${response.status} error.`;

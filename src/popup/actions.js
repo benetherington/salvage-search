@@ -105,9 +105,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
     .getElementById("search-button")
     .addEventListener("click", ()=>{
         document.getElementById("search-button").start()
-        const query = document.getElementById("search-input").value;
+        const vin = document.getElementById("search-input").value;
         const salvage = document.getElementById("salvage-input").value;
-        searchPort.postMessage({query, salvage})
+        searchPort.postMessage({vin, salvage})
     })
 })
 
@@ -196,7 +196,6 @@ const addFeedbackMessage = (rawFeedback)=>{
 
     // PREPARE FOR THE END
     closeUp = ()=>{
-
         // remove from drawer
         notification.remove()
         // close drawer
@@ -229,11 +228,11 @@ const setStoredSettings = async ()=>{
     const settings = await defaultedSettings();
     
     // Update defaults from the page
-    settings.searchCopart   = preferences.copartCheckEl.checked;
-    settings.searchIaai     = preferences.iaaiCheckEl.checked;
-    settings.searchRow52    = preferences.row52CheckEl.checked;
-    settings.searchPoctra   = preferences.poctraCheckEl.checked;
-    settings.searchBidfax   = preferences.bidfaxCheckEl.checked;
+    settings.searchCopart   = document.getElementById("copart").checked;
+    settings.searchIaai     = document.getElementById("iaai"  ).checked;
+    settings.searchRow52    = document.getElementById("row52" ).checked;
+    settings.searchPoctra   = document.getElementById("poctra").checked;
+    settings.searchBidfax   = document.getElementById("bidfax").checked;
     
     // Store settings
     browser.storage.local.set({settings})

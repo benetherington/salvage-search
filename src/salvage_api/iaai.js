@@ -16,7 +16,7 @@ const IAAI_S = {
                 resolve(searchResults)
             } catch (error) {
                 console.log(`IAAI rejecting: ${error}`)
-                notify(`IAAI: ${error}.`, {displayAs: "error"})
+                notify(`IAAI: ${error}.`, {displayAs: "status"})
                 reject()
             }
         })

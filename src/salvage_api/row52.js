@@ -12,7 +12,7 @@ const ROW52_S = {
                 resolve(searchResults)
             } catch (error) {
                 console.log(`R52 rejecting: ${error}`)
-                notify(`Row52: ${error}.`, {displayAs: "error"})
+                notify(`Row52: ${error}.`, {displayAs: "status"})
                 reject()
             }
         })

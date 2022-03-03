@@ -98,13 +98,26 @@ const sendNotification = (message, options={}) => {
             else {console.log(err)}
         })
 }
-const notifyUntilSuccess = () => {
-    // Sends notifications until one is successful, then blocks the rest.
+const notifyUntilSuccess = (port)=>{
+    /*
+    Sends notifications until one is successful, then blocks the rest.
+    */
+    
+    // Set success state
     let successful = false;
-    return (message, options={})=>{
+    
+    // Notification function
+    return (message, options)=>{
         if (!successful) {
+            // Update success state
             successful = options.displayAs==="success";
-            sendNotification(message, options)
+            
+            // Merge options into payload
+            const feedback = {action:"feedback-message", message};
+            Object.assign(feedback, options||{})
+            
+            // Send complete message
+            port.postMessage({feedback})
         }
     }
 }
@@ -116,3 +129,6 @@ const sendProgress = (recipient, behavior, options={}) => {
     browser.runtime.sendMessage({type: "feedback", values})
         .catch(err=>console.log(err+"\n is the popup closed?"))
 }
+
+
+
