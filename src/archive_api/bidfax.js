@@ -108,22 +108,25 @@ const BIDFAX_S = {
             })()`
         })
         
+        // Asynchronously wait for tab to update with token
         return new Promise((resolve, reject)=>{
-            let intervalIterations = 0;
+            // Set maximum iterations before timeout
+            const checkInterval = 20; // 20ms
+            let iterationsLeft = 150; // 20ms*150 = 3s
+            
+            // Start checking the tab
             const intervalId = setInterval(async()=>{
-                // Fetch tab
+                // Update tab
                 tokenTab = await browser.tabs.get(tokenTab.id);
                 
-                // Check if URL has been updated
+                // No token yet?
                 if (!/token2/.exec(tokenTab.url)) {
-                    // Check number of iterations
-                    if (intervalIterations++<50) return;
+                    // Keep waiting...
+                    if (iterationsLeft-->1) return;
                     
-                    // Halt interval
+                    // ... or time out
                     clearInterval(intervalId)
-                    
-                    // Time out
-                    reject()
+                    reject(`Timed out: ${tokenTab.url}`)
                 };
                 
                 // Halt interval
@@ -133,11 +136,10 @@ const BIDFAX_S = {
                 const tokenUrl = new URL(tokenTab.url);
                 const token = tokenUrl.searchParams.get('token2');
                 
-                // Close tab
+                // Finish up
                 browser.tabs.remove(tokenTab.id)
-                
                 resolve(token);
-            }, 20)
+            }, checkInterval)
         })
     }
 };
