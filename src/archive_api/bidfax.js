@@ -64,7 +64,7 @@ const BIDFAX_S = {
         // Check result count
         const searchResults = doc.querySelectorAll(".thumbnail.offer");
         if (!searchResults.length)  {throw "search returned no results."}
-        if (searchResults.length>3) {throw "search returned no results."}
+        if (searchResults.length>5) {throw "search returned no results."}
         
         // Get listing URLs
         const listingUrls = [];
