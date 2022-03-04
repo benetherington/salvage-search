@@ -53,9 +53,9 @@ const getTabInfo = async()=>{
 /*---------------*\
   DOWNLOAD IMAGES
 \*---------------*/
-const getImageUrls = async({lotNumber, salvage})=>{
+const getImageUrls = async(lotNumber, salvageName)=>{
     // Find download object
-    const salvageObject = salvageNameToObject[salvage];
+    const salvage = salvageNameToObject[salvageName];
     
     // Fetch image info
     const imageInfo = await salvage.imageInfoFromLotNumber(lotNumber);
@@ -71,24 +71,30 @@ const getImageUrls = async({lotNumber, salvage})=>{
 // Init messaging ports
 let dPort;
 browser.runtime.onConnect.addListener( async connectingPort=>{
-    if (connectingPort.name!=="download") {return}
-    dPort = connectingPort
+    if (connectingPort.name!=="download") return;
+    dPort = connectingPort;
     dPort.onMessage.addListener(download)
 })
 
 // Handle messages
 const download = async (message)=>{
+    // Find tabs on request
     if (message.findTabs) return dPort.postMessage(await getTabInfo());
     
+    // Interpret message data
+    const {query, salvageName} = message;
+    const lotNumber = validateLot(query);
+    console.log(message)
+    console.log(lotNumber)
     
-    const {query, salvage} = message;
-    const lotNumber = validateVin(query);
+    // Check message data
+    if (!lotNumber) return;
     
     // Fetch images
-    if (lotNumber) return getImageUrls({lotNumber, salvage});
+    const imageUrls = getImageUrls(lotNumber, salvageName);
     
-    // Or, find tabs to download from
-    return getTabInfo();
+    // Send images to downloads folder
+    console.log(imageUrls)
 };
 
 

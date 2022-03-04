@@ -145,19 +145,21 @@ document.addEventListener("DOMContentLoaded", ()=>{
     .addEventListener("click", ()=>{
         document.getElementById("download-button").start()
         const query = document.getElementById("search-input").value;
-        downloadPort.postMessage(query)
+        const salvageName = document.getElementById("salvage-input").value;
+        downloadPort.postMessage({query, salvageName})
     })
 })
 
 // Handle download messages
 const onDownloadMessage = (message)=>{
+    console.log(message)
     // Reset the download button
     if (message.download) document.getElementById("download-button").enable();
     
     // Update query fields from open tab
     if (message.lotNumber) {
         document.getElementById("search-input").value = message.lotNumber;
-        document.getElementById("salvage-input").value = message.salvage;
+        document.getElementById("salvage-input").value = message.salvageName;
         inputChanged()
         addFeedbackMessage({message: "Loaded lot number from open tab."})
     };
