@@ -10,7 +10,7 @@ const BIDFAX_S = {
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await BIDFAX_S.searcher(vin, notify);
+                const searchResults = await BIDFAX_S.searcher(vin);
                 notify(
                     `BidFax: found a match!`,
                     {displayAs: "success"}
@@ -28,13 +28,10 @@ const BIDFAX_S = {
             }
         })
     },
-    searcher: async (vin, notify)=>{
-        // TODO: this appears to be broken again. 1FMCU02Z58KB50453 exemplar.
-        
+    searcher: async (vin)=>{
         // Fetch Captcha token
-        const tokenPromise = BIDFAX_S.fetchCaptchaToken();
-        tokenPromise.catch(()=>{throw captchaMessage;})
-        const token = await tokenPromise;
+        const token = await BIDFAX_S.fetchCaptchaToken()
+                                    .catch(()=>{throw captchaMessage});
         
         // Configure VIN search
         const searchUrl = new URL("https://en.bidfax.info/")
@@ -56,21 +53,17 @@ const BIDFAX_S = {
             throw captchaMessage;
         }
         
-        
         // Parse response content
         const parser = new DOMParser();
         const doc = parser.parseFromString(await response.text(), "text/html");
         
         // Check result count
-        const searchResults = doc.querySelectorAll(".thumbnail.offer");
+        const searchResults = doc.querySelectorAll(".caption");
         if (!searchResults.length)  {throw "search returned no results."}
         if (searchResults.length>5) {throw "search returned no results."}
         
         // Get listing URLs
-        const listingUrls = [];
-        searchResults.forEach(
-            el=>listingUrls.push(el.querySelector(".caption a").href)
-        );
+        const listingUrls = Array.from(searchResults).map(BIDFAX_S.getUrlFromCaption);
         
         // Check listing URLs
         if (!listingUrls.some(el=>el)) {
@@ -141,6 +134,11 @@ const BIDFAX_S = {
                 resolve(token);
             }, checkInterval)
         })
+    },
+    getUrlFromCaption: (el)=>{
+        const anchor = el.querySelector("a")
+        if (!anchor) return;
+        return anchor.href;
     }
 };
 
