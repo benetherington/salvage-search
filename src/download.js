@@ -31,7 +31,7 @@ const findBestTab = async()=>{
     // select most recently opened
     return recentTabs.pop();
 };
-const getSalvageFromTab = async(tab)=>{
+const getSalvageFromTab = (tab)=>{
     // Identify primary sites
     if (/copart\.com/i .test(tab.url)) return COPART_D;
     if (/iaai\.com/i   .test(tab.url)) return IAAI_D;
@@ -44,7 +44,7 @@ const getTabInfo = async()=>{
     const bestTab = await findBestTab();
     if (!bestTab) return;
     const salvage = getSalvageFromTab(bestTab);
-    const salvageName = salvage.name;
+    const salvageName = salvage.NAME;
     const lotNumber = await salvage.lotNumberFromTab(bestTab);
     return {salvageName, lotNumber};
 }
