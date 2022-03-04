@@ -70,7 +70,7 @@ const searchArchives = async (vin, notify)=>{
 }
 const openTabAndSendMessage = (searchResults)=>{
     // Open new tab to the listing page
-    browser.tabs.create({url: message.listingUrl})
+    browser.tabs.create({url: searchResults.listingUrl})
     
     // Send success message, updating button states
     port.postMessage({
@@ -115,7 +115,6 @@ const search = async (message)=>{
         openTabAndSendMessage(searchResults)
         return;
     } catch (AggrigateError) {
-        
         // Primaries and archives both failed.
         console.log("archive searches empty")
         port.postMessage({
