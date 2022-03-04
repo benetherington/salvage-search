@@ -72,23 +72,18 @@ const COPART_D = {
     __proto__: Salvage,
     NAME: "copart",
     URL_PATTERN: "*://*.copart.com/lot/*",
-    lotNumberFromTab: async (tabOrVehicle)=>{
-        let tabId;
-        if (tabOrVehicle.tabId)   {tabId = tabOrVehicle.tabId;}
-        else if (tabOrVehicle.id) {tabId = tabOrVehicle.id;}
-        else                      {tabId = tabOrVehicle;}
-        
-        let lotMatch = await browser.tabs.get(tabId)
-                            .then(t=>t.title.match(/^(.*) for Sale/i))
-        let lotNumber;
-        if (lotMatch) { lotNumber = lotMatch[0] }
-        else {
-            let framesResponses = await browser.tabs.executeScript(
-                tabId, {code:`document.querySelector("#lot-details .lot-number").lastChild.textContent.trim()`}
-            )
-            lotNumber = framesResponses[0]
-        }
-        return {lotNumber}
+    lotNumberFromTab: async (tab)=>{
+        const lotExecuting = browser.tabs.executeScript(
+            tab.id, {code:`
+                document
+                    .querySelector("#lot-details .lot-number")
+                    .lastChild
+                    .textContent
+                    .trim()`
+            }
+        );
+        const lotNumber = (await lotExecuting)[0];
+        return lotNumber;
     },
     lotNumberValid: async (lotNumberOrVehicle)=>{
         let imageInfo = await COPART_D.imageInfoFromLotNumber(lotNumberOrVehicle);
