@@ -8,7 +8,7 @@ const IAAI_S = {
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await IAAI_S.searcher(vin, notify);
+                const searchResults = await IAAI_S.searcher(vin);
                 notify(
                     `IAAI: found a match!`,
                     {displayAs:"success"}
@@ -21,7 +21,7 @@ const IAAI_S = {
             }
         })
     },
-    searcher: async (vin, notify)=>{
+    searcher: async (vin)=>{
         // Configure VIN search
         const searchUrl = `https://www.iaai.com/Search?SearchVIN=${vin}`;
         const headers = {

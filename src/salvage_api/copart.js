@@ -9,7 +9,7 @@ const COPART_S = {
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await COPART_S.searcher(vin, notify);
+                const searchResults = await COPART_S.searcher(vin);
                 notify(
                     `Copart: found a match!`,
                     {displayAs:"success"}
@@ -22,7 +22,7 @@ const COPART_S = {
             }
         })
     },
-    searcher: async (vin, notify)=>{
+    searcher: async (vin)=>{
         // Configure VIN search
         const searchUrl = "https://www.copart.com/public/lots/vin/search";
         const method = "POST";

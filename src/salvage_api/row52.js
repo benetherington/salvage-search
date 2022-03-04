@@ -7,7 +7,7 @@ const ROW52_S = {
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await ROW52_S.searcher(vin, notify);
+                const searchResults = await ROW52_S.searcher(vin);
                 notify(`Row52: Found a match!`, {displayAs: "success"})
                 resolve(searchResults)
             } catch (error) {
@@ -17,9 +17,9 @@ const ROW52_S = {
             }
         })
     },
-    searcher: async (vin, notify)=>{
+    searcher: async (vin)=>{
         // Configure VIN search
-        const searchAddress = "https://row52.com/Search/";
+        const searchAddress = new URL("https://row52.com/Search/");
         const params = new URLSearchParams();
         params.set("YMMorVin",   "VIN")
         params.set("Year",       "")
