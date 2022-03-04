@@ -68,6 +68,7 @@ window.addEventListener("focus", async ()=>{
     setTimeout(()=>{
         if (searchInput.value) return;
         searchInput.value = clipboard;
+        inputChanged()
         addFeedbackMessage({message:"Pasted value from clipbard."})
     }, 20)
 });
@@ -76,28 +77,28 @@ window.addEventListener("focus", async ()=>{
 document.addEventListener("DOMContentLoaded", ()=>{
     document
     .getElementById('search-input')
-    .addEventListener('input', ()=>{
-        const input = document.getElementById('search-input').value;
-        
-        // Validate VINs
-        if (validateVin(input)) {
-            console.log('VIN')
-            document.getElementById("search-button").enable()
-            return;
-        } else {
-            document.getElementById("search-button").disable()
-        }
-        
-        // Validate lot numbers
-        if (validateLot(input)) {
-            console.log('lot number')
-            document.getElementById("download-button").enable()
-        } else {
-            document.getElementById("download-button").disable()
-        }
-    })
+    .addEventListener('input', inputChanged)
 })
-
+const inputChanged = ()=>{
+    const inputValue = document.getElementById('search-input').value;
+    
+    // Validate VINs
+    if (validateVin(inputValue)) {
+        console.log('VIN')
+        document.getElementById("search-button").enable()
+        return;
+    } else {
+        document.getElementById("search-button").disable()
+    }
+    
+    // Validate lot numbers
+    if (validateLot(inputValue)) {
+        console.log('lot number')
+        document.getElementById("download-button").enable()
+    } else {
+        document.getElementById("download-button").disable()
+    }
+}
 
 
 /*------*\
@@ -157,6 +158,7 @@ const onDownloadMessage = (message)=>{
     if (message.lotNumber) {
         document.getElementById("search-input").value = message.lotNumber;
         document.getElementById("salvage-input").value = message.salvage;
+        inputChanged()
         addFeedbackMessage({message: "Loaded lot number from open tab."})
     };
     
