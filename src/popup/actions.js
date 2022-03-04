@@ -51,21 +51,25 @@ window.addEventListener("focus", async ()=>{
     // TODO: to request access in Chrome, we need to load a new tab
 
     // Skip if there's already something to search for
-    const searchInput = document.getElementById("search-input").value;
-    if (searchInput) return;
+    const searchInput = document.getElementById("search-input");
+    if (searchInput.value) return;
     
     // Request open tabs check
     downloadPort.postMessage({findTabs: true})
     
     // Grab clipboard
-    clipboard = await navigator.clipboard.readText().then(s=>s.trim());
+    const clipboard = await navigator.clipboard.readText().then(s=>s.trim());
+    
+    // Check clipboard contents
+    if ( !(validateLot(clipboard)||validateVin(clipboard)) ) return;
     
     // Load clipboard contents after a delay, allowing open tabs to load
     // instead. We could load immediately, but this might result in flickering.
     setTimeout(()=>{
         if (searchInput.value) return;
         searchInput.value = clipboard;
-    }, 200)
+        addFeedbackMessage({message:"Pasted value from clipbard."})
+    }, 20)
 });
 
 // Typed input
@@ -153,6 +157,7 @@ const onDownloadMessage = (message)=>{
     if (message.lotNumber) {
         document.getElementById("search-input").value = message.lotNumber;
         document.getElementById("salvage-input").value = message.salvage;
+        addFeedbackMessage({message: "Loaded lot number from open tab."})
     };
     
     // Display feedback messages
