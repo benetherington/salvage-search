@@ -69,13 +69,18 @@ const getImageUrls = async({lotNumber, salvage})=>{
   MESSAGING
 \*---------*/
 // Init messaging ports
-browser.runtime.onConnect.addListener( async port=>{
-    if (port.name!=="download") {return}
-    port.onMessage.addListener(download)
+let dPort;
+browser.runtime.onConnect.addListener( async connectingPort=>{
+    if (connectingPort.name!=="download") {return}
+    dPort = connectingPort
+    dPort.onMessage.addListener(download)
 })
 
 // Handle messages
-const download = async ({message})=>{
+const download = async (message)=>{
+    if (message.findTabs) return dPort.postMessage(await getTabInfo());
+    
+    
     const {query, salvage} = message;
     const lotNumber = validateVin(query);
     

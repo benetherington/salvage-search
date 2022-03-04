@@ -73,7 +73,7 @@ const openTabAndSendMessage = (searchResults)=>{
     browser.tabs.create({url: searchResults.listingUrl})
     
     // Send success message, updating button states
-    port.postMessage({
+    sPort.postMessage({
         complete: true,
         found: true,
         ...searchResults
@@ -98,7 +98,7 @@ const search = async (message)=>{
     */
     
     // Create a notifier tunnel
-    const notify = notifyUntilSuccess(port);
+    const notify = notifyUntilSuccess(sPort);
     
     // Search primaries
     try {
@@ -117,7 +117,7 @@ const search = async (message)=>{
     } catch (AggrigateError) {
         // Primaries and archives both failed.
         console.log("archive searches empty")
-        port.postMessage({
+        sPort.postMessage({
             feedback: {
                 action: "feedback-message",
                 message: "Search complete. No results found.",
@@ -134,11 +134,11 @@ const search = async (message)=>{
 /*----*\
   PORT
 \*----*/
-let port;
+let sPort;
 browser.runtime.onConnect.addListener( async connectingPort=>{
     if (connectingPort.name!=="search") return;
-    port = connectingPort;
-    port.onMessage.addListener(search)
+    sPort = connectingPort;
+    sPort.onMessage.addListener(search)
 })
 
 console.log("search loaded!")
