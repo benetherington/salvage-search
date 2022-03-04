@@ -1,77 +1,143 @@
 /*------*\
   SEARCH  
 \*------*/
+const captchaMessage = "CAPTCHA failed. \
+Please click on a listing before trying again.";
+
 const BIDFAX_S = {
     __proto__: Archive,
     NAME: "bidfax",
-    search: (vinOrVehicle, notify=sendNotification)=>{
-        // TODO: this appears to be broken again. 1FMCU02Z58KB50453 exemplar.
-        let vin = vinOrVehicle.vin || vinOrVehicle;
-        return new Promise(async (resolve, reject)=>{
+    search: (vin, notify=sendNotification)=>{
+        return new Promise( async (resolve, reject)=>{
             try {
-                // FETCH GC TOKEN
-                let homeUrl = "https://en.bidfax.info";
-                let tokenTab = await browser.tabs.create({url:homeUrl, active:false})
-                await browser.tabs.executeScript(tokenTab.id,{code:
-                    `(()=>{
-                        document.querySelector("#submit").click()
-                    })()`
-                })
-                let token = await browser.tabs.executeScript(tokenTab.id, {code:
-                    `(()=>{return (new URL(document.querySelector("link[rel=alternate]").href)).searchParams.get('token2');})()`
-                })[0]
-                browser.tabs.remove(tokenTab.id)
-                
-                // SEARCH
-                let searchUrl = new URL("https://en.bidfax.info/")
-                searchUrl.searchParams.append("do", "search")
-                searchUrl.searchParams.append("subaction", "search")
-                searchUrl.searchParams.append("story", vin)
-                searchUrl.searchParams.append("token2", token)
-                searchUrl.searchParams.append("action2", "search_action")
-                let response = await fetch(searchUrl);
-                if (!response.ok) { throw "something went wrong on their end..." }
-                if (response.status === 301) {
-                    // Moved Permanently is returned when the GC token is invalid or
-                    // missing.
-                    console.log("BidFax wants a CAPTCHA check")
-                    browser.tabs.create({url:homeUrl})
-                    throw "CAPTCHA failed. Please click on a listing before trying again."
-                }
-                // CHECK FOR RESULTS
-                let parser = new DOMParser()
-                let doc = parser.parseFromString(await response.text(), "text/html");
-                let searchResults = doc.querySelectorAll(".thumbnail.offer");
-                if (!searchResults.length)  {throw "search returned no results."}
-                if (searchResults.length>3) {throw "search returned no results."}
-                // PARSE RESULTS
-                searchResult = searchResults[0]
-                // FIND PAGE LINK
-                let lotLinkElement = searchResult.querySelector(".caption a");
-                if (!lotLinkElement) {throw "the website has changed. Please send Ben "+
-                                            "your search terms so he can fix it."}
-                let vehicle = {listingUrl: lotLinkElement.href}
-                // NOTIFY
-                try {
-                    let yardNameElement = searchResult.querySelector(".short-storyup span");
-                    let yardName = yardNameElement.innerText.trim();
-                    if (yardName==="iaai"  ) {vehicle.salvage=IAAI_S}
-                    if (yardName==="copart") {vehicle.salvage=COPART_S}
-                    let lotNumberElement = searchResult.querySelector(".short-story span");
-                    let lotNumber = stockNumberElement.innerText;
-                    vehicle.lotNumber = lotNumber
-                    notify( `BidFax: found a match at ${yardName}! `+
-                            `Lot ${lotNumber}.`, {displayAs: "success"} )
-                } catch {
-                    notify( "BidFax: found a match!", {displayAs: "success"})
-                }
-                // SUCCESS!
-                resolve(()=>{vehicle})
+                const searchResults = await BIDFAX_S.searcher(vin, notify);
+                notify(
+                    `BidFax: found a match!`,
+                    {displayAs: "success"}
+                )
+                resolve(searchResults)
             } catch (error) {
                 console.log(`BidFax rejecting: ${error}`)
-                notify(`BidFax: ${error}`, {displayAs: "error"})
+                const sent = notify(`BidFax: ${error}.`, {displayAs: "status"})
+                if (sent && error===captchaMessage) {
+                    // Captcha failed. Only notify if another searcher has not
+                    // yet been successful
+                    browser.tabs.create({url:"https://en.bidfax.info"})
+                }
                 reject()
             }
+        })
+    },
+    searcher: async (vin, notify)=>{
+        // TODO: this appears to be broken again. 1FMCU02Z58KB50453 exemplar.
+        
+        // Fetch Captcha token
+        const tokenPromise = BIDFAX_S.fetchCaptchaToken();
+        tokenPromise.catch(()=>{throw captchaMessage;})
+        const token = await tokenPromise;
+        
+        // Configure VIN search
+        const searchUrl = new URL("https://en.bidfax.info/")
+        searchUrl.searchParams.append("do", "search")
+        searchUrl.searchParams.append("subaction", "search")
+        searchUrl.searchParams.append("story", vin)
+        searchUrl.searchParams.append("token2", token)
+        searchUrl.searchParams.append("action2", "search_action")
+        
+        // Fetch search results
+        const response = await fetch(searchUrl);
+        
+        // Check response
+        if (!response.ok) { throw "something went wrong on their end..." }
+        if (response.status === 301) {
+            // Moved Permanently is returned when the token is invalid or
+            // missing.
+            console.log("BidFax wants a CAPTCHA check")
+            throw captchaMessage;
+        }
+        
+        
+        // Parse response content
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(await response.text(), "text/html");
+        
+        // Check result count
+        const searchResults = doc.querySelectorAll(".thumbnail.offer");
+        if (!searchResults.length)  {throw "search returned no results."}
+        if (searchResults.length>3) {throw "search returned no results."}
+        
+        // Get listing URLs
+        const listingUrls = [];
+        searchResults.forEach(
+            el=>listingUrls.push(el.querySelector(".caption a").href)
+        );
+        
+        // Check listing URLs
+        if (!listingUrls.some(el=>el)) {
+            console.log("BidFax found results, but not listing URLs.");
+            throw "search returned a result, but it's invalid.";
+        }
+        
+        // Split results
+        const listingUrl = listingUrls.pop();
+        const extras = listingUrls;
+        
+        // Send back results
+        return {salvage: "bidfax", listingUrl, extras};
+    },
+    fetchCaptchaToken: async ()=>{
+        /*
+        A bit of a nightmare solution for Bidfax' recaptcha implementation.
+        Loads a new Bidfax page and does a dummy search, waits for the recaptcha
+        token to be served, and resolves with the token.
+        
+        These tokens are good for two minutes, in the future, maybe we should
+        cache them?
+        */
+        // Configure token capture tab
+        const url = "https://en.bidfax.info";
+        
+        // Open token capture tab
+        let tokenTab = await browser.tabs.create({url, active:false});
+        
+        // Inject content script to interact with the page
+        await browser.tabs.executeScript(tokenTab.id, {code:
+            `(()=>{
+                document.getElementById("search").value = "5YJ3E1EA8LF";
+                document.getElementById("submit").click()
+            })()`
+        })
+        
+        return new Promise((resolve, reject)=>{
+            let intervalIterations = 0;
+            const intervalId = setInterval(async()=>{
+                // Fetch tab
+                tokenTab = await browser.tabs.get(tokenTab.id);
+                
+                // Check if URL has been updated
+                if (!/token2/.exec(tokenTab.url)) {
+                    // Check number of iterations
+                    if (intervalIterations++<50) return;
+                    
+                    // Halt interval
+                    clearInterval(intervalId)
+                    
+                    // Time out
+                    reject()
+                };
+                
+                // Halt interval
+                clearInterval(intervalId)
+                
+                // Get token from URL
+                const tokenUrl = new URL(tokenTab.url);
+                const token = tokenUrl.searchParams.get('token2');
+                
+                // Close tab
+                browser.tabs.remove(tokenTab.id)
+                
+                resolve(token);
+            }, 20)
         })
     }
 };
