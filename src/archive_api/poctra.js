@@ -5,55 +5,70 @@ const POCTRA_S = {
     __proto__: Archive,
     NAME: "poctra",
     INFO_REGEX: /^(?<salvage>.*?) (Stock|Lot) No: (?<lotNumber>\d*)<br>.*<br>Location: (?<location>.*)$/,
-    search: (vinOrVehicle, notify=sendNotification)=>{
-        let vin = vinOrVehicle.vin || vinOrVehicle;
-        // TODO: handle this too
-        let vehicle = vinOrVehicle;
-        return new Promise(async (resolve, reject)=>{
+    search: (vin, notify=sendNotification)=>{
+        return new Promise( async (resolve, reject)=>{
             try {
-                // SEARCH
-                let searchUrl = `https://poctra.com/search/ajax`;
-                let body = `q=${vin}&by=&asc=&page=1`;
-                let headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"};
-                let response = await fetch( searchUrl, {method: "POST", headers, body} );
-                if (!response.ok) { throw "something went wrong on their end..." }
-                // CHECK FOR RESULTS
-                let parser = new DOMParser();
-                let doc = parser.parseFromString(await response.text(), "text/html");
-                // set base URI so that relative links work
-                let base = doc.createElement("base");
-                base.href = searchUrl;
-                doc.head.append(base)
-                let searchResults = doc.querySelectorAll(".clickable-row");
-                if (searchResults.length===0 || searchResults.length>3) {throw "search returned no results."}
-
-                // TODO: handle multiple listings
-                let searchResult = searchResults[0]
-                // FIND PAGE LINK
-                let lotLink = searchResult.querySelector("a");
-                if (!lotLink) {console.log("POCTRA found results, but no lotLink");throw "search returned no results.";}
-                vehicle.listingUrl = lotLink.href;
-                // NOTIFY
-                try {
-                    let infoElement = searchResult.querySelector("p");
-                    let infoParsed = POCTRA_S.INFO_REGEX.exec(infoElement.innerHTML.trim()).groups;
-                    vehicle.lotNumber = infoParsed.lotNumber;
-                    vehicle.location = infoParsed.location;
-                    if (infoParsed.salvage.toLowerCase()==="iaai"  ) {vehicle.salvage=IAAI_S}
-                    if (infoParsed.salvage.toLowerCase()==="copart") {vehicle.salvage=COPART_S}
-                    notify( `Poctra: found a match at ${vehicle.salvage.PRETTY_NAME}! `+
-                            `Lot ${vehicle.lotNumber}.`, {displayAs: "success"} )
-                } catch {
-                    notify( "Poctra: found a match!", {displayAs: "success"})
-                }
-                // SUCCESS!
-                resolve(()=>{vehicle})
+                const searchResults = await POCTRA_S.searcher(vin);
+                notify(
+                    `Poctra: found a match!`,
+                    {displayAs: "success"}
+                )
+                resolve(searchResults)
             } catch (error) {
                 console.log(`Poctra rejecting: ${error}`)
-                notify(`Poctra: ${error}`, {displayAs: "error"})
+                notify(`Poctra: ${error}.`, {displayAs: "status"})
                 reject()
             }
         })
+    },
+    searcher: async (vin)=>{
+        // Configure VIN search
+        const searchUrl = new URL("https://poctra.com/search/ajax");
+        const method = "POST";
+        const headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"};
+        
+        // Build request body. For some reason, these aren't passed as params.
+        const params = new URLSearchParams();
+        params.set("q", vin)
+        params.set("by", "")
+        params.set("asc", "")
+        params.set("page", 1)
+        const body = params.toString();
+        
+        // Fetch search results
+        const response = await fetch(searchUrl, {method, headers, body});
+        
+        // Check response
+        if (!response.ok) {throw "something went wrong on their end..."}
+        
+        // Parse response content
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(await response.text(), "text/html");
+        // set base URI so that relative links work
+        const base = doc.createElement("base");
+        base.href = searchUrl;
+        doc.head.append(base)
+        
+        // Check result count
+        const searchResults = doc.querySelectorAll(".clickable-row");
+        if (searchResults.length===0 || searchResults.length>3) {throw "search returned no results."}
+        
+        // Get listing URLs
+        const listingUrls = [];
+        searchResults.forEach(el=>listingUrls.push(el.querySelector("a").href));
+        
+        // Check listing URLs
+        if (!listingUrls.some(el=>el)) {
+            console.log("POCTRA found results, but not listing URLs.");
+            throw "search returned a result, but it's invalid.";
+        }
+        
+        // Split results
+        const listingUrl = listingUrls.pop();
+        const extras = listingUrls;
+        
+        // Send back results
+        return {salvage: "poctra", listingUrl, extras};
     }
 };
 
