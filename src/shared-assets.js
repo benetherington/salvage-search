@@ -107,17 +107,20 @@ const notifyUntilSuccess = (port)=>{
     let successful = false;
     
     // Notification function
-    return (message, options)=>{
+    return (message, options={})=>{
         if (!successful) {
             // Update success state
             successful = options.displayAs==="success";
             
             // Merge options into payload
             const feedback = {action:"feedback-message", message};
-            Object.assign(feedback, options||{})
+            Object.assign(feedback, options)
             
             // Send complete message
             port.postMessage({feedback})
+            
+            // Let the caller know a message was sent
+            return true;
         }
     }
 }

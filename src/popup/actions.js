@@ -28,6 +28,21 @@ document.addEventListener("click", (event) =>{
 
 
 
+/*---------*\
+  MESSAGING
+\*---------*/
+// Connect messaging ports
+let searchPort, downloadPort;
+document.addEventListener("DOMContentLoaded", ()=>{
+    searchPort = browser.runtime.connect({name:"search"});
+    searchPort.onMessage.addListener(onSearchMessage)
+    
+    downloadPort = browser.runtime.connect({name:"download"});
+    downloadPort.onMessage.addListener(onDownloadMessage)
+})
+
+
+
 /*-----*\
   INPUT
 \*-----*/
@@ -77,21 +92,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
             document.getElementById("download-button").disable()
         }
     })
-})
-
-
-
-/*---------*\
-  MESSAGING
-\*---------*/
-// Connect messaging ports
-let searchPort, downloadPort;
-document.addEventListener("DOMContentLoaded", ()=>{
-    searchPort = browser.runtime.connect({name:"search"});
-    searchPort.onMessage.addListener(onSearchMessage)
-    
-    downloadPort = browser.runtime.connect({name:"download"});
-    downloadPort.onMessage.addListener(onDownloadMessage)
 })
 
 
