@@ -52,7 +52,7 @@ window.addEventListener("focus", async ()=>{
 
     // Skip if there's already something to search for
     const searchInput = document.getElementById("search-input").value;
-    if (searchInput.value) return;
+    if (searchInput) return;
     
     // Request open tabs check
     downloadPort.postMessage({findTabs: true})
