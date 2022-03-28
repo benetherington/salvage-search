@@ -111,10 +111,23 @@ document.addEventListener("DOMContentLoaded", ()=>{
     .addEventListener("click", ()=>{
         document.getElementById("search-button").start()
         const vin = document.getElementById("search-input").value;
-        const salvage = document.getElementById("salvage-input").value;
+        const salvage = getSalvageNameInput();
         searchPort.postMessage({vin, salvage})
     })
 })
+// Salvage yard radio buttons
+const getSalvageNameInput = ()=>{
+    const selected = document.querySelector("#salvage-selector input:checked").id;
+    if (selected == "unknown-salvage") return;
+    return selected;
+}
+const setSalvageNameInput = (salvageName)=>{
+    if (!salvageName) {
+        document.getElementById("unknown-salvage").checked = true;
+    } else {
+        document.getElementById(salvageName).checked = true;
+    }
+}
 
 // Handle search messages
 const onSearchMessage = (message)=>{
@@ -145,7 +158,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     .addEventListener("click", ()=>{
         document.getElementById("download-button").start()
         const query = document.getElementById("search-input").value;
-        const salvageName = document.getElementById("salvage-input").value;
+        const salvageName = getSalvageNameInput();
         downloadPort.postMessage({query, salvageName})
     })
 })
@@ -159,7 +172,7 @@ const onDownloadMessage = (message)=>{
     // Update query fields from open tab
     if (message.lotNumber) {
         document.getElementById("search-input").value = message.lotNumber;
-        document.getElementById("salvage-input").value = message.salvageName;
+        setSalvageNameInput(message.salvageName);
         inputChanged()
         addFeedbackMessage({message: "Loaded lot number from open tab."})
     };
