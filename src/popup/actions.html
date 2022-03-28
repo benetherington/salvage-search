@@ -25,9 +25,23 @@
             <div id="main" class="slider-page active">
                 <div class="grouped">
                     <input id="search-input" type="text" class="input-big" size="17" placeholder="VIN OR LOT">
-                    <input id="salvage-input" hidden>
-                    <div id="search-button" is="progress-button"
-                         class="button disabled" data-style-orig="button">
+                    
+                    <div class="radio-wrapper">
+                        <div class="slide-radio">
+                            <input id="unknown-salvage" type="radio" class="toggle-option" name="salvage-name">
+                            <label for="unknown-salvage">Unknown</label>
+                            
+                            <input id="copart" type="radio" class="toggle-option" name="salvage-name">
+                            <label for="copart">Copart</label>
+                            
+                            <input id="iaai" type="radio" class="toggle-option" name="salvage-name">
+                            <label for="iaai">IAAI</label>
+                            
+                            <div class="slider"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="search-button" is="progress-button" class="button disabled" data-style-orig="button">
                         Search
                     </div>
                 </div>
