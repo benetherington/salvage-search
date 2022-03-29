@@ -58,10 +58,11 @@ const COPART_S = {
         
         // split results
         const listingUrl = listingUrls.pop();
-        const extras = listingUrls;
+        const lotNumber = lotNumbers.pop();
+        const extras = {listingUrls, lotNumbers};
         
         // Send back results
-        return {salvage: "copart", listingUrl, extras};
+        return {salvage: "copart", listingUrl, lotNumber, extras};
     }
 };
 

@@ -42,10 +42,11 @@ const IAAI_S = {
         
         // Get listing URL
         const listingUrl = response.url;
+        const lotNumber = /\d{8}/.exec(response.url)[0];
         const extras = [];
         
         // Send back results
-        return {salvage: "iaai", listingUrl, extras};
+        return {salvage: "iaai", listingUrl, lotNumber, extras};
     },
     getVehicleInfo: async (vehicle, options)=>{
         if (options.url) {
@@ -79,7 +80,7 @@ const IAAI_D = {
                                     "Please reload the page and try again." })
                 .then( lastEvaluated=>JSON.parse(lastEvaluated[0]) )
                 .then( jsn=>jsn.VehicleDetailsViewModel.StockNo );
-            return {lotNumber}
+            return lotNumber;
         } catch {
             throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
         }
