@@ -84,7 +84,6 @@ const inputChanged = ()=>{
     
     // Validate VINs
     if (validateVin(inputValue)) {
-        console.log('VIN')
         document.getElementById("search-button").enable()
         return;
     } else {
@@ -93,7 +92,6 @@ const inputChanged = ()=>{
     
     // Validate lot numbers
     if (validateLot(inputValue)) {
-        console.log('lot number')
         document.getElementById("download-button").enable()
     } else {
         document.getElementById("download-button").disable()
@@ -110,9 +108,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
     .getElementById("search-button")
     .addEventListener("click", ()=>{
         document.getElementById("search-button").start()
-        const vin = document.getElementById("search-input").value;
+        const query = document.getElementById("search-input").value;
         const salvage = getSalvageNameInput();
-        searchPort.postMessage({vin, salvage})
+        searchPort.postMessage({query, salvage})
     })
 })
 // Salvage yard radio buttons
@@ -131,16 +129,17 @@ const setSalvageNameInput = (salvageName)=>{
 
 // Handle search messages
 const onSearchMessage = (message)=>{
+    // Flash the download button
     if (message.found) {
-        // Flash the download button
         document.getElementById("download-button").attention();
-        
-        // Update salvage input (we already have a VIN/Lot)
-        document.getElementById("salvage-input").value = message.salvage;
     }
+    
     
     // Reset the search button
     if (message.complete) document.getElementById("search-button").enable();
+    
+    // Update salvage slider
+    setSalvageNameInput(message.salvage);
     
     // Display feedback messages
     if (message.feedback) addFeedbackMessage(message.feedback);
@@ -165,7 +164,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
 // Handle download messages
 const onDownloadMessage = (message)=>{
-    console.log(message)
     // Reset the download button
     if (message.download) document.getElementById("download-button").enable();
     

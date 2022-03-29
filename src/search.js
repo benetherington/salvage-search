@@ -1,11 +1,11 @@
 /*------------------*\
   SETTINGS ACCESSORS
 \*------------------*/
-const searchPrimaries = async (vin, notify)=>{
+const searchPrimaries = async (vin, notify, settings=null)=>{
     /*
     Performs salvage yard searches.
     
-    Requries a VIN and a notify callback.
+    Requries a VIN and a notify callback. Takes an optional settings override.
     
     Returns a Promise.all(), which resolves as an object: {
         salvage: str,
@@ -15,7 +15,9 @@ const searchPrimaries = async (vin, notify)=>{
     */
    
     // Set up
-    const settings = await defaultedSettings();
+    if (!settings) {
+        settings = await defaultedSettings();
+    }
     const searchPromises = [];
     
     // Start searches
@@ -36,7 +38,7 @@ const searchPrimaries = async (vin, notify)=>{
         Promise.reject()
     ])
 }
-const searchArchives = async (vin, notify)=>{
+const searchArchives = async (query, notify)=>{
     /*
     Performs archive searches.
     
@@ -55,10 +57,10 @@ const searchArchives = async (vin, notify)=>{
     
     // Start searches
     if (settings.searchPoctra) {
-        archivePromises.push(POCTRA_S.search(vin, notify))
+        archivePromises.push(POCTRA_S.search(query, notify))
     }
     if (settings.searchBidfax) {
-        archivePromises.push(BIDFAX_S.search(vin, notify))
+        archivePromises.push(BIDFAX_S.search(query, notify))
     }
     
     // Return search results, with a guaranteed rejection in case none were
@@ -68,6 +70,9 @@ const searchArchives = async (vin, notify)=>{
         Promise.reject()
     ]);
 }
+
+
+
 const openTabAndSendMessage = (searchResults)=>{
     // Open new tab to the listing page
     browser.tabs.create({url: searchResults.listingUrl})
@@ -102,16 +107,35 @@ const search = async (message)=>{
     
     // Search primaries
     try {
-        const searchResults = await searchPrimaries(message.vin, notify);
+        let searchResults;
+        
+        // Do specific search if forced
+        if (message.salvage==="iaai") {
+            console.log("Starting forced search at IAAI")
+            searchResults = await searchPrimaries(message.query, notify, {searchIaai: true});
+        } else if (message.salvage==="copart") {
+            console.log("Starting forced search at Copart")
+            searchResults = await searchPrimaries(message.query, notify, {searchCopart: true});
+        }
+        
+        // Do general primaries search
+        else {searchResults = await searchPrimaries(message.query, notify);}
         openTabAndSendMessage(searchResults)
+        
+        // if no error was thrown, our search was successful.
         return;
     } catch (AggrigateError) {
-        console.log("primary searches empty, trying archives")
+        if (message.salvage) {
+            console.log("Forced search came up empty")
+            return;
+        } else {
+            console.log("primary searches empty, trying archives")
+        }
     }
     
     // Search archives
     try {
-        const searchResults = await searchArchives(message.vin, notify);
+        const searchResults = await searchArchives(message.query, notify);
         openTabAndSendMessage(searchResults)
         return;
     } catch (AggrigateError) {
