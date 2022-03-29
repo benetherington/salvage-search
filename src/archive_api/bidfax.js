@@ -64,6 +64,7 @@ const BIDFAX_S = {
         
         // Get listing URLs
         const listingUrls = Array.from(searchResults).map(BIDFAX_S.getUrlFromCaption);
+        const lotNumbers = listingUrls.map(url=>/\d{8}/.exec(url)[0]);
         
         // Check listing URLs
         if (!listingUrls.some(el=>el)) {
@@ -73,10 +74,11 @@ const BIDFAX_S = {
         
         // Split results
         const listingUrl = listingUrls.pop();
-        const extras = listingUrls;
+        const lotNumber = lotNumbers.pop();
+        const extras = {listingUrls, lotNumbers};
         
         // Send back results
-        return {salvage: "bidfax", listingUrl, extras};
+        return {salvage: "bidfax", listingUrl, lotNumber, extras};
     },
     fetchCaptchaToken: async ()=>{
         /*

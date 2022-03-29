@@ -56,6 +56,7 @@ const POCTRA_S = {
         // Get listing URLs
         const listingUrls = [];
         searchResults.forEach(el=>listingUrls.push(el.querySelector("a").href));
+        const lotNumbers = searchResults.map(el=>/\d{8}/.exec(el.innerHTML));
         
         // Check listing URLs
         if (!listingUrls.some(el=>el)) {
@@ -65,10 +66,11 @@ const POCTRA_S = {
         
         // Split results
         const listingUrl = listingUrls.pop();
-        const extras = listingUrls;
+        const lotNumber = lotNumbers.pop();
+        const extras = {listingUrls, lotNumbers};
         
         // Send back results
-        return {salvage: "poctra", listingUrl, extras};
+        return {salvage: "poctra", listingUrl, lotNumber, extras};
     }
 };
 
