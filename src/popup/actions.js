@@ -109,8 +109,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
     .addEventListener("click", ()=>{
         document.getElementById("search-button").start()
         const query = document.getElementById("search-input").value;
-        const salvage = getSalvageNameInput();
-        searchPort.postMessage({query, salvage})
+        const salvageName = getSalvageNameInput();
+        searchPort.postMessage({query, salvageName})
     })
 })
 // Salvage yard radio buttons

@@ -110,10 +110,10 @@ const search = async (message)=>{
         let searchResults;
         
         // Do specific search if forced
-        if (message.salvage==="iaai") {
+        if (message.salvageName==="iaai") {
             console.log("Starting forced search at IAAI")
             searchResults = await searchPrimaries(message.query, notify, {searchIaai: true});
-        } else if (message.salvage==="copart") {
+        } else if (message.salvageName==="copart") {
             console.log("Starting forced search at Copart")
             searchResults = await searchPrimaries(message.query, notify, {searchCopart: true});
         }
@@ -125,7 +125,7 @@ const search = async (message)=>{
         // if no error was thrown, our search was successful.
         return;
     } catch (AggrigateError) {
-        if (message.salvage) {
+        if (message.salvageName) {
             console.log("Forced search came up empty")
             return;
         } else {
