@@ -84,11 +84,13 @@ const download = async (message)=>{
     // Interpret message data
     const {query, salvageName} = message;
     const lotNumber = validateLot(query);
-    console.log(message)
-    console.log(lotNumber)
     
     // Check message data
-    if (!lotNumber) return;
+    if (!lotNumber) {
+        console.log("download message handler received an invalid lot number")
+        console.log(message)
+        return;
+    }
     
     // Fetch images
     const imageUrls = getImageUrls(lotNumber, salvageName);
