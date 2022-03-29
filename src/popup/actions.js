@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
 const inputChanged = ()=>{
     const inputValue = document.getElementById('search-input').value;
     
-    // Validate VINs
+    // Validate VINs, enable search
     if (validateVin(inputValue)) {
         document.getElementById("search-button").enable()
         return;
@@ -90,9 +90,15 @@ const inputChanged = ()=>{
         document.getElementById("search-button").disable()
     }
     
-    // Validate lot numbers
-    if (validateLot(inputValue)) {
+    // Validate lot numbers, enable download
+    if (validateLot(inputValue) && getSalvageNameInput()) {
+        // valid lot and salvage selected
         document.getElementById("download-button").enable()
+    } else if (validateLot(inputValue) && !getSalvageNameInput()) {
+        // valid lot but missing salvage
+        document.querySelector("#salvage-selector .slider")
+                .classList.add("error-attention")
+        document.getElementById("download-button").disable()
     } else {
         document.getElementById("download-button").disable()
     }
@@ -114,6 +120,12 @@ document.addEventListener("DOMContentLoaded", ()=>{
     })
 })
 // Salvage yard radio buttons
+// Listen for slider change, validate input
+document.addEventListener("DOMContentLoaded", ()=>{
+    document.querySelector("#salvage-selector")
+            .addEventListener("click", inputChanged)
+})
+// Slider getter and setter
 const getSalvageNameInput = ()=>{
     const selected = document.querySelector("#salvage-selector input:checked").id;
     if (selected == "unknown-salvage") return;
@@ -133,7 +145,6 @@ const onSearchMessage = (message)=>{
     if (message.found) {
         document.getElementById("download-button").attention();
     }
-    
     
     // Reset the search button
     if (message.complete) document.getElementById("search-button").enable();
