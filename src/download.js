@@ -53,7 +53,7 @@ const getTabInfo = async()=>{
 /*---------------*\
   DOWNLOAD IMAGES
 \*---------------*/
-const getImageUrls = async(lotNumber, salvageName)=>{
+const fetchImageUrls = async(lotNumber, salvageName)=>{
     // Fetch image info
     const salvage = salvageNameToObject[salvageName];
     const imageInfo = await salvage.imageInfoFromLotNumber(lotNumber);
@@ -61,13 +61,14 @@ const getImageUrls = async(lotNumber, salvageName)=>{
     // Fetch image urls
     return salvage.imageUrlsFromInfo(imageInfo)
 }
-const downloadImages = (salvageName, lotNumber, images)=>{
+const saveImages = (salvageName, lotNumber, images)=>{
     // Download hero images
     if (images.imageUrls) {
         images.imageUrls.forEach((url, idx)=>{
-            browser.downloads.download(url, {
+            browser.downloads.download({
+                url,
                 saveAs: false,
-                path: `${salvageName}-${lotNumber}/${idx}.jpg`
+                filename: `${salvageName}-${lotNumber}/${idx}.jpg`
             })
         })
     }
@@ -114,13 +115,19 @@ const download = async (message)=>{
     }
     
     // Fetch images
-    const images = await getImageUrls(lotNumber, salvageName);
+    const imageUrls = await fetchImageUrls(lotNumber, salvageName);
     
     // Send images to downloads folder
-    await downloadImages(salvageName, lotNumber, images);
+    console.log("Download got images, sending to downloads folder")
+    await saveImages(salvageName, lotNumber, imageUrls);
     
     // Wrap up
-    dPort.postMessage({complete: true})
+    const complete = true;
+    const feedback = {
+        message: "All done!",
+        displayAs: "success"
+    }
+    dPort.postMessage({complete, feedback})
 };
 
 
