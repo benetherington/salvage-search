@@ -67,21 +67,7 @@ const IAAI_D = {
     __proto__: Salvage,
     NAME: "iaai",
     URL_PATTERN: "*://*.iaai.com/*ehicle*etails*",
-    buildImageInfoRequest: (stockNumber)=>{
-        // Create URL with search body
-        const url = new URL("https://iaai.com/Images/GetJsonImageDimensions");
-        url.searchParams.append(
-            'json', JSON.stringify({"stockNumber":stockNumber})
-        )
-        
-        // Create headers
-        const headers = {
-            "User-Agent": window.navigator.userAgent,
-            "Accept": "application/json, text/plain, */*"
-        };
-        
-        return {url, headers}
-    },
+    
     
     lotNumberFromTab: async (tabOrVehicle)=>{
         let tabId;
@@ -101,20 +87,23 @@ const IAAI_D = {
             throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
         }
     },
-    lotNumberValid: async (stockNumberOrVehicle)=>{
-        try {
-            let imageInfo = await IAAI_D.imageInfoFromLotNumber(stockNumberOrVehicle)
-            return imageInfo.imageInfo.keys.length;
-        } catch (error) {
-            if (error==="no images found.") return 0;
-        }
-    },
+    // lotNumberValid: async (stockNumberOrVehicle)=>{
+    //     try {
+    //         let imageInfo = await IAAI_D.imageInfoFromLotNumber(stockNumberOrVehicle)
+    //         return imageInfo.imageInfo.keys.length;
+    //     } catch (error) {
+    //         if (error==="no images found.") return 0;
+    //     }
+    // },
+    
+    
     imageInfoFromLotNumber: async (stockNumber)=>{
         console.log(`IAAI fetching image info for ${stockNumber}`)
         
         // Make request
         const {url, headers} = IAAI_D.buildImageInfoRequest(stockNumber);
         const response = await fetch(url, headers);
+        console.log("IAAI imageInfo request complete")
         
         // Check response status
         if (!response.ok) throw "server error";
@@ -127,90 +116,131 @@ const IAAI_D = {
         // Everything looks good!
         return response.json()
     },
-    imageUrlsFromInfo: async function (lotDetails) {
+    buildImageInfoRequest: (stockNumber)=>{
+        // Create URL with search body
+        const url = new URL("https://iaai.com/Images/GetJsonImageDimensions");
+        url.searchParams.append(
+            'json', JSON.stringify({"stockNumber":stockNumber})
+        )
+        
+        // Create headers
+        const headers = {
+            "User-Agent": window.navigator.userAgent,
+            "Accept": "application/json, text/plain, */*"
+        };
+        
+        return {url, headers}
+    },
+    
+    
+    
+    
+    imageUrlsFromInfo: async function (lotDetails, notify=sendNotification) {
         console.log(`IAAI downloading images.`)
-        sendNotification(`IAAI: processing ${lotDetails.keys.length} images.`)
+        notify(`IAAI: processing ${lotDetails.keys.length} images.`)
         
         // Start processing heros
-        const imageUrls = await IAAI_D.fetchAndDezoom(lotDetails.keys);
+        const imageUrls = await IAAI_D.fetchHeroImages(lotDetails.keys);
         
         // Start processing interactives
-        let {walkaroundUrls, panoUrls} = await SPINCAR_D.interactiveUrlsFromImageInfo(lotDetailsOrVehicle);
+        // const {walkaroundUrls, panoUrls} =
+        //     await SPINCAR_D.interactiveUrlsFromImageInfo(lotDetails);
+        const walkaroundUrls = {};
+        const panoUrls = {};
         
         // DONE
         return {imageUrls, walkaroundUrls, panoUrls}
     },
     
-    // Fetch and Dezoom utilities
-    tileUrl: (key, x, y)=>`https://anvis.iaai.com/deepzoom?imageKey=${key.K}`+
-                    `&level=12&x=${x}&y=${y}&overlap=0&tilesize=${IAAI_D.TILE_SIZE}`,
-    getTileBmp: async (key, x, y)=>{
-        const url = IAAI_D.tileUrl(key, x,y);
+    // Massive function to fetch and dezoom Seadragon images
+    fetchHeroImages: async function (imageKeys) {
+        // Fetch tiles for each image
+        const imagesAsTilesPromises = imageKeys.map(IAAI_D.fetchImageTiles);
+        const imagesAsTiles = await Promise.all(imagesAsTilesPromises);
+        
+        // Zip keys and downloaded tiles
+        const stitchableImages = imagesAsTiles.map(
+            (tiles, idx)=>{return {tiles, key: imageKeys[idx]}}
+        )
+        
+        // Stitch each set of tiles into a single image
+        const stitchedImagePromises = stitchableImages.map(IAAI_D.stitchImage);
+        const stitchedImages = await Promise.all(stitchedImagePromises);
+        
+        // Return ObjectUrls
+        return stitchedImages
+    },
+    TILE_SIZE: 250,
+    fetchImageTiles: key=>{
+        // Plan out tile requests
+        let xTiles = Math.ceil(key.W / IAAI_D.TILE_SIZE);
+        let yTiles = Math.ceil(key.H / IAAI_D.TILE_SIZE);
+        let xRange = [...Array(xTiles).keys()];
+        let yRange = [...Array(yTiles).keys()];
+        
+        // Fetch all tiles for this image
+        let bmpPromises = [];
+        for (let x of xRange) {
+            for (let y of yRange){
+                bmpPromises.push(IAAI_D.fetchBmpDetail(key, x, y))
+            }
+        }
+        return Promise.all(bmpPromises)
+    },
+    fetchBmpDetail: async (key, x, y)=>{
+        const url = IAAI_D.getTileUrl(key, x,y);
         const response = await fetch(url);
         const blob = await response.blob();
         const bmp = await createImageBitmap(blob);
         return {x, y, bmp};
     },
-    TILE_SIZE: 250,
+    getTileUrl: (key, x, y)=>{
+        const url = new URL ("https://anvis.iaai.com/deepzoom");
+        url.searchParams.append("imageKey", key.K)
+        url.searchParams.append("level", 12)
+        url.searchParams.append("x", x)
+        url.searchParams.append("y", y)
+        url.searchParams.append("overlap", 0)
+        url.searchParams.append("tilesize", IAAI_D.TILE_SIZE)
+        return url;
+    },
     
-    // Massive function to fetch and dezoom Seadragon images
-    fetchAndDezoom: async function (...imageKeys) {
-        // Accepts a single keys object, multiple keys objects, or an array of keys
-        // objects.
+    stitchImage: ({key, tiles})=>{
+        // Create canvas
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d")
-        const processedPromises = imageKeys.map(async key=>{
-            // Prepare the canvas
-            canvas.width  = key.W;
-            canvas.height = key.H;
-            
-            // Plan out tile requests
-            let xTiles = Math.ceil(key.W / IAAI_D.TILE_SIZE);
-            let yTiles = Math.ceil(key.H / IAAI_D.TILE_SIZE);
-            let xRange = [...Array(xTiles).keys()];
-            let yRange = [...Array(yTiles).keys()];
-            
-            // FETCH
-            let bitmapPromises = [];
-            for (let x of xRange) {
-                for (let y of yRange){
-                    bitmapPromises.push(IAAI_D.getTileBmp(key, x, y))
-                }
-            }
-            let bmpDetails = await Promise.all(bitmapPromises)
-            
-            // Paint tiles onto canvas
-            bmpDetails.forEach(bmpDetails=>{
-                const {bmp,x,y} = bmpDetails;
-                ctx.drawImage(
-                    bmp,
-                    x*IAAI_D.TILE_SIZE,
-                    y*IAAI_D.TILE_SIZE
-                )
-            })
-            
-            // Export canvas
-            let dataURL = canvas.toDataURL("image/jpeg");
-            let objectURL = IAAI_D.dataURLtoObjectURL(dataURL);
-            
-            console.log(`${key.K} processed`)
-            
-            // Done!
-            return objectURL
-        });
-        return Promise.all(processedPromises)
+        canvas.width  = key.W;
+        canvas.height = key.H;
+        
+        // Paint tiles onto canvas
+        tiles.forEach(tile=>{
+            const {bmp,x,y} = tile;
+            ctx.drawImage(
+                bmp,
+                x*IAAI_D.TILE_SIZE,
+                y*IAAI_D.TILE_SIZE
+            )
+        })
+        
+        // Export canvas
+        const dataURL = canvas.toDataURL("image/jpeg");
+        const objectURL = IAAI_D.dataURLtoObjectURL(dataURL);
+        
+        // Done!
+        console.log(`${key.K} processed`)
+        return objectURL
     },
     dataURLtoObjectURL: (uri, name)=>{
         // Takes a dataURL and turns it into a temporary object URL. This makes it
         // easier to pass around. See: https://stackoverflow.com/a/12300351
-        let byteString = atob(uri.split(',')[1]);
-        let mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
-        let ab = new ArrayBuffer(byteString.length);
-        let ia = new Uint8Array(ab);
+        const byteString = atob(uri.split(',')[1]);
+        const mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
         for (let i = 0; i < byteString.length; i++) {
             ia[i] = byteString.charCodeAt(i);
         }
-        let blob = new Blob([ab], {type: mimeString});
+        const blob = new Blob([ab], {type: mimeString});
         blob.name = name+".jpg"
         return URL.createObjectURL(blob)
     }
