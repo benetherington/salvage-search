@@ -149,11 +149,15 @@ const onSearchMessage = (message)=>{
     // Reset the search button
     if (message.complete) document.getElementById("search-button").enable();
     
-    // Update salvage slider
-    setSalvageNameInput(message.salvage);
-    
     // Display feedback messages
     if (message.feedback) addFeedbackMessage(message.feedback);
+    
+    // Update salvage slider and lot number
+    setSalvageNameInput(message.salvage);
+    if (message.lotNumber) {
+        document.getElementById("search-input").value = message.lotNumber;
+    }
+    
 };
 
 
@@ -176,7 +180,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
 // Handle download messages
 const onDownloadMessage = (message)=>{
     // Reset the download button
-    if (message.download) document.getElementById("download-button").enable();
+    if (message.complete) document.getElementById("download-button").enable();
     
     // Update query fields from open tab
     if (message.lotNumber) {
