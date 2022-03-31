@@ -73,6 +73,9 @@ const COPART_D = {
     __proto__: Salvage,
     NAME: "copart",
     URL_PATTERN: "*://*.copart.com/lot/*",
+    
+    
+    // Tabs
     lotNumberFromTab: async (tab)=>{
         const lotExecuting = browser.tabs.executeScript(
             tab.id, {code:`
@@ -88,6 +91,7 @@ const COPART_D = {
     },
     
     
+    // Image info
     imageInfoFromLotNumber: async (lotNumber)=>{
         // Configure image download
         const imagesUrl = `https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`;
@@ -114,8 +118,7 @@ const COPART_D = {
     },
     
     
-    
-    
+    // Image fetching
     imageUrlsFromInfo: async function (imageInfo) {
         // Validate imageInfo
         const nope = ()=>{throw "encountered a server error."}

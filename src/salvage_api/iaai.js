@@ -69,6 +69,7 @@ const IAAI_D = {
     URL_PATTERN: "*://*.iaai.com/*ehicle*etails*",
     
     
+    // Tabs
     lotNumberFromTab: async (tabOrVehicle)=>{
         let tabId;
         if (tabOrVehicle.tabId)   {tabId = tabOrVehicle.tabId;}
@@ -89,6 +90,7 @@ const IAAI_D = {
     },
     
     
+    // Image info
     imageInfoFromLotNumber: async (stockNumber)=>{
         console.log(`IAAI fetching image info for ${stockNumber}`)
         
@@ -125,8 +127,7 @@ const IAAI_D = {
     },
     
     
-    
-    
+    // Image fetching
     imageUrlsFromInfo: async function (lotDetails, notify=sendNotification) {
         console.log(`IAAI downloading images.`)
         notify(`IAAI: processing ${lotDetails.keys.length} images.`)
@@ -143,8 +144,8 @@ const IAAI_D = {
         // DONE
         return {imageUrls, walkaroundUrls, panoUrls}
     },
-    
-    // Massive function to fetch and dezoom Seadragon images
+    // IAAI uses Deepzoom/OpenSeaDragon, so there's a lot of work to get
+    // full-res images.
     fetchHeroImages: async function (imageKeys) {
         // Fetch tiles for each image
         const imagesAsTilesPromises = imageKeys.map(IAAI_D.fetchImageTiles);
@@ -162,6 +163,7 @@ const IAAI_D = {
         // Return ObjectUrls
         return stitchedImages
     },
+    // Tile fetching
     TILE_SIZE: 250,
     fetchImageTiles: key=>{
         // Plan out tile requests
@@ -196,7 +198,7 @@ const IAAI_D = {
         url.searchParams.append("tilesize", IAAI_D.TILE_SIZE)
         return url;
     },
-    
+    // Tile stitching
     stitchImage: ({key, tiles})=>{
         // Create canvas
         const canvas = document.createElement("canvas");
