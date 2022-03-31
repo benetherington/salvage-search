@@ -86,17 +86,17 @@ const defaultedSettings = async () => {
     }
     return settings
 }
-const sendNotification = (message, options={}) => {
+const connectionFailure = (err)=>{
+    return err.message==="Could not establish connection. Receiving end does not exist.";
+};
+const sendNotification = (payload) => {
     // quick feedback notification creation with error catching
-    let value = Object.assign(options, {action: "feedback-message",
-                                        message:message});
-    let values = [value]
-    browser.runtime.sendMessage({type: "feedback", values})
-        .catch(err=>{
-            if (err.message==="Could not establish connection. Receiving end does not exist.")
-                    {console.log("\n\nConnection error. Is the popup closed?")}
-            else {console.log(err)}
-        })
+    browser.runtime.sendMessage({message: payload}).catch(
+        err=>{
+            if (!connectionFailure(err)) console.log(err);
+            console.log("Connection error. Is the popup closed?")
+        }
+    )
 }
 const notifyUntilSuccess = (port)=>{
     /*

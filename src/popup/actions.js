@@ -242,7 +242,9 @@ const addFeedbackMessage = (rawFeedback)=>{
     // show the drawer
     drawer.classList.remove("hidden")
 }
-
+// Listen for messages from API interfaces. Messages are also passed over the
+// two message ports.
+browser.runtime.onMessage.addListener(addFeedbackMessage)
 
 /*----------------*\
   PREFERENCES PAGE  
