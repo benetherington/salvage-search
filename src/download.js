@@ -54,15 +54,36 @@ const getTabInfo = async()=>{
   DOWNLOAD IMAGES
 \*---------------*/
 const getImageUrls = async(lotNumber, salvageName)=>{
-    // Find download object
-    const salvage = salvageNameToObject[salvageName];
-    
     // Fetch image info
+    const salvage = salvageNameToObject[salvageName];
     const imageInfo = await salvage.imageInfoFromLotNumber(lotNumber);
     
     // Fetch image urls
-    return await salvage.imageUrlsFromInfo(imageInfo)
+    return salvage.imageUrlsFromInfo(imageInfo)
 }
+const downloadImages = (salvageName, lotNumber, images)=>{
+    // Download hero images
+    if (images.imageUrls) {
+        images.imageUrls.forEach((url, idx)=>{
+            browser.downloads.download(url, {
+                saveAs: false,
+                path: `${salvageName}-${lotNumber}/${idx}.jpg`
+            })
+        })
+    }
+    
+    // Open walkaround and pano editors
+    if (images.walkaroundUrls) openWalkEditor(images.walkaroundUrls);
+    if (images.panoUrls) openPanoEditor(images.panoUrls);
+};
+const openWalkEditor = (urls)=>{
+    console.log("Walkaround Editor:")
+    console.log(urls)
+};
+const openPanoEditor = (urls)=>{
+    console.log("Panorama Editor:")
+    console.log(urls)
+};
 
 
 /*---------*\
@@ -93,10 +114,13 @@ const download = async (message)=>{
     }
     
     // Fetch images
-    const imageUrls = getImageUrls(lotNumber, salvageName);
+    const images = await getImageUrls(lotNumber, salvageName);
     
     // Send images to downloads folder
-    console.log(imageUrls)
+    await downloadImages(salvageName, lotNumber, images);
+    
+    // Wrap up
+    dPort.postMessage({complete: true})
 };
 
 

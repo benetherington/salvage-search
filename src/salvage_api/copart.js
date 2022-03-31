@@ -139,9 +139,12 @@ const COPART_D = {
         if (!imageInfo.data.imagesList             ) nope();
         if (!imageInfo.data.imagesList.FULL_IMAGE  ) nope();
         
-        // Pick highest resolution images
+        // Process images
         const imageUrls = COPART_D.pickBestImages(imageInfo);
-        return imageUrls;
+        const walkaroundUrls = [];
+        const panoUrls = [];
+        
+        return {imageUrls, walkaroundUrls, panoUrls};
     },
     pickBestImages: (imageInfo)=>{
         // Grab image resolutions
