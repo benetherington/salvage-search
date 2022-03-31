@@ -114,20 +114,29 @@ const download = async (message)=>{
         return;
     }
     
-    // Fetch images
-    const imageUrls = await fetchImageUrls(lotNumber, salvageName);
-    
-    // Send images to downloads folder
-    console.log("Download got images, sending to downloads folder")
-    await saveImages(salvageName, lotNumber, imageUrls);
-    
-    // Wrap up
-    const complete = true;
-    const feedback = {
-        message: "All done!",
-        displayAs: "success"
+    try {
+        // Fetch images
+        const imageUrls = await fetchImageUrls(lotNumber, salvageName);
+        
+        // Send images to downloads folder
+        console.log("Download got images, sending to downloads folder")
+        await saveImages(salvageName, lotNumber, imageUrls);
+        
+        // Wrap up
+        const complete = true;
+        const feedback = {
+            message: "All done!",
+            displayAs: "success"
+        }
+        dPort.postMessage({complete, feedback})
+    } catch (error) {
+        const complete = true;
+        const feedback = {
+            message: error,
+            displayAs: "error"
+        }
+        dPort.postMessage({complete, feedback})
     }
-    dPort.postMessage({complete, feedback})
 };
 
 
