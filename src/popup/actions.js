@@ -217,7 +217,7 @@ const addFeedbackMessage = (rawFeedback)=>{
         feedback.closeable = closeable;
         feedback.displayAs = displayAs;
         feedback.createdAt = performance.now().toString();
-    } else {console.log("empty message");return;}
+    } else {console.debug("empty message");return;}
 
     // CREATE ELEMENT
     let notification = document.createElement("div");

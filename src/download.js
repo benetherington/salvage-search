@@ -142,4 +142,4 @@ const download = async (message)=>{
 
 
 
-console.log("download-background loaded")
+console.debug("download-background loaded")

@@ -36,8 +36,8 @@ function download(img, idx) {
   POPUP MESSAGING
 \*---------------*/
 
-let messageHandler = message=>{console.log("messageHandler"); document.querySelector("#stage").setAngles(message)}
-let connectHandler = port=>{console.log("connectHandler"); port.onMessage.addListener(messageHandler)}
+let messageHandler = message=>{console.log(message); document.querySelector("#stage").setAngles(message)}
+let connectHandler = port=>{console.log(port); port.onMessage.addListener(messageHandler)}
 browser.runtime.onConnect.addListener(connectHandler);
 
 /*---------------*\
