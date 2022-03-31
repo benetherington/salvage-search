@@ -86,26 +86,8 @@ const COPART_D = {
         const lotNumber = (await lotExecuting)[0];
         return lotNumber;
     },
-    fetchImageUrls: async (lotNumber, notify=sendNotification) => {
-        return new Promise(async (resolve, reject)=>{
-            try {
-                // Fetch image info
-                const imageInfo = await COPART_D.imageInfoFromLotNumber(lotNumber);
-                console.log(imageInfo)
-                
-                // Fetch image data
-                const imageUrls = await COPART_D.imageUrlsFromInfo(imageInfo);
-                console.log(imageUrls)
-                
-                // Done!
-                resolve(imageUrls)
-            } catch (error) {
-                console.log(`COPART rejecting: ${error}`)
-                notify(`COPART: ${error}`, {displayAs:"error"})
-                reject()
-            }
-        })
-    },
+    
+    
     imageInfoFromLotNumber: async (lotNumber)=>{
         // Configure image download
         const imagesUrl = `https://www.copart.com/public/data/lotdetails/solr/lotImages/${lotNumber}/USA`;
@@ -130,6 +112,10 @@ const COPART_D = {
         // Get response content
         return await response.json();
     },
+    
+    
+    
+    
     imageUrlsFromInfo: async function (imageInfo) {
         // Validate imageInfo
         const nope = ()=>{throw "encountered a server error."}
