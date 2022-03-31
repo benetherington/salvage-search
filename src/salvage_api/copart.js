@@ -104,13 +104,13 @@ const COPART_D = {
         let response = await fetch(imagesUrl, {headers});
 
         // Check status
-        if (!response.ok) throw `something went wrong on their end: ${response.status} error.`;
+        if (!response.ok) throw `Copart encountered a server error: ${response.status} error.`;
         
         // Check response content
         if (!response.headers.get("content-type").startsWith("application/json")) {
             console.log("Copart wants a CAPTCHA check")
             browser.tabs.create({url:"https://www.copart.com"})
-            throw "please complete the CAPTCHA and try again."
+            throw "Please complete the CAPTCHA and try again."
         };
         
         // Get response content
@@ -121,7 +121,7 @@ const COPART_D = {
     // Image fetching
     imageUrlsFromInfo: async function (imageInfo) {
         // Validate imageInfo
-        const nope = ()=>{throw "encountered a server error."}
+        const nope = ()=>{throw "Copart encountered a server error."}
         if (!imageInfo.hasOwnProperty("returnCode")) nope();
         if ( imageInfo.returnCode!=1               ) nope();
         if (!imageInfo.data                        ) nope();
