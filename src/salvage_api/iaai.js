@@ -87,14 +87,6 @@ const IAAI_D = {
             throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
         }
     },
-    // lotNumberValid: async (stockNumberOrVehicle)=>{
-    //     try {
-    //         let imageInfo = await IAAI_D.imageInfoFromLotNumber(stockNumberOrVehicle)
-    //         return imageInfo.imageInfo.keys.length;
-    //     } catch (error) {
-    //         if (error==="no images found.") return 0;
-    //     }
-    // },
     
     
     imageInfoFromLotNumber: async (stockNumber)=>{
@@ -145,8 +137,8 @@ const IAAI_D = {
         // Start processing interactives
         // const {walkaroundUrls, panoUrls} =
         //     await SPINCAR_D.interactiveUrlsFromImageInfo(lotDetails);
-        const walkaroundUrls = {};
-        const panoUrls = {};
+        const walkaroundUrls = [];
+        const panoUrls = [];
         
         // DONE
         return {imageUrls, walkaroundUrls, panoUrls}
