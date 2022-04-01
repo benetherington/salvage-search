@@ -772,8 +772,8 @@ class PanoViewer extends HTMLCanvasElement {
         // be mushed onto the canvas in the wrong resultion at best, and skewed
         // at worst. A ResizeObserver can trigger updates for us.
         let resizeObserver = new ResizeObserver((entries, observer)=>{
-            this.height = entries[0].contentBoxSize[0].blockSize;
-            this.width  = entries[0].contentBoxSize[0].inlineSize;
+            // this.height = entries[0].contentBoxSize[0].blockSize;
+            // this.width  = entries[0].contentBoxSize[0].inlineSize;
             this.render()
         })
         resizeObserver.observe(this)
