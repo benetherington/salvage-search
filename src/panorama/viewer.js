@@ -802,7 +802,7 @@ class PanoViewer extends HTMLCanvasElement {
         }
     }
     updateFaces(faces) {let gl = this.getContext("webgl");
-        let texPromises = []
+        let texPromises = [];
         texPromises.push(
             this.loadTexture(
                 gl.TEXTURE_CUBE_MAP_POSITIVE_X,

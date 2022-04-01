@@ -33,12 +33,11 @@ function download(img, idx) {
 
 
 /*---------------*\
-  POPUP MESSAGING
+  BACKGROUND MESSAGING
 \*---------------*/
-
-let messageHandler = message=>{console.log(message); document.querySelector("#stage").setAngles(message)}
-let connectHandler = port=>{console.log(port); port.onMessage.addListener(messageHandler)}
-browser.runtime.onConnect.addListener(connectHandler);
+browser.runtime.onMessage.addListener(message=>{
+    document.querySelector("#stage").setAngles(message)
+})
 
 /*---------------*\
   EVENT LISTENERS

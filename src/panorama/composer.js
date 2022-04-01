@@ -19,10 +19,8 @@ function downloadImages(e) {
 }
 
 /*---------------*\
-  POPUP MESSAGING
+  BACKGROUND MESSAGING
 \*---------------*/
-let port = browser.runtime.connect();
-port.onMessage.addListener(messageHandler)
 async function messageHandler(message) {
     console.log('message:'); console.log(message)
     // create thumbnail set, point them in the correct direction
@@ -36,6 +34,7 @@ async function messageHandler(message) {
     await stage.getPano().goToPassenger(); await saveThumb();
     await stage.getPano().goToIp();        await saveThumb();
 }
+browser.runtime.onMessage.addListener(messageHandler);
 
 /*---------------*\
   EVENT LISTENERS
