@@ -75,15 +75,53 @@ const saveImages = (salvageName, lotNumber, images)=>{
     
     // Open walkaround and pano editors
     if (images.walkaroundUrls) openWalkEditor(images.walkaroundUrls);
-    if (images.panoUrls) openPanoEditor(images.panoUrls);
+    if (images.panoImageInfo) openPanoEditor(images.panoImageInfo);
 };
-const openWalkEditor = (urls)=>{
-    console.log("Walkaround Editor:")
-    console.log(urls)
+const openWalkEditor = async (walkaroundUrls)=>{
+    // Build an event listener in this scope
+    const updatedListener = async (tabId, changeInfo)=>{
+        // Wait for tab to finish loading
+        if (changeInfo.status!=="complete") return;
+        
+        // Send panorama data
+        await browser.tabs.sendMessage(tabId, walkaroundUrls)
+        
+        // Stop listening
+        browser.tabs.onUpdated.removeListener(updatedListener)
+    }
+    
+    // Start listening for changes on the tab we're about to open
+    browser.tabs.onUpdated.addListener(
+        updatedListener,
+        {urls: [browser.runtime.getURL("/walkaround/composer.html")],
+         properties: ["status"]}
+    )
+    
+    // Open a panorama viewer tab
+    await browser.tabs.create({url: "/walkaround/composer.html"});
 };
-const openPanoEditor = (urls)=>{
-    console.log("Panorama Editor:")
-    console.log(urls)
+const openPanoEditor = async (panoImageInfo)=>{
+    // Build an event listener in this scope
+    const updatedListener = async (tabId, changeInfo)=>{
+        // Wait for tab to finish loading
+        if (changeInfo.status!=="complete") return;
+        
+        // Send panorama data
+        await browser.tabs.sendMessage(tabId, panoImageInfo)
+        
+        // Stop listening
+        browser.tabs.onUpdated.removeListener(updatedListener)
+    }
+    
+    // Start listening for changes on the tab we're about to open
+    browser.tabs.onUpdated.addListener(
+        updatedListener,
+        {urls: [browser.runtime.getURL("/panorama/composer.html")],
+         properties: ["status"]}
+    )
+    
+    // Open a panorama viewer tab
+    await browser.tabs.create({url: "/panorama/composer.html"});
 };
 
 
