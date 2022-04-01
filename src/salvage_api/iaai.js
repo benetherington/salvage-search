@@ -136,11 +136,11 @@ const IAAI_D = {
         const imageUrls = await IAAI_D.fetchHeroImages(lotDetails.keys);
         
         // Start processing interactives
-        const {walkaroundUrls, panoUrls} =
+        const {walkaroundUrls, panoImageInfo} =
             await SPINCAR_D.interactiveUrlsFromImageInfo(lotDetails);
         
         // DONE
-        return {imageUrls, walkaroundUrls, panoUrls}
+        return {imageUrls, walkaroundUrls, panoImageInfo}
     },
     // IAAI uses Deepzoom/OpenSeaDragon, so there's a lot of work to get
     // full-res images.
@@ -308,26 +308,31 @@ let SPINCAR_D = {
     },
     panoObjectUrlsFromImageInfo: async (spinInfo) =>{
         // Build image URLs
-        let panoUrls = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'].map(
+        const faceNames = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'];
+        let panoUrls = faceNames.map(
             cubeFace=>(`https:${spinInfo.cdn_image_prefix}pano/${cubeFace}.jpg`)
         );
         
         // Fetch image data, convert to object URLs
-        let panoPromises = panoUrls.map(imageUrl=>{
-            return fetch(imageUrl)
+        let panoPromises = panoUrls.map(url=>{
+            return fetch(url)
                 .then(response=>response.blob())
                 .then(blob=>URL.createObjectURL(blob))
         });
         let panoSettled = await Promise.allSettled(panoPromises);
         
-        // Check for errors
-        let panoObjectUrls = panoSettled.map(p=>p.value||"TODO: add rejected image");
+        // Check for errors, add face labels
+        let panoObjectUrls = panoSettled.map((promise, idx)=>{
+            const url = promise.value||"TODO: add rejected image";
+            const face = faceNames[idx];
+            return [face, url];
+        });
         
         // Send back object URLs and information on how to interpret them
         return {
             cubemap: true,
             equirectangular: false,
-            urls: panoObjectUrls
+            faces: Object.fromEntries(panoObjectUrls)
         }
     },
 }
