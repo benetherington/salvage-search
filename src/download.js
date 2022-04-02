@@ -138,21 +138,21 @@ browser.runtime.onConnect.addListener( async connectingPort=>{
 
 // Handle messages
 const download = async (message)=>{
-    // Find tabs on request
-    if (message.findTabs) return dPort.postMessage(await getTabInfo());
-    
-    // Interpret message data
-    const {query, salvageName} = message;
-    const lotNumber = validateLot(query);
-    
-    // Check message data
-    if (!lotNumber) {
-        console.log("download message handler received an invalid lot number")
-        console.log(message)
-        return;
-    }
-    
     try {
+        // Find tabs on request
+        if (message.findTabs) return dPort.postMessage(await getTabInfo());
+        
+        // Interpret message data
+        const {query, salvageName} = message;
+        const lotNumber = validateLot(query);
+        
+        // Check message data
+        if (!lotNumber) {
+            console.log("download message handler received an invalid lot number")
+            console.log(message)
+            return;
+        }
+    
         // Fetch images
         const imageUrls = await fetchImageUrls(lotNumber, salvageName);
         
