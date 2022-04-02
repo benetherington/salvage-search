@@ -4,13 +4,21 @@ body * {
 }
 
 /* LAYOUT */
-.horizontal {
-    display: grid;
-    grid-template-columns: repeat(5, 3fr);
-    column-gap: 1vw;
-    row-gap: 1vw;
+body {
+    display: flex;
+    flex-direction: row;
+    
+    height: calc(100vh - 16px);
+    width: calc(100vw - 16px);
+}
+@media screen and (max-aspect-ratio: 22/21) {
+    /* Screen is narrow, put thumbs below stage */
+    body {
+        flex-direction: column;
+    }
 }
 .grouped {
+    height: fit-content;
     box-sizing: border-box;
     margin: 0.5vh;
     padding: 1vh;
@@ -18,6 +26,7 @@ body * {
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
 .ungrouped {
+    height: fit-content;
     box-sizing: border-box;
     margin: 0.5vh;
     padding: 1vh;
@@ -29,29 +38,21 @@ body * {
     position: absolute;
     z-index: 1;
 }
-    .hover::after {
-        position:absolute;
-        content: "";
-        height: 100%;
-        width: 100%;
-        left: 0;
-        top: 0;
-        box-shadow: 0 0 10px rgba(1,1,1,0.3);
-    }
-    .hover.left   {left:   5px;}
-    .hover.right  {right:  5px;}
-    .hover.top    {top:    5px;}
-    .hover.bottom {bottom: 5px;}
+.hover::after {
+    position:absolute;
+    content: "";
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    box-shadow: 0 0 10px rgba(1,1,1,0.3);
+}
+.hover.left   {left:   5px;}
+.hover.right  {right:  5px;}
+.hover.top    {top:    5px;}
+.hover.bottom {bottom: 5px;}
 .hidden {
     display: none;
-}
-
-/* CONTAINERS */
-#thumbs {
-    /* height is based on square grid elements:min-height:
-    thumbs width is 20vw less 0.5vh padding, and each column
-    has a 1vw gap. Appears right, probably right for the wrong reason? */
-    min-height: calc(20vw - 0.5vh + 1vw);
 }
 
 /* ELEMENTS */
@@ -66,13 +67,43 @@ button {
     cursor: pointer;
     border: initial;
 }
-    button.disabled, button.disabled:hover {
-        color:            #666666;
-        background-color: inherit;
-        pointer-events: none;
-        opacity: 0.5;
-        box-shadow: 0px 0px 2px 1px grey;
+button.disabled, button.disabled:hover {
+    color:            #666666;
+    background-color: inherit;
+    pointer-events: none;
+    opacity: 0.5;
+    box-shadow: 0px 0px 2px 1px grey;
+}
+
+/* CONTAINERS */
+#stage-container {
+    flex-basis: 200px;
+    max-height: 80vh;
+    /* .ungrouped isn't intended for things that have full-size children */
+    padding: 0;
+}
+@media screen and (min-aspect-ratio: 22/21) {
+    /* Screen is wide, make stage grow */
+    #stage-container {
+        flex-grow: 6;
+        max-height: calc(100% - 16px)
     }
+}
+#thumbs {
+    display: grid;
+    grid-template-columns: repeat(5, 3fr);
+    column-gap: 1vw;
+    row-gap: 1vw;
+    
+    flex-grow: 1;
+    flex-basis: 200px;
+}
+@media screen and (min-aspect-ratio: 22/21) {
+    /* Screen is wide, use fewer columns */
+    #thumbs {
+        grid-template-columns: repeat(2, 3fr);
+    }
+}
 .img-container{
     position: relative;
 }
@@ -89,31 +120,43 @@ button {
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     display: flex;
 }
+
+/* THUMBNAIL HOVERING DELETE BUTTON */
+#thumbs:not(:hover) .hover-bar {visibility: hidden;}
 .delete-icon {
+    /* style */
+    background-color: black;
     transition: background-color .1s;
+    /* icon */
+    mask-image: url("/icons/x-circle-fill.svg");
+    mask-size: 100%;
+    mask-position: 100%;
+    mask-repeat: no-repeat;
+    /* size and position */
+    position: absolute;
+    height: 20%;
+    width: 20%;
+    right: -2%;
+    top: -5%;
+    content: "";
+    
 }
-    *:hover > * > .delete-icon {
-        content: "";
-        position: absolute;
-        width: 20%;
-        height: 20%;
-        top: -5%;
-        right: -2%;
-        
-        background-color: black;
-        mask-image: url("/icons/x-circle-fill.svg");
-        mask-size: 100%;
-        mask-position: 100%;
-        mask-repeat: no-repeat;
-    }
-    .delete-icon:hover {
-        background-color: #db392b;
-    }
-    .delete-icon::after {
-        filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.75))
-    }
+.delete-icon:hover {
+    background-color: #db392b;
+}
+.delete-icon::after {
+    filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.75))
+}
 
 /* SPECIFIC ITEMS */
+walkaround-viewer {
+    /* For the life of me, I cannot figure out why 100% does not work below. It
+    winds up with unbounded height for very wide windows. What is the containing
+    block here, and why isn't it statically-positioned #stage-container?! It
+    cant be html, right? */
+    /* Subtract margin used by body and #stage-container */
+    max-height: calc(100vh - 16px - 1vh);
+}
 #save-view {
     height: 60px;
     aspect-ratio: 1/1;
@@ -127,7 +170,7 @@ button {
     #save-view::after {
         border-radius: 100%;
     }
-#thumbs > .placeholder {
+.placeholder {
     /* appearance */
     color: grey;
     font-size: 2em;
@@ -143,7 +186,7 @@ button {
     /* Because thumbnails get added to the end of #thumbs,
     the placeholder can hide itself when there's anything
     below it. */
-    visibility: hidden;
+    display: none;
 }
 #dl-all {
     height: 60px;
@@ -155,9 +198,9 @@ button {
     background-position: center;
     background-repeat: no-repeat;
 }
-    #dl-all::after {
-        border-radius: 100%;
-    }
+#dl-all::after {
+    border-radius: 100%;
+}
 
 
 
