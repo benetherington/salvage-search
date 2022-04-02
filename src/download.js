@@ -163,7 +163,7 @@ const download = async (message)=>{
         // Wrap up
         const complete = true;
         const feedback = {
-            message: "All done!",
+            message: "Images saved to downloads folder!",
             displayAs: "success"
         }
         dPort.postMessage({complete, feedback})
