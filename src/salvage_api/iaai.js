@@ -66,24 +66,22 @@ const IAAI_S = {
 const IAAI_D = {
     __proto__: Salvage,
     NAME: "iaai",
-    URL_PATTERN: "*://*.iaai.com/*ehicle*etails*",
+    URL_PATTERN: "*://*.iaai.com/*ehicle*etail*",
     
     
     // Tabs
-    lotNumberFromTab: async (tabOrVehicle)=>{
-        let tabId;
-        if (tabOrVehicle.tabId)   {tabId = tabOrVehicle.tabId;}
-        else if (tabOrVehicle.id) {tabId = tabOrVehicle.id;}
-        else                      {tabId = tabOrVehicle;}
-        
+    lotNumberFromTab: async (tab)=>{
         try {
-            let lotNumber = await browser.tabs.executeScript(
-                    tabId, {code:`document.querySelector("#ProductDetailsVM").innerText`}
-                ).catch(()=>{ throw "there was an error communicating with the page."+
-                                    "Please reload the page and try again." })
-                .then( lastEvaluated=>JSON.parse(lastEvaluated[0]) )
-                .then( jsn=>jsn.VehicleDetailsViewModel.StockNo );
-            return lotNumber;
+            const lastEvaluated = await browser.tabs.executeScript(
+                tab.id,
+                {code:`document.querySelector("#ProductDetailsVM").innerText`}
+            );
+            const jsn = JSON.parse(lastEvaluated[0]);
+            
+            // Not sure if this was a change, or just a configuration I missed
+            // the first time round...
+            if (jsn.VehicleDetailsViewModel) return jsn.VehicleDetailsViewModel.StockNo;
+            if (jsn.auctionInformation) return jsn.auctionInformation.stockNumber;
         } catch {
             throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
         }
