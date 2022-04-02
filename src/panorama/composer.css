@@ -39,18 +39,18 @@ body {
     z-index: 1;
 }
 .hover::after {
-        position:absolute;
-        content: "";
-        height: 100%;
-        width: 100%;
-        left: 0;
-        top: 0;
-        box-shadow: 0 0 10px rgba(1,1,1,0.3);
-    }
-    .hover.left   {left:   5px;}
-    .hover.right  {right:  5px;}
-    .hover.top    {top:    5px;}
-    .hover.bottom {bottom: 5px;}
+    position:absolute;
+    content: "";
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    box-shadow: 0 0 10px rgba(1,1,1,0.3);
+}
+.hover.left   {left:   5px;}
+.hover.right  {right:  5px;}
+.hover.top    {top:    5px;}
+.hover.bottom {bottom: 5px;}
 .hidden {
     display: none;
 }
@@ -86,17 +86,13 @@ button.disabled, button.disabled:hover {
     }
 }
 #thumbs {
-    flex-grow: 1;
-    flex-basis: 200px;
-    
-    /* height is based on square grid elements:min-height:
-    thumbs width is 20vw less 0.5vh padding, and each column
-    has a 1vw gap. Appears right, probably right for the wrong reason? */
     display: grid;
+    grid-template-columns: repeat(5, 3fr);
     column-gap: 1vw;
     row-gap: 1vw;
-
-    grid-template-columns: repeat(5, 3fr);
+    
+    flex-grow: 1;
+    flex-basis: 200px;
 }
 @media screen and (min-aspect-ratio: 22/21) {
     /* Screen is wide, use fewer columns */
@@ -104,16 +100,18 @@ button.disabled, button.disabled:hover {
         grid-template-columns: repeat(2, 3fr);
     }
 }
-
 .thumb-container {
     position: relative;
 }
 .thumb-container img {
+    /* make thumbnails square */
     width: 100%;
     aspect-ratio: 1/1;
     object-fit: cover;
     
+    /* allow corner snipping */
     overflow: hidden;
+    /* style container */
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     display: flex;
@@ -127,9 +125,9 @@ button.disabled, button.disabled:hover {
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     border-radius: 4px;
     /* size and position */
-    height: 40px;
     position: absolute;
     display: flex;
+    height: 40px;
     right: -5px;
     top: -5px;
 }
@@ -194,9 +192,9 @@ button.disabled, button.disabled:hover {
     background-position: center;
     background-repeat: no-repeat;
 }
-    #dl-all::after {
-        border-radius: 100%;
-    }
+#dl-all::after {
+    border-radius: 100%;
+}
 
 
 
