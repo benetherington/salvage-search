@@ -5,12 +5,13 @@ WALKAROUND_VIEWER_STYLE = `<style>
     /* style container */
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    display: flex;
-    
     cursor: ew-resize;
+    /* lay-out container */
+    display: flex;
 }
 
 img {
+    inline-size: 100%;
     width: 100%;
 }
 </style>`
