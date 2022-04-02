@@ -131,9 +131,9 @@ const COPART_D = {
         // Process images
         const imageUrls = COPART_D.pickBestImages(imageInfo);
         const walkaroundUrls = [];
-        const panoUrls = [];
+        const panoImageInfo = [];
         
-        return {imageUrls, walkaroundUrls, panoUrls};
+        return {imageUrls, walkaroundUrls, panoImageInfo};
     },
     pickBestImages: (imageInfo)=>{
         // Grab image resolutions

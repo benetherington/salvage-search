@@ -74,8 +74,8 @@ const saveImages = (salvageName, lotNumber, images)=>{
     }
     
     // Open walkaround and pano editors
-    if (images.walkaroundUrls) openWalkEditor(images.walkaroundUrls);
-    if (images.panoImageInfo) openPanoEditor(images.panoImageInfo);
+    if (images.walkaroundUrls.length) openWalkEditor(images.walkaroundUrls);
+    if (images.panoImageInfo.length) openPanoEditor(images.panoImageInfo);
 };
 const openWalkEditor = async (walkaroundUrls)=>{
     // Build an event listener in this scope
