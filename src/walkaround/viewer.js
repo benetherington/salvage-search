@@ -11,8 +11,8 @@ WALKAROUND_VIEWER_STYLE = `<style>
 }
 
 img {
-    inline-size: 100%;
     width: 100%;
+    object-fit: cover;
 }
 </style>`
 

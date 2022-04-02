@@ -10,8 +10,9 @@ body {
     
     height: calc(100vh - 16px);
     width: calc(100vw - 16px);
+    overflow: hidden;
 }
-@media screen and (max-aspect-ratio: 22/21) {
+@media screen and (max-aspect-ratio: 1000/978) {
     /* Screen is narrow, put thumbs below stage */
     body {
         flex-direction: column;
@@ -82,7 +83,7 @@ button.disabled, button.disabled:hover {
     /* .ungrouped isn't intended for things that have full-size children */
     padding: 0;
 }
-@media screen and (min-aspect-ratio: 22/21) {
+@media screen and (min-aspect-ratio: 1000/978) {
     /* Screen is wide, make stage grow */
     #stage-container {
         flex-grow: 6;
@@ -90,22 +91,33 @@ button.disabled, button.disabled:hover {
     }
 }
 #thumbs {
-    display: grid;
-    grid-template-columns: repeat(5, 3fr);
-    column-gap: 1vw;
-    row-gap: 1vw;
+    /* child layout */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    overflow: hidden auto;
+    scrollbar-width: thin;
     
-    flex-grow: 1;
-    flex-basis: 200px;
+    /* this element layout */
+    flex-grow: 0;
 }
-@media screen and (min-aspect-ratio: 22/21) {
-    /* Screen is wide, use fewer columns */
+@media screen and (min-aspect-ratio: 1000/978) {
     #thumbs {
-        grid-template-columns: repeat(2, 3fr);
+        flex-grow: 1;
+        flex-basis: 200px;
     }
 }
-.img-container{
+.img-container {
     position: relative;
+    /* basis includes #thumbs{gap:10px}, times four gaps distributed over five "columns" */
+    flex-basis: calc(20% - 10px * 4 / 5);
+    flex-shrink: 1;
+}
+@media screen and (min-aspect-ratio: 1000/978) {
+    .img-container {
+        /* basis includes #thumbs{gap:10px}, distributed over two "columns" */
+        flex-basis: calc(50% - 10px / 2);
+    }
 }
 .img-container img {
     /* make thumbnails square */
@@ -201,6 +213,7 @@ walkaround-viewer {
 #dl-all::after {
     border-radius: 100%;
 }
+
 
 
 
