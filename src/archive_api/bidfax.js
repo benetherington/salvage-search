@@ -4,13 +4,12 @@
 const captchaMessage = "CAPTCHA failed. \
 Please click on a listing before trying again.";
 
-const BIDFAX_S = {
-    __proto__: Archive,
+const BIDFAX_API = {
     NAME: "bidfax",
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await BIDFAX_S.searcher(vin);
+                const searchResults = await BIDFAX_API.searcher(vin);
                 notify(
                     `BidFax: found a match!`,
                     {displayAs: "success"}
@@ -30,7 +29,7 @@ const BIDFAX_S = {
     },
     searcher: async (vin)=>{
         // Fetch Captcha token
-        const token = await BIDFAX_S.fetchCaptchaToken()
+        const token = await BIDFAX_API.fetchCaptchaToken()
                                     .catch(()=>{throw captchaMessage});
         
         // Configure VIN search
@@ -63,7 +62,7 @@ const BIDFAX_S = {
         if (searchResults.length>5) {throw "search returned no results."}
         
         // Get listing URLs
-        const listingUrls = Array.from(searchResults).map(BIDFAX_S.getUrlFromCaption);
+        const listingUrls = Array.from(searchResults).map(BIDFAX_API.getUrlFromCaption);
         const lotNumbers = listingUrls.map(url=>/\d{8}/.exec(url)[0]);
         
         // Check listing URLs
@@ -141,14 +140,12 @@ const BIDFAX_S = {
         const anchor = el.querySelector("a")
         if (!anchor) return;
         return anchor.href;
-    }
-};
-
-
-/*--------*\
-  DOWNLOAD
-\*--------*/
-const BIDFAX_D = {
+    },
+    
+    
+    /*--------*\
+      DOWNLOAD
+    \*--------*/
     URL_PATTERN: "*://en.bidfax.info/*",
     lotNumberFromTab: async (poctraTab)=>{
         try {

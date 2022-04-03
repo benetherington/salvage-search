@@ -2,7 +2,7 @@ const salvageNameToObject = {
     "iaai": IAAI_D,
     "copart": COPART_D,
     "poctra": POCTRA_D,
-    "bidfax": BIDFAX_D
+    "bidfax": BIDFAX_API
 }
 
 
