@@ -18,9 +18,9 @@ function downloadImages(e) {
     })
 }
 
-/*---------------*\
+/*--------------------*\
   BACKGROUND MESSAGING
-\*---------------*/
+\*--------------------*/
 async function messageHandler(message) {
     console.log('message:'); console.log(message)
     // create thumbnail set, point them in the correct direction

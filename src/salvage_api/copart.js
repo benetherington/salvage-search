@@ -1,15 +1,17 @@
-/*------*\
-  SEARCH  
-\*------*/
-const COPART_S = {
-    __proto__: Salvage,
+
+const COPART_API = {
     NAME: "copart",
     PRETTY_NAME: "Copart",
+    
+    
+    /*------*\
+      SEARCH  
+    \*------*/
     listingUrl: (lotNumber)=>`https://www.copart.com/lot/${lotNumber}`,
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await COPART_S.searcher(vin);
+                const searchResults = await COPART_API.searcher(vin);
                 notify(
                     `Copart: found a match!`,
                     {displayAs:"success"}
@@ -54,7 +56,7 @@ const COPART_S = {
         
         // Get listing URLs
         const lotNumbers = jsn.data.results.content.map(vehicle=>vehicle.lotNumberStr);
-        const listingUrls = lotNumbers.map(lot=>COPART_S.listingUrl(lot));
+        const listingUrls = lotNumbers.map(lot=>COPART_API.listingUrl(lot));
         
         // split results
         const listingUrl = listingUrls.pop();
@@ -63,19 +65,13 @@ const COPART_S = {
         
         // Send back results
         return {salvage: "copart", listingUrl, lotNumber, extras};
-    }
-};
-
-/*--------*\
-  DOWNLOAD
-\*--------*/
-const COPART_D = {
-    __proto__: Salvage,
-    NAME: "copart",
+    },
+    
+    
+    /*------*\
+      SCRAPE
+    \*------*/
     URL_PATTERN: "*://*.copart.com/lot/*",
-    
-    
-    // Tabs
     lotNumberFromTab: async (tab)=>{
         const lotExecuting = browser.tabs.executeScript(
             tab.id, {code:`
@@ -92,6 +88,9 @@ const COPART_D = {
     },
     
     
+    /*--------*\
+      DOWNLOAD
+    \*--------*/
     // Image info
     imageInfoFromLotNumber: async (lotNumber)=>{
         // Configure image download
@@ -119,7 +118,7 @@ const COPART_D = {
     },
     
     
-    // Image fetching
+    // Hero images
     imageUrlsFromInfo: async function (imageInfo) {
         // Validate imageInfo
         const nope = ()=>{throw "Copart encountered a server error."}
@@ -130,10 +129,10 @@ const COPART_D = {
         if (!imageInfo.data.imagesList.FULL_IMAGE  ) nope();
         
         // Process images
-        const imageUrls = COPART_D.pickBestImages(imageInfo);
+        const imageUrls = COPART_API.pickBestImages(imageInfo);
         // Start processing interactives
         const {walkaroundUrls, panoImageInfo} =
-            await COPART_D.interactiveUrlsFromImageInfo(imageInfo);
+            await COPART_API.interactiveUrlsFromImageInfo(imageInfo);
         
         return {imageUrls, walkaroundUrls, panoImageInfo};
     },
@@ -166,17 +165,17 @@ const COPART_D = {
     },
     
     
-    // INTERACTIVE
+    // Panorama/walkaround
     interactiveUrlsFromImageInfo: async (imageInfo)=>{
         // returns empty array if there's no pano/walk indicated, undefined if there was an exception
         let walkaroundUrls, panoImageInfo;
         
         try {
-            walkaroundUrls = await COPART_D.walkaroundObjectUrlsFromImageInfo(imageInfo);
+            walkaroundUrls = await COPART_API.walkaroundObjectUrlsFromImageInfo(imageInfo);
         } catch {}
         
         try {
-            panoImageInfo = await COPART_D.panoObjectUrlsFromImageInfo(imageInfo);
+            panoImageInfo = await COPART_API.panoObjectUrlsFromImageInfo(imageInfo);
         } catch {}
         
         return {walkaroundUrls, panoImageInfo};
@@ -225,7 +224,7 @@ const COPART_D = {
                 face
             }
         }
-    },
+    }
 };
 
 // ImageInfo looks like:

@@ -1,14 +1,17 @@
-/*------*\
-  SEARCH  
-\*------*/
-const IAAI_S = {
+
+const IAAI_API = {
     __proto__: Salvage,
     NAME: "iaai",
     PRETTY_NAME: "IAAI",
+    
+    
+    /*------*\
+      SEARCH  
+    \*------*/
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await IAAI_S.searcher(vin);
+                const searchResults = await IAAI_API.searcher(vin);
                 notify(
                     `IAAI: found a match!`,
                     {displayAs:"success"}
@@ -57,19 +60,13 @@ const IAAI_S = {
             let jsn = JSON.parse(doc.querySelector("#ProductDetailsVM").innerText);
             vehicle.lotNumber = jsn.VehicleDetailsViewModel.StockNo
         }
-    }
-};
-
-/*--------*\
-  DOWNLOAD
-\*--------*/
-const IAAI_D = {
-    __proto__: Salvage,
-    NAME: "iaai",
+    },
+    
+    
+    /*------*\
+      SCRAPE
+    \*------*/
     URL_PATTERN: "*://*.iaai.com/*ehicle*etail*",
-    
-    
-    // Tabs
     lotNumberFromTab: async (tab)=>{
         try {
             // Execute content script
@@ -94,12 +91,15 @@ const IAAI_D = {
     },
     
     
+    /*--------*\
+      DOWNLOAD
+    \*--------*/
     // Image info
     imageInfoFromLotNumber: async (stockNumber)=>{
         console.log(`IAAI fetching image info for ${stockNumber}`)
         
         // Make request
-        const {url, headers} = IAAI_D.buildImageInfoRequest(stockNumber);
+        const {url, headers} = IAAI_API.buildImageInfoRequest(stockNumber);
         const response = await fetch(url, headers);
         console.log("IAAI imageInfo request complete")
         
@@ -131,17 +131,17 @@ const IAAI_D = {
     },
     
     
-    // Image fetching
+    // Hero images
     imageUrlsFromInfo: async function (lotDetails, notify=sendNotification) {
         console.log(`IAAI downloading images.`)
         notify(`IAAI: processing ${lotDetails.keys.length} images.`)
         
         // Start processing heros
-        const imageUrls = await IAAI_D.fetchHeroImages(lotDetails.keys);
+        const imageUrls = await IAAI_API.fetchHeroImages(lotDetails.keys);
         
         // Start processing interactives
         const {walkaroundUrls, panoImageInfo} =
-            await SPINCAR_D.interactiveUrlsFromImageInfo(lotDetails);
+            await IAAI_API.interactiveUrlsFromImageInfo(lotDetails);
         
         // DONE
         return {imageUrls, walkaroundUrls, panoImageInfo}
@@ -150,7 +150,7 @@ const IAAI_D = {
     // full-res images.
     fetchHeroImages: async function (imageKeys) {
         // Fetch tiles for each image
-        const imagesAsTilesPromises = imageKeys.map(IAAI_D.fetchImageTiles);
+        const imagesAsTilesPromises = imageKeys.map(IAAI_API.fetchImageTiles);
         const imagesAsTiles = await Promise.all(imagesAsTilesPromises);
         
         // Zip keys and downloaded tiles
@@ -159,7 +159,7 @@ const IAAI_D = {
         )
         
         // Stitch each set of tiles into a single image
-        const stitchedImagePromises = stitchableImages.map(IAAI_D.stitchImage);
+        const stitchedImagePromises = stitchableImages.map(IAAI_API.stitchImage);
         const stitchedImages = await Promise.all(stitchedImagePromises);
         
         // Return ObjectUrls
@@ -169,8 +169,8 @@ const IAAI_D = {
     TILE_SIZE: 250,
     fetchImageTiles: key=>{
         // Plan out tile requests
-        let xTiles = Math.ceil(key.W / IAAI_D.TILE_SIZE);
-        let yTiles = Math.ceil(key.H / IAAI_D.TILE_SIZE);
+        let xTiles = Math.ceil(key.W / IAAI_API.TILE_SIZE);
+        let yTiles = Math.ceil(key.H / IAAI_API.TILE_SIZE);
         let xRange = [...Array(xTiles).keys()];
         let yRange = [...Array(yTiles).keys()];
         
@@ -178,13 +178,13 @@ const IAAI_D = {
         let bmpPromises = [];
         for (let x of xRange) {
             for (let y of yRange){
-                bmpPromises.push(IAAI_D.fetchBmpDetail(key, x, y))
+                bmpPromises.push(IAAI_API.fetchBmpDetail(key, x, y))
             }
         }
         return Promise.all(bmpPromises)
     },
     fetchBmpDetail: async (key, x, y)=>{
-        const url = IAAI_D.getTileUrl(key, x,y);
+        const url = IAAI_API.getTileUrl(key, x,y);
         const response = await fetch(url);
         const blob = await response.blob();
         const bmp = await createImageBitmap(blob);
@@ -197,7 +197,7 @@ const IAAI_D = {
         url.searchParams.append("x", x)
         url.searchParams.append("y", y)
         url.searchParams.append("overlap", 0)
-        url.searchParams.append("tilesize", IAAI_D.TILE_SIZE)
+        url.searchParams.append("tilesize", IAAI_API.TILE_SIZE)
         return url;
     },
     // Tile stitching
@@ -213,14 +213,14 @@ const IAAI_D = {
             const {bmp,x,y} = tile;
             ctx.drawImage(
                 bmp,
-                x*IAAI_D.TILE_SIZE,
-                y*IAAI_D.TILE_SIZE
+                x*IAAI_API.TILE_SIZE,
+                y*IAAI_API.TILE_SIZE
             )
         })
         
         // Export canvas
         const dataURL = canvas.toDataURL("image/jpeg");
-        const objectURL = IAAI_D.dataURLtoObjectURL(dataURL);
+        const objectURL = IAAI_API.dataURLtoObjectURL(dataURL);
         
         // Done!
         console.log(`${key.K} processed`)
@@ -239,37 +239,10 @@ const IAAI_D = {
         const blob = new Blob([ab], {type: mimeString});
         blob.name = name+".jpg"
         return URL.createObjectURL(blob)
-    }
-}
-// FOR REFERENCE
-// getJsonImageDimensions returns:
-// {
-//     DeepZoomInd: true
-//     Image360Ind: true
-//     Image360Url: https://cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/20210928165305.CUFD0VOL/ec/0-41.jpg
-//     UndercarriageInd: false
-//     VRDUrl: "https://mediastorageaccountprod.blob.core.windows.net/media/31819854_VES-100_1"
-//     Videos: [{…}]
-//     keys: (11) [{
-//         AR: 1.33,
-//         ART: 1.35,
-//         B: 671,
-//         H: 1944,
-//         I: 0,
-//         IN: 1,
-//         K: "31819854~SID~B671~S0~I1~RW2592~H1944~TH0",
-//         S: 0,
-//         SID: 31819854,
-//         SN: 31355822,
-//         TH: 72,
-//         TW: 96,
-//         W: 2592,
-//     }, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
-// }
-
-
-let SPINCAR_D = {
-    __proto__: Salvage,
+    },
+    
+    
+    // Panorama/walkaround
     interactiveUrlsFromImageInfo: async (imageInfo)=>{
         // Validate imageInfo
         if (!imageInfo.Image360Ind) {
@@ -286,8 +259,8 @@ let SPINCAR_D = {
         let spinInfo = await fetch(apiUrl, headers).then(r=>r.json());
         
         // Fetch images
-        let walkaroundUrls = await SPINCAR_D.walkaroundObjectUrlsFromImageInfo(spinInfo);
-        let panoImageInfo = await SPINCAR_D.panoObjectUrlsFromImageInfo(spinInfo);
+        let walkaroundUrls = await IAAI_API.walkaroundObjectUrlsFromImageInfo(spinInfo);
+        let panoImageInfo = await IAAI_API.panoObjectUrlsFromImageInfo(spinInfo);
         
         // Done!
         return {walkaroundUrls, panoImageInfo}
@@ -338,8 +311,35 @@ let SPINCAR_D = {
             equirectangular: false,
             faces: Object.fromEntries(panoObjectUrls)
         }
-    },
+    }
 }
+
+// FOR REFERENCE
+// getJsonImageDimensions returns:
+// {
+//     DeepZoomInd: true
+//     Image360Ind: true
+//     Image360Url: https://cdn.spincar.com/swipetospin-viewers/iaa-rochester/000-31355822/20210928165305.CUFD0VOL/ec/0-41.jpg
+//     UndercarriageInd: false
+//     VRDUrl: "https://mediastorageaccountprod.blob.core.windows.net/media/31819854_VES-100_1"
+//     Videos: [{…}]
+//     keys: (11) [{
+//         AR: 1.33,
+//         ART: 1.35,
+//         B: 671,
+//         H: 1944,
+//         I: 0,
+//         IN: 1,
+//         K: "31819854~SID~B671~S0~I1~RW2592~H1944~TH0",
+//         S: 0,
+//         SID: 31819854,
+//         SN: 31355822,
+//         TH: 72,
+//         TW: 96,
+//         W: 2592,
+//     }, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+// }
+
 
 // FOR REFERENCE:
 // walkaround/pano URL format is:

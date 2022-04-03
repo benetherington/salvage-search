@@ -1,13 +1,12 @@
 /*------*\
   SEARCH  
 \*------*/
-const ROW52_S = {
-    __proto__: Salvage,
+const ROW52_API = {
     NAME: "row52",
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await ROW52_S.searcher(vin);
+                const searchResults = await ROW52_API.searcher(vin);
                 notify(`Row52: Found a match!`, {displayAs: "success"})
                 resolve(searchResults)
             } catch (error) {
@@ -96,9 +95,4 @@ const ROW52_S = {
         // let yardName = yardNameElement.innerText.trim()
     }
 };
-
-
-/*--------*\
-  DOWNLOAD
-\*--------*/
 

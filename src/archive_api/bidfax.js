@@ -146,9 +146,9 @@ const BIDFAX_API = {
     },
     
     
-    /*--------*\
-      DOWNLOAD
-    \*--------*/
+    /*------*\
+      SCRAPE
+    \*------*/
     URL_PATTERN: "*://en.bidfax.info/*",
     lotNumberFromTab: async (poctraTab)=>{
         try {

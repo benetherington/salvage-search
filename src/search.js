@@ -22,13 +22,13 @@ const searchPrimaries = async (vin, notify, settings=null)=>{
     
     // Start searches
     if (settings.searchCopart) {
-        searchPromises.push(COPART_S.search(vin, notify))
+        searchPromises.push(COPART_API.search(vin, notify))
     }
     if (settings.searchIaai) {
-        searchPromises.push(IAAI_S.search(vin, notify))
+        searchPromises.push(IAAI_API.search(vin, notify))
     }
     if (settings.searchRow52) {
-        searchPromises.push(ROW52_S.search(vin, notify))
+        searchPromises.push(ROW52_API.search(vin, notify))
     }
     
     // Return search results, with a guaranteed rejection in case none were

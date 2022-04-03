@@ -78,9 +78,9 @@ const POCTRA_API = {
     },
     
     
-    /*--------*\
-      DOWNLOAD
-    \*--------*/
+    /*------*\
+      SCRAPE
+    \*------*/
     lotNumberFromTab: async (poctraTab)=>{
         try {
             const code = `(${POCTRA_API.getLotNumber.toString()})()`

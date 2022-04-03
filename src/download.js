@@ -1,6 +1,6 @@
 const salvageNameToObject = {
-    "iaai": IAAI_D,
-    "copart": COPART_D,
+    "iaai": IAAI_API,
+    "copart": COPART_API,
     "poctra": POCTRA_API,
     "bidfax": BIDFAX_API
 }
@@ -13,7 +13,7 @@ const findBestTab = async()=>{
     // Find all salvage tabs
     let salvageTabs = await browser.tabs.query({
         url: [
-            COPART_D.URL_PATTERN, IAAI_D.URL_PATTERN,
+            COPART_API.URL_PATTERN, IAAI_API.URL_PATTERN,
             POCTRA_API.URL_PATTERN, BIDFAX_API.URL_PATTERN
         ]
     });
@@ -33,8 +33,8 @@ const findBestTab = async()=>{
 };
 const getSalvageFromTab = (tab)=>{
     // Identify primary sites
-    if (/copart\.com/i .test(tab.url)) return COPART_D;
-    if (/iaai\.com/i   .test(tab.url)) return IAAI_D;
+    if (/copart\.com/i .test(tab.url)) return COPART_API;
+    if (/iaai\.com/i   .test(tab.url)) return IAAI_API;
     
     // Identify archive sites
     if (/poctra\.com/i .test(tab.url)) return POCTRA_API;
