@@ -99,6 +99,7 @@ button.disabled, button.disabled:hover {
     scrollbar-width: thin;
     
     /* this element layout */
+    min-height: calc(20% + .5vh);
     flex-grow: 0;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
@@ -192,19 +193,16 @@ pano-container {
     /* appearance */
     color: grey;
     font-size: 2em;
-    /* alignment */
-    padding: 10%;
-    padding-right: calc(10% + 30px); /* leave room for dl button */
-    position: absolute;
+    /* alignment, skewed slightly left to make room for download button */
+    width: 90%;
     align-self: center;
-    justify-self: center;
     text-align: center;
 }
 .placeholder:not(:last-child) {
     /* Because thumbnails get added to the end of #thumbs,
     the placeholder can hide itself when there's anything
     below it. */
-    visibility: hidden;
+    display: none;
 }
 #dl-all {
     height: 60px;
