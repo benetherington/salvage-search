@@ -90,44 +90,86 @@ const POCTRA_API = {
         } catch (error) {throw `Poctra: ${error}`}
     },
     getLotNumber: ()=>{
-        // Primary method, look at the grid of information
-        let infoGrid = "";
+        // A button links to the salvage site, this is the best place to find
+        // our info!
+        let viewButton;
         try {
-            infoGrid = document.getElementById("aside").innerText;
+            viewButton = document.querySelector(".btn-primary[type=button]")
+                      || document.querySelector(".btn-primary[href*=copart i]")
+                      || document.querySelector(".btn-primary[href*=iaai i]");
         } catch {}
         
-        // Find lotNumber from info grid
+        // Find lotNumber from button
         let lotNumber = "";
         try {
-            // first try, very specific
-            lotNumber = /(stock|lot) (no|number)\W+(?<lotNumber>\d*)/i.exec(infoGrid)[3];
-        } catch {
-            // backup, less specific
-            try {lotNumber = /\d{8}/i.exec(infoGrid)[0];} catch {}
-        };
-        
-        // Find salvageName from info grid
-        let salvageName = "";
+            lotNumber = /lot\/(\d{8})/.exec(viewButton.href)[1];
+        } catch {}
+        // Backup: find lotNumber from headline
         try {
-            // first try, very specific
-            salvageName = /auction\W+(\w*)/i.exec(infoGrid)[1];
-        } catch {
-            // backup, less specific
-            try {salvageName = /(iaai|copart)/i.exec(infoGrid)[0];} catch {}
-        }
-        
-        // Backup method, look at the page headline
+            const headline = document.querySelector("h2").innerText;
+            lotNumber = /\d{8}/.exec(headline)[0];
+        } catch {}
+        // Backup: find lotNumber in SEO data
         if (!lotNumber) {
             try {
-                const headline = document.querySelector("h2").innerText;
-                lotNumber = /\d{8}/i.exec(headline)[0];
+                const seo = document.querySelector("meta[name=description]").content;
+                lotNumber = /\W(\d{8})/i.exec(seo)[1];
             } catch {}
         }
-        // Find salvageName from headline
+        // Backup: find lotNumber in image url
+        if (!lotNumber) {
+            try {
+                const imageSrc = document.getElementById("mainImage").src;
+                lotNumber = /(\d{8}).jpg/i.exec(imageSrc)[1];
+            } catch {}
+        }
+        
+        
+        // Find salvageName from button
+        let salvageName = "";
+        try {
+            if (
+                /iaai/i.exec(viewButton.href)
+                || /iaai/i.exec(viewButton.innerText)
+            ) salvageName = "iaai";
+            else if (
+                /copart/i.exec(viewButton.href)
+                || /copart/i.exec(viewButton.innerText)
+                || /us lot/i.exec(viewButton.innerText)
+            ) salvageName = "copart";
+        } catch {}
+        // Backup: find salvageName in image url
+        if (!salvageName) {
+            try {
+                const imageSrc = document.getElementById("mainImage").src;
+                salvageName = /(copart|iaai)/i.exec(imageSrc)[0];
+            } catch {}
+        }
+        // Backup: infer salvageName from headline
         if (!salvageName) {
             try {
                 const headline = document.querySelector("h2").innerText;
-                salvageName = /(iaai|copart)/i.exec(headline)[0];
+                if (/stock/i.exec(headline)) salvageName = "iaai";
+                else if (/lot/i.exec(headline)) salvageName = "copart";
+            } catch {}
+        }
+        // Backup: find salvageName in SEO data
+        if (!salvageName) {
+            try {
+                const seo = document.querySelector("meta[name=description]").content;
+                salvageName = /(iaai|copart)/i.exec(seo)[0];
+            } catch {
+                // Backup to the backup: infer salvageName
+                const seo = document.querySelector("meta[name=description]").content;
+                if (/stock/i.exec(seo)) salvageName = "iaai";
+                else if (/lot/i.exec(seo)) salvageName = "copart";
+            }
+        }
+        // Backup: find salvageName in modal
+        if (!salvageName) {
+            try {
+                if (document.getElementById("iaaiModal")) salvageName = "iaai";
+                else if (document.getElementById("copartModal")) salvageName = "copart";
             } catch {}
         }
         
