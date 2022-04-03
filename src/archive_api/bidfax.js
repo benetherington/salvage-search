@@ -1,12 +1,14 @@
-/*------*\
-  SEARCH  
-\*------*/
 const captchaMessage = "CAPTCHA failed. \
 Please click on a listing before trying again.";
 
 const BIDFAX_API = {
     NAME: "bidfax",
     URL_PATTERN: "*://en.bidfax.info/*",
+    
+    
+    /*------*\
+      SEARCH
+    \*------*/
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
