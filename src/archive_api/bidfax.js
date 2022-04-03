@@ -6,6 +6,7 @@ Please click on a listing before trying again.";
 
 const BIDFAX_API = {
     NAME: "bidfax",
+    URL_PATTERN: "*://en.bidfax.info/*",
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
