@@ -83,23 +83,60 @@ const POCTRA_S = {
 \*--------*/
 const POCTRA_D = {
     URL_PATTERN: "*://*.poctra.com/*/id-*/*",
-    lotNumbersFromTab: async (poctraTab)=>{
+    lotNumberFromTab: async (poctraTab)=>{
         try {
-            let code = `(${POCTRA_D.getLotNumber.toString()})()`
-            let framesResults = await browser.tabs.executeScript(poctraTab.id,{code});
-            let frameResults = framesResults[0]
-            let vehicle = {lotNumber: frameResults.lotNumber};
-            if (frameResults.copart) {vehicle.salvage = "copart"};
-            if (frameResults.iaai  ) {vehicle.salvage = "iaai"  };
-            return vehicle
+            const code = `(${POCTRA_D.getLotNumber.toString()})()`
+            const framesResults = await browser.tabs.executeScript(poctraTab.id, {code});
+            const frameResults = framesResults[0]
+            return frameResults
         } catch (error) {throw `Poctra: ${error}`}
     },
     getLotNumber: ()=>{
-        let idElement = document.querySelector("h2");
-        if (!idElement) {return null}
-        let idString = idElement.innerText;
-        let idMatches = /((?<copart>Lot)|(?<iaai>Stock)) no: (?<lotNumber>\d*)/.exec(idString);
-        if (!idMatches) {return null}
-        return idMatches.groups;
+        // Primary method, look at the grid of information
+        let infoGrid = "";
+        try {
+            infoGrid = document.getElementById("aside").innerText;
+        } catch {}
+        
+        // Find lotNumber from info grid
+        let lotNumber = "";
+        try {
+            // first try, very specific
+            lotNumber = /(stock|lot) (no|number)\W+(?<lotNumber>\d*)/i.exec(infoGrid)[3];
+        } catch {
+            // backup, less specific
+            try {lotNumber = /\d{8}/i.exec(infoGrid)[0];} catch {}
+        };
+        
+        // Find salvageName from info grid
+        let salvageName = "";
+        try {
+            // first try, very specific
+            salvageName = /auction\W+(\w*)/i.exec(infoGrid)[1];
+        } catch {
+            // backup, less specific
+            try {salvageName = /(iaai|copart)/i.exec(infoGrid)[0];} catch {}
+        }
+        
+        // Backup method, look at the page headline
+        if (!lotNumber) {
+            try {
+                const headline = document.querySelector("h2").innerText;
+                lotNumber = /\d{8}/i.exec(headline)[0];
+            } catch {}
+        }
+        // Find salvageName from headline
+        if (!salvageName) {
+            try {
+                const headline = document.querySelector("h2").innerText;
+                salvageName = /(iaai|copart)/i.exec(headline)[0];
+            } catch {}
+        }
+        
+        // Clean up results
+        lotNumber = lotNumber.trim();
+        salvageName = salvageName.trim().toLowerCase();
+        
+        return {lotNumber, salvageName};
     }
 }
