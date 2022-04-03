@@ -57,10 +57,10 @@ const searchArchives = async (query, notify)=>{
     
     // Start searches
     if (settings.searchPoctra) {
-        archivePromises.push(POCTRA_S.search(query, notify))
+        archivePromises.push(POCTRA_API.search(query, notify))
     }
     if (settings.searchBidfax) {
-        archivePromises.push(BIDFAX_S.search(query, notify))
+        archivePromises.push(BIDFAX_API.search(query, notify))
     }
     
     // Return search results, with a guaranteed rejection in case none were

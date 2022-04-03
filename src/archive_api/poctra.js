@@ -1,14 +1,15 @@
-/*------*\
-  SEARCH  
-\*------*/
-const POCTRA_S = {
-    __proto__: Archive,
+const POCTRA_API = {
     NAME: "poctra",
-    INFO_REGEX: /^(?<salvage>.*?) (Stock|Lot) No: (?<lotNumber>\d*)<br>.*<br>Location: (?<location>.*)$/,
+    URL_PATTERN: "*://*.poctra.com/*/id-*/*",
+    
+    
+    /*------*\
+      SEARCH
+    \*------*/
     search: (vin, notify=sendNotification)=>{
         return new Promise( async (resolve, reject)=>{
             try {
-                const searchResults = await POCTRA_S.searcher(vin);
+                const searchResults = await POCTRA_API.searcher(vin);
                 notify(
                     `Poctra: found a match!`,
                     {displayAs: "success"}
@@ -74,18 +75,15 @@ const POCTRA_S = {
         
         // Send back results
         return {salvage: "poctra", listingUrl, lotNumber, extras};
-    }
-};
-
-
-/*--------*\
-  DOWNLOAD
-\*--------*/
-const POCTRA_D = {
-    URL_PATTERN: "*://*.poctra.com/*/id-*/*",
+    },
+    
+    
+    /*--------*\
+      DOWNLOAD
+    \*--------*/
     lotNumberFromTab: async (poctraTab)=>{
         try {
-            const code = `(${POCTRA_D.getLotNumber.toString()})()`
+            const code = `(${POCTRA_API.getLotNumber.toString()})()`
             const framesResults = await browser.tabs.executeScript(poctraTab.id, {code});
             const frameResults = framesResults[0]
             return frameResults
