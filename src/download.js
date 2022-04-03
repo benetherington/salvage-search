@@ -44,8 +44,7 @@ const getTabInfo = async()=>{
     const bestTab = await findBestTab();
     if (!bestTab) return;
     const salvage = getSalvageFromTab(bestTab);
-    const salvageName = salvage.NAME;
-    const lotNumber = await salvage.lotNumberFromTab(bestTab);
+    const {lotNumber, salvageName} = await salvage.lotNumberFromTab(bestTab);
     return {salvageName, lotNumber};
 }
 

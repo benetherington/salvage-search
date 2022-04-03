@@ -87,7 +87,8 @@ const COPART_D = {
             }
         );
         const lotNumber = (await lotExecuting)[0];
-        return lotNumber;
+        const salvageName = "copart";
+        return {lotNumber, salvageName};
     },
     
     

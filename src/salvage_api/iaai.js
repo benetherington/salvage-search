@@ -72,16 +72,22 @@ const IAAI_D = {
     // Tabs
     lotNumberFromTab: async (tab)=>{
         try {
+            // Execute content script
             const lastEvaluated = await browser.tabs.executeScript(
                 tab.id,
                 {code:`document.querySelector("#ProductDetailsVM").innerText`}
             );
-            const jsn = JSON.parse(lastEvaluated[0]);
             
-            // Not sure if this was a change, or just a configuration I missed
-            // the first time round...
-            if (jsn.VehicleDetailsViewModel) return jsn.VehicleDetailsViewModel.StockNo;
-            if (jsn.auctionInformation) return jsn.auctionInformation.stockNumber;
+            // Parse out lotNumber
+            let lotNumber;
+            const jsn = JSON.parse(lastEvaluated[0]);
+            // Not sure if below are alternatives, or the first was superceded.
+            if (jsn.VehicleDetailsViewModel) lotNumber = jsn.VehicleDetailsViewModel.StockNo;
+            if (jsn.auctionInformation)      lotNumber = jsn.auctionInformation.stockNumber;
+            
+            // Done!
+            const salvageName = "iaai";
+            return {lotNumber, salvageName};
         } catch {
             throw "something went wrong getting this vehicle's stock number. Please reload the page and try again."
         }
