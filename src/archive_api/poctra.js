@@ -56,13 +56,16 @@ const POCTRA_S = {
         // Get listing URLs
         const listingUrls = [];
         searchResults.forEach(el=>listingUrls.push(el.querySelector("a").href));
-        const lotNumbers = searchResults.map(el=>/\d{8}/.exec(el.innerHTML));
         
         // Check listing URLs
         if (!listingUrls.some(el=>el)) {
             console.log("POCTRA found results, but not listing URLs.");
             throw "search returned a result, but it's invalid.";
         }
+        
+        // Extract lot numbers
+        const lotNumbers = [];
+        searchResults.forEach( el=>lotNumbers.push(/\d{8}/.exec(el.innerHTML)[0]) );
         
         // Split results
         const listingUrl = listingUrls.pop();
