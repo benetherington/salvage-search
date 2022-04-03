@@ -14,7 +14,7 @@ const findBestTab = async()=>{
     let salvageTabs = await browser.tabs.query({
         url: [
             COPART_D.URL_PATTERN, IAAI_D.URL_PATTERN,
-            POCTRA_D.URL_PATTERN, BIDFAX_D.URL_PATTERN
+            POCTRA_D.URL_PATTERN, BIDFAX_API.URL_PATTERN
         ]
     });
     
@@ -38,7 +38,7 @@ const getSalvageFromTab = (tab)=>{
     
     // Identify archive sites
     if (/poctra\.com/i .test(tab.url)) return POCTRA_D;
-    if (/bidfax\.info/i.test(tab.url)) return BIDFAX_D;
+    if (/bidfax\.info/i.test(tab.url)) return BIDFAX_API;
 }
 const getTabInfo = async()=>{
     const bestTab = await findBestTab();
