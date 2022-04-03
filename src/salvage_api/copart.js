@@ -131,8 +131,9 @@ const COPART_D = {
         
         // Process images
         const imageUrls = COPART_D.pickBestImages(imageInfo);
-        const walkaroundUrls = [];
-        const panoImageInfo = [];
+        // Start processing interactives
+        const {walkaroundUrls, panoImageInfo} =
+            await COPART_D.interactiveUrlsFromImageInfo(imageInfo);
         
         return {imageUrls, walkaroundUrls, panoImageInfo};
     },
@@ -162,7 +163,69 @@ const COPART_D = {
         }
         
         return bestUrls;
-    }
+    },
+    
+    
+    // INTERACTIVE
+    interactiveUrlsFromImageInfo: async (imageInfo)=>{
+        // returns empty array if there's no pano/walk indicated, undefined if there was an exception
+        let walkaroundUrls, panoImageInfo;
+        
+        try {
+            walkaroundUrls = await COPART_D.walkaroundObjectUrlsFromImageInfo(imageInfo);
+        } catch {}
+        
+        try {
+            panoImageInfo = await COPART_D.panoObjectUrlsFromImageInfo(imageInfo);
+        } catch {}
+        
+        return {walkaroundUrls, panoImageInfo};
+    },
+    walkaroundObjectUrlsFromImageInfo: async (imageInfo) =>{
+        // Validate imageInfo (we're guaranteed to have imagesList)
+        if (!imageInfo.data.imagesList.EXTERIOR_360) return [];
+        if (!imageInfo.data.imagesList.EXTERIOR_360.length) return [];
+        
+        // Extract, format data
+        const {url, frameCount} = imageInfo.data.imagesList.EXTERIOR_360[0];
+        const frameUrl = (frame)=>url.replace(/(?<=frames_)\d+/, frame);
+        const frameIdcs = Array(frameCount).keys();
+        
+        // Build a list of all URLs
+        const walkaroundUrls = [];
+        for (idx of frameIdcs) {
+            walkaroundUrls.push(frameUrl(idx))
+        }
+        
+        // Fetch image data, convert object URLs
+        let walkPromises = walkaroundUrls.map(imageUrl=>{
+            return fetch(imageUrl)
+                .then(response=>response.blob())
+                .then(blob=>URL.createObjectURL(blob))
+        });
+        let walkSettled = await Promise.allSettled(walkPromises);
+        
+        // Check for errors, hand back object URLs
+        return walkSettled.map(p=>p.value||"TODO: add rejected image")
+    },
+    panoObjectUrlsFromImageInfo: async (imageInfo) =>{
+        // Validate imageInfo (we're guaranteed to have imagesList)
+        if (!imageInfo.data.imagesList.INTERIOR_360) return [];
+        if (!imageInfo.data.imagesList.INTERIOR_360.length) return [];
+        if (!imageInfo.data.imagesList.INTERIOR_360[0].url) return [];
+        
+        // Extract data
+        const face = imageInfo.data.imagesList.INTERIOR_360[0].url;
+        
+        // Send back object URLs and information on how to interpret them
+        if (face) {
+            return {
+                cubemap: false,
+                equirectangular: true,
+                face
+            }
+        }
+    },
 };
 
 // ImageInfo looks like:
