@@ -52,29 +52,38 @@ const getTabInfo = async()=>{
 /*---------------*\
   DOWNLOAD IMAGES
 \*---------------*/
-const fetchImageUrls = async(lotNumber, salvageName)=>{
+const fetchImageUrls = async (lotNumber, salvageName)=>{
     // Fetch image info
     const salvage = salvageNameToObject[salvageName];
     const imageInfo = await salvage.imageInfoFromLotNumber(lotNumber);
     
     // Fetch image urls
-    return salvage.imageUrlsFromInfo(imageInfo)
+    const heroImages = await salvage.heroImages(imageInfo);
+    const {walkaroundUrls, panoImageInfo} = await salvage.bonusImages(imageInfo);
+    
+    console.log(`Collected images.`)
+    return {heroImages, walkaroundUrls, panoImageInfo};
 }
-const saveImages = (salvageName, lotNumber, images)=>{
-    // Download hero images
-    if (images.imageUrls) {
-        images.imageUrls.forEach((url, idx)=>{
+const saveImages = (salvageName, lotNumber, {heroImages, walkaroundUrls, panoImageInfo})=>{
+    // Check for hero images, save them
+    if (heroImages) {
+        heroImages.forEach((url, idx)=>{
             browser.downloads.download({
                 url,
                 saveAs: false,
                 filename: `${salvageName}-${lotNumber}/${idx}.jpg`
             })
         })
+        console.log(`Saved ${heroImages.length} heroImages.`)
     }
     
-    // Open walkaround and pano editors
-    if (images.walkaroundUrls.length) openWalkEditor(images.walkaroundUrls);
-    if (images.panoImageInfo) openPanoEditor(images.panoImageInfo);
+    // Check for walkaround images, save them
+    if (walkaroundUrls) openWalkEditor(salvageName, lotNumber, walkaroundUrls);
+    else console.log("No walkaround images.")
+    
+    // Check for panorama images, save them
+    if (panoImageInfo) openPanoEditor(salvageName, lotNumber, panoImageInfo);
+    else console.log("No panorama images.")
 };
 const openWalkEditor = async (walkaroundUrls)=>{
     // Build an event listener in this scope
@@ -156,7 +165,6 @@ const download = async (message)=>{
         const imageUrls = await fetchImageUrls(lotNumber, salvageName);
         
         // Send images to downloads folder
-        console.log("Download got images, sending to downloads folder")
         await saveImages(salvageName, lotNumber, imageUrls);
         
         // Wrap up
@@ -167,6 +175,7 @@ const download = async (message)=>{
         }
         dPort.postMessage({complete, feedback})
     } catch (error) {
+        console.error(error)
         const complete = true;
         const feedback = {
             message: error,
