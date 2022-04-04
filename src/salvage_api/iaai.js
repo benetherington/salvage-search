@@ -95,11 +95,11 @@ const IAAI_API = {
       DOWNLOAD
     \*--------*/
     // Image info
-    imageInfoFromLotNumber: async (stockNumber)=>{
-        console.log(`IAAI fetching image info for ${stockNumber}`)
+    imageInfoFromLotNumber: async (lotNumber)=>{
+        console.log(`IAAI fetching image info for ${lotNumber}`)
         
         // Make request
-        const {url, headers} = IAAI_API.buildImageInfoRequest(stockNumber);
+        const {url, headers} = IAAI_API.buildImageInfoRequest(lotNumber);
         const response = await fetch(url, headers);
         console.log("IAAI imageInfo request complete")
         
@@ -114,11 +114,11 @@ const IAAI_API = {
         // Everything looks good!
         return response.json()
     },
-    buildImageInfoRequest: (stockNumber)=>{
+    buildImageInfoRequest: (lotNumber)=>{
         // Create URL with search body
         const url = new URL("https://iaai.com/Images/GetJsonImageDimensions");
         url.searchParams.append(
-            'json', JSON.stringify({"stockNumber":stockNumber})
+            'json', JSON.stringify({"stockNumber": lotNumber})
         )
         
         // Create headers
@@ -132,23 +132,21 @@ const IAAI_API = {
     
     
     // Hero images
-    imageUrlsFromInfo: async function (lotDetails, notify=sendNotification) {
-        console.log(`IAAI downloading images.`)
-        notify(`IAAI: processing ${lotDetails.keys.length} images.`)
+    heroImages: async (imageInfo, notify=sendNotification) => {
+        console.log("IAAI downloading images.")
         
-        // Start processing heros
-        const imageUrls = await IAAI_API.fetchHeroImages(lotDetails.keys);
+        // TODO: Validate imageInfo
         
-        // Start processing interactives
-        const {walkaroundUrls, panoImageInfo} =
-            await IAAI_API.interactiveUrlsFromImageInfo(lotDetails);
+        // Process Images
+        notify(`IAAI: processing ${imageInfo.keys.length} images.`)
+        const heroImages = await IAAI_API.fetchHeroImages(imageInfo.keys);
         
         // DONE
-        return {imageUrls, walkaroundUrls, panoImageInfo}
+        return heroImages;
     },
     // IAAI uses Deepzoom/OpenSeaDragon, so there's a lot of work to get
     // full-res images.
-    fetchHeroImages: async function (imageKeys) {
+    fetchHeroImages: async (imageKeys) => {
         // Fetch tiles for each image
         const imagesAsTilesPromises = imageKeys.map(IAAI_API.fetchImageTiles);
         const imagesAsTiles = await Promise.all(imagesAsTilesPromises);
@@ -243,59 +241,100 @@ const IAAI_API = {
     
     
     // Panorama/walkaround
-    interactiveUrlsFromImageInfo: async (imageInfo)=>{
+    bonusImages: async (imageInfo)=>{
+        /*
+        Returns empty array if there's no pano/walk indicated, undefined if
+        there was an exception.
+        */
+        
         // Validate imageInfo
         if (!imageInfo.Image360Ind) {
             console.log("no 360 indicated")
             return [];
         }
         
-        // Fetch interactive info
-        let spinUrl = imageInfo.Image360Url;
-        let spinPath = /com\/(.*)/.exec(spinUrl)[1];
-        let apiUrl = "https://api.spincar.com/spin/" + spinPath;
-        let headers = { "User-Agent": window.navigator.userAgent,
-                    "Accept": "application/json" };
-        let spinInfo = await fetch(apiUrl, headers).then(r=>r.json());
+        // Fetch bonus info
+        const bonusInfo = await IAAI_API.bonusImageInfo(imageInfo);
         
         // Fetch images
-        let walkaroundUrls = await IAAI_API.walkaroundObjectUrlsFromImageInfo(spinInfo);
-        let panoImageInfo = await IAAI_API.panoObjectUrlsFromImageInfo(spinInfo);
+        let walkaroundUrls, panoImageInfo;
+        try {
+            walkaroundUrls = await IAAI_API.walkaroundObjectUrls(bonusInfo);
+        } catch {}
+        try {
+            panoImageInfo = await IAAI_API.panoramaObjectUrls(bonusInfo);
+        } catch {}
         
         // Done!
-        return {walkaroundUrls, panoImageInfo}
+        return {walkaroundUrls, panoImageInfo};
     },
-    walkaroundObjectUrlsFromImageInfo: async (spinInfo) =>{
-        // Build image urls
-        let walkaroundCount = spinInfo.info.options.numImgEC;
-        let walkaroundUrls = Array.from(Array(walkaroundCount).keys()).map(
-            idx=>`https:${spinInfo.cdn_image_prefix}ec/0-${idx}.jpg`
-        );
+    bonusImageInfo: async (imageInfo)=>{
+        try {
+            // Build request
+            const spinUrl = imageInfo.Image360Url;
+            const spinPath = /com\/(.*)/.exec(spinUrl)[1];
+            const apiUrl = "https://api.spincar.com/spin/" + spinPath;
+            const headers = { "User-Agent": window.navigator.userAgent,
+            "Accept": "application/json" };
+            
+            // Send request
+            const spincarRequest = fetch(apiUrl, headers).then(r=>r.json());
+            spincarRequest.catch(error=>{
+                console.error("Spincar request failed!")
+                console.error(error)
+                return;
+            })
+            return spincarRequest;
+        } catch (error) {
+            console.error("IAAI failed while requesting Spincar info.")
+            console.error(`spinUrl: ${spinUrl}`)
+            console.error(`apiUrl: ${apiUrl}`)
+            console.error(error)
+        }
+    },
+    walkaroundObjectUrls: async (bonusInfo)=>{
+        // Validate bonusInfo
+        if (!bonusInfo.info                 ) return [];
+        if (!bonusInfo.info.options         ) return [];
+        if (!bonusInfo.info.options.numImgEC) return [];
+        
+        // Extract data
+        const walkaroundCount = bonusInfo.info.options.numImgEC;
+        const frameIdcs = Array(walkaroundCount).keys();
+
+        // Build a list of all urls
+        const walkaroundUrls = [];
+        for (idx of frameIdcs) {
+            walkaroundUrls.push(`https:${bonusInfo.cdn_image_prefix}ec/0-${idx}.jpg`)
+        }
         
         // Fetch image data, convert object URLs
-        let walkPromises = walkaroundUrls.map(imageUrl=>{
-            return fetch(imageUrl)
+        let walkPromises = walkaroundUrls.map(imageUrl=>
+            fetch(imageUrl)
                 .then(response=>response.blob())
                 .then(blob=>URL.createObjectURL(blob))
-        });
+        );
         let walkSettled = await Promise.allSettled(walkPromises);
         
         // Check for errors, hand back object URLs
         return walkSettled.map(p=>p.value||"TODO: add rejected image")
     },
-    panoObjectUrlsFromImageInfo: async (spinInfo) =>{
+    panoramaObjectUrls: async (bonusInfo) =>{
+        // Validate bonusInfo
+        if (!bonusInfo.cdn_image_prefix) return [];
+        
         // Build image URLs
         const faceNames = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'];
         let panoUrls = faceNames.map(
-            cubeFace=>(`https:${spinInfo.cdn_image_prefix}pano/${cubeFace}.jpg`)
+            cubeFace=>(`https:${bonusInfo.cdn_image_prefix}pano/${cubeFace}.jpg`)
         );
         
         // Fetch image data, convert to object URLs
-        let panoPromises = panoUrls.map(url=>{
-            return fetch(url)
+        let panoPromises = panoUrls.map(url=>
+            fetch(url)
                 .then(response=>response.blob())
                 .then(blob=>URL.createObjectURL(blob))
-        });
+        );
         let panoSettled = await Promise.allSettled(panoPromises);
         
         // Check for errors, add face labels
@@ -304,12 +343,13 @@ const IAAI_API = {
             const face = faceNames[idx];
             return [face, url];
         });
+        const faces = Object.fromEntries(panoObjectUrls);
         
         // Send back object URLs and information on how to interpret them
         return {
             cubemap: true,
             equirectangular: false,
-            faces: Object.fromEntries(panoObjectUrls)
+            faces
         }
     }
 }

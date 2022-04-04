@@ -119,7 +119,9 @@ const COPART_API = {
     
     
     // Hero images
-    imageUrlsFromInfo: async function (imageInfo) {
+    heroImages: async (imageInfo)=>{
+        console.log("Copart downloading images.")
+        
         // Validate imageInfo
         const nope = ()=>{throw "Copart encountered a server error."}
         if (!imageInfo.hasOwnProperty("returnCode")) nope();
@@ -129,12 +131,10 @@ const COPART_API = {
         if (!imageInfo.data.imagesList.FULL_IMAGE  ) nope();
         
         // Process images
-        const imageUrls = COPART_API.pickBestImages(imageInfo);
-        // Start processing interactives
-        const {walkaroundUrls, panoImageInfo} =
-            await COPART_API.interactiveUrlsFromImageInfo(imageInfo);
+        const heroImages = COPART_API.pickBestImages(imageInfo);
         
-        return {imageUrls, walkaroundUrls, panoImageInfo};
+        // Done!
+        return heroImages;
     },
     pickBestImages: (imageInfo)=>{
         // Grab image resolutions
@@ -161,28 +161,36 @@ const COPART_API = {
             bestUrls.push(high.url)
         }
         
+        // Done!
         return bestUrls;
     },
     
     
     // Panorama/walkaround
-    interactiveUrlsFromImageInfo: async (imageInfo)=>{
-        // returns empty array if there's no pano/walk indicated, undefined if there was an exception
+    bonusImages: async (imageInfo)=>{
+        /*
+        Returns empty array if there's no pano/walk indicated, undefined if
+        there was an exception.
+        */
+        
+        // TODO: Validate imageInfo
+        
         let walkaroundUrls, panoImageInfo;
         
+        // Fetch images
         try {
-            walkaroundUrls = await COPART_API.walkaroundObjectUrlsFromImageInfo(imageInfo);
+            walkaroundUrls = await COPART_API.walkaroundObjectUrls(imageInfo);
         } catch {}
         
         try {
-            panoImageInfo = await COPART_API.panoObjectUrlsFromImageInfo(imageInfo);
+            panoImageInfo = await COPART_API.panoramaObjectUrls(imageInfo);
         } catch {}
         
         return {walkaroundUrls, panoImageInfo};
     },
-    walkaroundObjectUrlsFromImageInfo: async (imageInfo) =>{
+    walkaroundObjectUrls: async (imageInfo) =>{
         // Validate imageInfo (we're guaranteed to have imagesList)
-        if (!imageInfo.data.imagesList.EXTERIOR_360) return [];
+        if (!imageInfo.data.imagesList.EXTERIOR_360       ) return [];
         if (!imageInfo.data.imagesList.EXTERIOR_360.length) return [];
         
         // Extract, format data
@@ -197,19 +205,19 @@ const COPART_API = {
         }
         
         // Fetch image data, convert object URLs
-        let walkPromises = walkaroundUrls.map(imageUrl=>{
-            return fetch(imageUrl)
+        let walkPromises = walkaroundUrls.map(url=>
+            fetch(url)
                 .then(response=>response.blob())
                 .then(blob=>URL.createObjectURL(blob))
-        });
+        );
         let walkSettled = await Promise.allSettled(walkPromises);
         
         // Check for errors, hand back object URLs
         return walkSettled.map(p=>p.value||"TODO: add rejected image")
     },
-    panoObjectUrlsFromImageInfo: async (imageInfo) =>{
+    panoramaObjectUrls: async (imageInfo) =>{
         // Validate imageInfo (we're guaranteed to have imagesList)
-        if (!imageInfo.data.imagesList.INTERIOR_360) return [];
+        if (!imageInfo.data.imagesList.INTERIOR_360       ) return [];
         if (!imageInfo.data.imagesList.INTERIOR_360.length) return [];
         if (!imageInfo.data.imagesList.INTERIOR_360[0].url) return [];
         
