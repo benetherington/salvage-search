@@ -12,7 +12,7 @@ function downloadImages(e) {
     document.querySelectorAll("#thumbs img").forEach((img, idx)=>{
         browser.downloads.download({
             url:img.src,
-            filename: `panorama/${idx}.jpg`,
+            filename: `${salvageName}-${lotNumber}/panorama/${idx}.jpg`,
             saveAs:false
         })
     })
@@ -21,14 +21,20 @@ function downloadImages(e) {
 /*--------------------*\
   BACKGROUND MESSAGING
 \*--------------------*/
+var salvageName, lotNumber;
 async function messageHandler(message) {
-    console.log('message:'); console.log(message)
-    // create thumbnail set, point them in the correct direction
-    let stage = document.querySelector("#stage");
+    // Save variables for download folder
+    salvageName = message.salvageName;
+    lotNumber = message.lotNumber;
     
-    if (message.cubemap) {
-        await stage.addPano(message.faces);
+    // Load panorama
+    let stage = document.querySelector("#stage");
+    const {cubemap, faces, equirectangular, face} = message.panoImageInfo;
+    if (cubemap) {
+        await stage.addPano(faces);
     }
+    
+    // Create thumbnail set, point them in the correct direction
     await stage.getPano().goToDriver();    await saveThumb();
     await stage.getPano().goToRear();      await saveThumb();
     await stage.getPano().goToPassenger(); await saveThumb();

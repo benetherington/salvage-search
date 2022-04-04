@@ -26,17 +26,20 @@ function downloadAll() {
 function download(img, idx) {
     browser.downloads.download({
         url:img.src,
-        filename:`walkaround/${idx}.jpg`,
+        filename:`${salvageName}-${lotNumber}/walkaround/${idx}.jpg`,
         saveAs: false
     })
 }
 
 
-/*---------------*\
+/*--------------------*\
   BACKGROUND MESSAGING
-\*---------------*/
+\*--------------------*/
+var salvageName, lotNumber;
 browser.runtime.onMessage.addListener(message=>{
-    document.querySelector("#stage").setAngles(message)
+    salvageName = message.salvageName;
+    lotNumber = message.lotNumber;
+    document.querySelector("#stage").setAngles(message.walkaroundUrls)
 })
 
 /*---------------*\

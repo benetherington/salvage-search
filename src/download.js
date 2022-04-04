@@ -85,14 +85,17 @@ const saveImages = (salvageName, lotNumber, {heroImages, walkaroundUrls, panoIma
     if (panoImageInfo) openPanoEditor(salvageName, lotNumber, panoImageInfo);
     else console.log("No panorama images.")
 };
-const openWalkEditor = async (walkaroundUrls)=>{
+const openWalkEditor = async (salvageName, lotNumber, walkaroundUrls)=>{
     // Build an event listener in this scope
     const updatedListener = async (tabId, changeInfo)=>{
         // Wait for tab to finish loading
         if (changeInfo.status!=="complete") return;
         
         // Send panorama data
-        await browser.tabs.sendMessage(tabId, walkaroundUrls)
+        await browser.tabs.sendMessage(
+            tabId,
+            {salvageName, lotNumber, walkaroundUrls}
+        )
         
         // Stop listening
         browser.tabs.onUpdated.removeListener(updatedListener)
@@ -108,14 +111,17 @@ const openWalkEditor = async (walkaroundUrls)=>{
     // Open a panorama viewer tab
     await browser.tabs.create({url: "/walkaround/composer.html"});
 };
-const openPanoEditor = async (panoImageInfo)=>{
+const openPanoEditor = async (salvageName, lotNumber, panoImageInfo)=>{
     // Build an event listener in this scope
     const updatedListener = async (tabId, changeInfo)=>{
         // Wait for tab to finish loading
         if (changeInfo.status!=="complete") return;
         
         // Send panorama data
-        await browser.tabs.sendMessage(tabId, panoImageInfo)
+        await browser.tabs.sendMessage(
+            tabId,
+            {salvageName, lotNumber, panoImageInfo}
+        )
         
         // Stop listening
         browser.tabs.onUpdated.removeListener(updatedListener)
