@@ -23,7 +23,7 @@ function downloadImages(e) {
 \*--------------------*/
 var salvageName, lotNumber;
 async function messageHandler(message) {
-    console.log(message)
+    console.log(message);
     // Assign variables for download folder
     ({salvageName, lotNumber} = message)
     
