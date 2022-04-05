@@ -274,14 +274,14 @@ const IAAI_API = {
         
         // Extract data
         const walkaroundCount = bonusInfo.info.options.numImgEC;
-        const frameIdcs = Array(walkaroundCount).keys();
+        const frameIndexes = Array(walkaroundCount).keys();
         
         // Notify user
         sendNotification(`Downloading ${walkaroundCount+1} exterior 360 images.`)
         
         // Build a list of all urls
         const walkaroundUrls = [];
-        for (idx of frameIdcs) {
+        for (idx of frameIndexes) {
             walkaroundUrls.push(`https:${bonusInfo.cdn_image_prefix}ec/0-${idx}.jpg`)
         }
         

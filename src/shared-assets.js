@@ -59,10 +59,10 @@ const fetchImageData = async (url)=>{
     
     return imageData
 };
-const fetchObjectUrl = ()=>{
-    fetch(imageUrl)
-                .then(response=>response.blob())
-                .then(blob=>URL.createObjectURL(blob))
+const fetchObjectUrl = (imageUrl)=>{
+    return fetch(imageUrl)
+            .then(response=>response.blob())
+            .then(blob=>URL.createObjectURL(blob))
 }
 
 
