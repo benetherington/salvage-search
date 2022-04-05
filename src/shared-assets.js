@@ -59,8 +59,16 @@ const fetchImageData = async (url)=>{
     
     return imageData
 };
+const fetchObjectUrl = ()=>{
+    fetch(imageUrl)
+                .then(response=>response.blob())
+                .then(blob=>URL.createObjectURL(blob))
+}
 
 
+/*----------------*\
+  INPUT VALIDATION
+\*----------------*/
 const validateVin = (vin)=>{
     if (!vin) {return}
     let safe = encodeURIComponent(vin.replace(/\s/g, ""));
@@ -72,6 +80,10 @@ const validateLot = (lot)=>{
     if (LOTREGEX.test(safe)) {return safe}
 }
 
+
+/*--------*\
+  SETTINGS
+\*--------*/
 const defaultedSettings = async () => {
     let storage = await browser.storage.local.get("settings");
     let settings = storage.settings || new Object;
@@ -83,6 +95,10 @@ const defaultedSettings = async () => {
     }
     return settings
 }
+
+/*------------------------------*\
+  POPUP-BACKGROUND COMMUNICATION
+\*------------------------------*/
 const connectionFailure = (err)=>{
     return err.message==="Could not establish connection. Receiving end does not exist.";
 };
@@ -121,14 +137,3 @@ const notifyUntilSuccess = (port)=>{
         }
     }
 }
-
-const sendProgress = (recipient, behavior, options={}) => {
-    let action = `${recipient}-${behavior}`
-    let value = Object.assign(options, {action:action})
-    let values = [value]
-    browser.runtime.sendMessage({type: "feedback", values})
-        .catch(err=>console.log(err+"\n is the popup closed?"))
-}
-
-
-

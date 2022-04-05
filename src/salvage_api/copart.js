@@ -133,6 +133,9 @@ const COPART_API = {
         if (!imageInfo.data.imagesList             ) nope();
         if (!imageInfo.data.imagesList.FULL_IMAGE  ) nope();
         
+        // Notify user
+        notify(`Processing ${imageInfo.data.imagesList.FULL_IMAGE.length} high-res images.`)
+        
         // Process images
         const heroImages = COPART_API.pickBestImages(imageInfo);
         
@@ -198,20 +201,19 @@ const COPART_API = {
         // Extract, format data
         const {url, frameCount} = imageInfo.data.imagesList.EXTERIOR_360[0];
         const frameUrl = (frame)=>url.replace(/(?<=frames_)\d+/, frame);
-        const frameIdcs = Array(frameCount).keys();
+        const walkaroundIndexes = Array(frameCount).keys();
+        
+        // Notify user
+        notify(`Downloading ${frameCount+1} exterior 360 images.`)
         
         // Build a list of all URLs
         const walkaroundUrls = [];
-        for (idx of frameIdcs) {
+        for (idx of walkaroundIndexes) {
             walkaroundUrls.push(frameUrl(idx))
         }
         
         // Fetch image data, convert object URLs
-        let walkPromises = walkaroundUrls.map(url=>
-            fetch(url)
-                .then(response=>response.blob())
-                .then(blob=>URL.createObjectURL(blob))
-        );
+        let walkPromises = walkaroundUrls.map(fetchObjectUrl);
         let walkSettled = await Promise.allSettled(walkPromises);
         
         // Check for errors, hand back object URLs
@@ -222,6 +224,9 @@ const COPART_API = {
         if (!imageInfo.data.imagesList.INTERIOR_360       ) return;
         if (!imageInfo.data.imagesList.INTERIOR_360.length) return;
         if (!imageInfo.data.imagesList.INTERIOR_360[0].url) return;
+        
+        // Notify user
+        notify("Processing interior 360. Please wait...")
         
         // Extract data
         const equirectangularUrl = imageInfo.data.imagesList.INTERIOR_360[0].url;

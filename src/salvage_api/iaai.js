@@ -137,7 +137,7 @@ const IAAI_API = {
         // TODO: Validate imageInfo
         
         // Process Images
-        notify(`IAAI: processing ${imageInfo.keys.length} images.`)
+        notify(`Processing ${imageInfo.keys.length} high-res images. Please wait...`)
         const heroImages = await IAAI_API.fetchHeroImages(imageInfo.keys);
         
         // DONE
@@ -282,7 +282,10 @@ const IAAI_API = {
         // Extract data
         const walkaroundCount = bonusInfo.info.options.numImgEC;
         const frameIdcs = Array(walkaroundCount).keys();
-
+        
+        // Notify user
+        notify(`Downloading ${walkaroundCount+1} exterior 360 images.`)
+        
         // Build a list of all urls
         const walkaroundUrls = [];
         for (idx of frameIdcs) {
@@ -290,11 +293,7 @@ const IAAI_API = {
         }
         
         // Fetch image data, convert object URLs
-        let walkPromises = walkaroundUrls.map(imageUrl=>
-            fetch(imageUrl)
-                .then(response=>response.blob())
-                .then(blob=>URL.createObjectURL(blob))
-        );
+        let walkPromises = walkaroundUrls.map(fetchObjectUrl);
         let walkSettled = await Promise.allSettled(walkPromises);
         
         // Check for errors, hand back object URLs
@@ -304,6 +303,9 @@ const IAAI_API = {
         // Validate bonusInfo
         if (!bonusInfo.cdn_image_prefix) return;
         
+        // Notify user
+        notify("Downloading interior 360.")
+        
         // Build image URLs
         const faceNames = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'];
         let spincarUrls = faceNames.map(
@@ -311,11 +313,7 @@ const IAAI_API = {
         );
         
         // Fetch image data, convert to object URLs
-        let panoPromises = spincarUrls.map(url=>
-            fetch(url)
-                .then(response=>response.blob())
-                .then(blob=>URL.createObjectURL(blob))
-        );
+        let panoPromises = spincarUrls.map(fetchObjectUrl);
         let panoSettled = await Promise.allSettled(panoPromises);
         
         // Check for errors, add face labels
