@@ -1,6 +1,5 @@
 
 const IAAI_API = {
-    __proto__: Salvage,
     NAME: "iaai",
     PRETTY_NAME: "IAAI",
     
@@ -218,41 +217,16 @@ const IAAI_API = {
         
         // Export canvas
         const dataURL = canvas.toDataURL("image/jpeg");
-        const objectURL = IAAI_API.dataURLtoObjectURL(dataURL);
+        const objectURL = urlFromDataUrl(dataURL);
         
         // Done!
         console.log(`${key.K} processed`)
         return objectURL
     },
-    dataURLtoObjectURL: (uri, name)=>{
-        // Takes a dataURL and turns it into a temporary object URL. This makes it
-        // easier to pass around. See: https://stackoverflow.com/a/12300351
-        const byteString = atob(uri.split(',')[1]);
-        const mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-        }
-        const blob = new Blob([ab], {type: mimeString});
-        blob.name = name+".jpg"
-        return URL.createObjectURL(blob)
-    },
     
     
     // Panorama/walkaround
     bonusImages: async (imageInfo)=>{
-        /*
-        Returns empty array if there's no pano/walk indicated, undefined if
-        there was an exception.
-        */
-        
-        // Validate imageInfo
-        if (!imageInfo.Image360Ind) {
-            console.log("no 360 indicated")
-            return [];
-        }
-        
         // Fetch bonus info
         const bonusInfo = await IAAI_API.bonusImageInfo(imageInfo);
         
