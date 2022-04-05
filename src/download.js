@@ -59,12 +59,12 @@ const fetchImageUrls = async (lotNumber, salvageName)=>{
     
     // Fetch image urls
     const heroImages = await salvage.heroImages(imageInfo);
-    const {walkaroundUrls, panoImageInfo} = await salvage.bonusImages(imageInfo);
+    const {walkaroundUrls, panoUrls} = await salvage.bonusImages(imageInfo);
     
     console.log(`Collected images.`)
-    return {heroImages, walkaroundUrls, panoImageInfo};
+    return {heroImages, walkaroundUrls, panoUrls};
 }
-const saveImages = (salvageName, lotNumber, {heroImages, walkaroundUrls, panoImageInfo})=>{
+const saveImages = (salvageName, lotNumber, {heroImages, walkaroundUrls, panoUrls})=>{
     // Check for hero images, save them
     if (heroImages) {
         heroImages.forEach((url, idx)=>{
@@ -82,7 +82,7 @@ const saveImages = (salvageName, lotNumber, {heroImages, walkaroundUrls, panoIma
     else console.log("No walkaround images.")
     
     // Check for panorama images, save them
-    if (panoImageInfo) openPanoEditor(salvageName, lotNumber, panoImageInfo);
+    if (panoUrls) openPanoEditor(salvageName, lotNumber, panoUrls);
     else console.log("No panorama images.")
 };
 const openWalkEditor = async (salvageName, lotNumber, walkaroundUrls)=>{
@@ -111,7 +111,7 @@ const openWalkEditor = async (salvageName, lotNumber, walkaroundUrls)=>{
     // Open a panorama viewer tab
     await browser.tabs.create({url: "/walkaround/composer.html"});
 };
-const openPanoEditor = async (salvageName, lotNumber, panoImageInfo)=>{
+const openPanoEditor = async (salvageName, lotNumber, panoUrls)=>{
     // Build an event listener in this scope
     const updatedListener = async (tabId, changeInfo)=>{
         // Wait for tab to finish loading
@@ -120,7 +120,7 @@ const openPanoEditor = async (salvageName, lotNumber, panoImageInfo)=>{
         // Send panorama data
         await browser.tabs.sendMessage(
             tabId,
-            {salvageName, lotNumber, panoImageInfo}
+            {salvageName, lotNumber, panoUrls}
         )
         
         // Stop listening
@@ -194,4 +194,4 @@ const download = async (message)=>{
 
 
 
-console.debug("download-background loaded")
+console.debug("download loaded")

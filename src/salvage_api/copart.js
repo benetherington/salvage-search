@@ -175,7 +175,7 @@ const COPART_API = {
         
         // TODO: Validate imageInfo
         
-        let walkaroundUrls, panoImageInfo;
+        let walkaroundUrls, panoUrls;
         
         // Fetch images
         try {
@@ -183,10 +183,10 @@ const COPART_API = {
         } catch {}
         
         try {
-            panoImageInfo = await COPART_API.panoramaObjectUrls(imageInfo);
+            panoUrls = await COPART_API.panoramaObjectUrls(imageInfo);
         } catch {}
         
-        return {walkaroundUrls, panoImageInfo};
+        return {walkaroundUrls, panoUrls};
     },
     walkaroundObjectUrls: async (imageInfo) =>{
         // Validate imageInfo (we're guaranteed to have imagesList)

@@ -23,22 +23,24 @@ function downloadImages(e) {
 \*--------------------*/
 var salvageName, lotNumber;
 async function messageHandler(message) {
-    // Save variables for download folder
-    salvageName = message.salvageName;
-    lotNumber = message.lotNumber;
+    console.log(message)
+    // Assign variables for download folder
+    ({salvageName, lotNumber} = message)
     
-    // Load panorama
-    let stage = document.querySelector("#stage");
-    const {cubemap, faces, equirectangular, face} = message.panoImageInfo;
-    if (cubemap) {
-        await stage.addPano(faces);
-    }
+    // Get panorama data from messagehandler
+    const {panoUrls:faces} = message;
+    
+    // Display panorama
+    const stage = document.querySelector("#stage");
+    await stage.addPano(faces);
     
     // Create thumbnail set, point them in the correct direction
     await stage.getPano().goToDriver();    await saveThumb();
     await stage.getPano().goToRear();      await saveThumb();
     await stage.getPano().goToPassenger(); await saveThumb();
     await stage.getPano().goToIp();        await saveThumb();
+    
+    console.log("message handled.")
 }
 browser.runtime.onMessage.addListener(messageHandler);
 
