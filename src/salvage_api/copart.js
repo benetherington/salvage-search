@@ -1,4 +1,7 @@
 
+const copartWorkers = [];
+const stopCopartWorkers = ()=>copartWorkers.forEach(w=>w.terminate());
+
 const COPART_API = {
     NAME: "copart",
     PRETTY_NAME: "Copart",
@@ -168,11 +171,6 @@ const COPART_API = {
     
     // Panorama/walkaround
     bonusImages: async (imageInfo)=>{
-        /*
-        Returns empty array if there's no pano/walk indicated, undefined if
-        there was an exception.
-        */
-        
         // TODO: Validate imageInfo
         
         let walkaroundUrls, panoUrls;
@@ -186,12 +184,16 @@ const COPART_API = {
             panoUrls = await COPART_API.panoramaObjectUrls(imageInfo);
         } catch {}
         
+        // Do some logging
+        console.log(`Fetched/processed bonusImages. Walk: ${walkaroundUrls.length}. Pano: ${!!panoUrls}.`)
+        
+        // Done!
         return {walkaroundUrls, panoUrls};
     },
     walkaroundObjectUrls: async (imageInfo) =>{
         // Validate imageInfo (we're guaranteed to have imagesList)
-        if (!imageInfo.data.imagesList.EXTERIOR_360       ) return [];
-        if (!imageInfo.data.imagesList.EXTERIOR_360.length) return [];
+        if (!imageInfo.data.imagesList.EXTERIOR_360       ) return;
+        if (!imageInfo.data.imagesList.EXTERIOR_360.length) return;
         
         // Extract, format data
         const {url, frameCount} = imageInfo.data.imagesList.EXTERIOR_360[0];
@@ -217,23 +219,74 @@ const COPART_API = {
     },
     panoramaObjectUrls: async (imageInfo) =>{
         // Validate imageInfo (we're guaranteed to have imagesList)
-        if (!imageInfo.data.imagesList.INTERIOR_360       ) return [];
-        if (!imageInfo.data.imagesList.INTERIOR_360.length) return [];
-        if (!imageInfo.data.imagesList.INTERIOR_360[0].url) return [];
+        if (!imageInfo.data.imagesList.INTERIOR_360       ) return;
+        if (!imageInfo.data.imagesList.INTERIOR_360.length) return;
+        if (!imageInfo.data.imagesList.INTERIOR_360[0].url) return;
         
         // Extract data
-        const face = imageInfo.data.imagesList.INTERIOR_360[0].url;
+        const equirectangularUrl = imageInfo.data.imagesList.INTERIOR_360[0].url;
         
-        // Send back object URLs and information on how to interpret them
-        if (face) {
-            return {
-                cubemap: false,
-                equirectangular: true,
-                face
-            }
+        // Fetch image
+        const equirectangularImage = await fetchImageData(equirectangularUrl);
+        
+        // Start workers to convert this equirectangular projection
+        // into six faces of a cubemap
+        let panoUrls;
+        try {
+            const faceImageDataEntries = await COPART_API.convertEquirectangular(equirectangularImage);
+            const facesUrlsEntries = faceImageDataEntries.map(([f, iD])=>[f, urlFromImageData(iD)]);
+            const facesUrls = Object.fromEntries(facesUrlsEntries);
+            panoUrls = facesUrls;
+        } catch (e) {console.log(e)}
+        finally {
+            // Make sure all copartWorkers are shut down!
+            // stopCopartWorkers();
+            return panoUrls;
         }
+    },
+    convertEquirectangular: (imageData)=>{
+        const workerPromises = [
+            COPART_API.extractCubemapFace(imageData, "pano_r", "px"),
+            COPART_API.extractCubemapFace(imageData, "pano_l", "nx"),
+            COPART_API.extractCubemapFace(imageData, "pano_u", "py"),
+            COPART_API.extractCubemapFace(imageData, "pano_d", "ny"),
+            COPART_API.extractCubemapFace(imageData, "pano_f", "pz"),
+            COPART_API.extractCubemapFace(imageData, "pano_b", "nz")
+        ];
+        return Promise.all(workerPromises)
+    },
+    extractCubemapFace: async (imageData, key, direction)=>{
+        // Create worker
+        const worker = new Worker('./salvage_api/copart-pano-worker.js');
+        copartWorkers.push(worker)
+        
+        // Listen to error events
+        worker.onerror = (error=>console.log(error));
+        worker.onmessageerror = (error=>console.log(error));
+        
+        // Start worker
+        const extractionPromise = new Promise(resolve=>{
+            // Start at the end
+            worker.onmessage = (message)=>{
+                const {imageData, percentDone} = message.data;
+                if (percentDone) console.log(`dir ${percentDone}%"`);
+                if (imageData) resolve([key, imageData]);
+            };
+            
+            // Send worker data to work on
+            worker.postMessage({
+                data: imageData,
+                face: direction,
+                rotation: 0,
+                interpolation: "lanczos"
+            })
+        });
+        
+        // Hand control back. Promise resolves to [key, imageData]
+        return extractionPromise;
     }
 };
+
 
 // ImageInfo looks like:
 // {
