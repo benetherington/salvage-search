@@ -134,7 +134,7 @@ const COPART_API = {
         if (!imageInfo.data.imagesList.FULL_IMAGE  ) nope();
         
         // Notify user
-        notify(`Processing ${imageInfo.data.imagesList.FULL_IMAGE.length} high-res images.`)
+        sendNotification(`Processing ${imageInfo.data.imagesList.FULL_IMAGE.length} high-res images.`)
         
         // Process images
         const heroImages = COPART_API.pickBestImages(imageInfo);
@@ -204,7 +204,7 @@ const COPART_API = {
         const walkaroundIndexes = Array(frameCount).keys();
         
         // Notify user
-        notify(`Downloading ${frameCount+1} exterior 360 images.`)
+        sendNotification(`Downloading ${frameCount+1} exterior 360 images.`)
         
         // Build a list of all URLs
         const walkaroundUrls = [];
@@ -226,7 +226,7 @@ const COPART_API = {
         if (!imageInfo.data.imagesList.INTERIOR_360[0].url) return;
         
         // Notify user
-        notify("Processing interior 360. Please wait...")
+        sendNotification("Processing interior 360. Please wait...")
         
         // Extract data
         const equirectangularUrl = imageInfo.data.imagesList.INTERIOR_360[0].url;

@@ -131,13 +131,13 @@ const IAAI_API = {
     
     
     // Hero images
-    heroImages: async (imageInfo, notify=sendNotification) => {
+    heroImages: async (imageInfo) => {
         console.log("IAAI downloading images.")
         
         // TODO: Validate imageInfo
         
         // Process Images
-        notify(`Processing ${imageInfo.keys.length} high-res images. Please wait...`)
+        sendNotification(`Processing ${imageInfo.keys.length} high-res images. Please wait...`)
         const heroImages = await IAAI_API.fetchHeroImages(imageInfo.keys);
         
         // DONE
@@ -239,13 +239,6 @@ const IAAI_API = {
             panoUrls = await IAAI_API.panoramaObjectUrls(bonusInfo);
         } catch {}
         
-        // Do some logging
-        if (!imageInfo.Image360Ind) {
-            console.log(`No 360 indicated. Walk: ${walkaroundUrls.length}. Pano: ${!!panoUrls}.`)
-        } else {
-            console.log(`Fetched/processed bonusImages. Walk: ${walkaroundUrls.length}. Pano: ${!!panoUrls}.`)
-        }
-        
         // Done!
         return {walkaroundUrls, panoUrls};
     },
@@ -284,7 +277,7 @@ const IAAI_API = {
         const frameIdcs = Array(walkaroundCount).keys();
         
         // Notify user
-        notify(`Downloading ${walkaroundCount+1} exterior 360 images.`)
+        sendNotification(`Downloading ${walkaroundCount+1} exterior 360 images.`)
         
         // Build a list of all urls
         const walkaroundUrls = [];
@@ -304,7 +297,7 @@ const IAAI_API = {
         if (!bonusInfo.cdn_image_prefix) return;
         
         // Notify user
-        notify("Downloading interior 360.")
+        sendNotification("Downloading interior 360.")
         
         // Build image URLs
         const faceNames = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'];
