@@ -231,20 +231,27 @@ const IAAI_API = {
         const bonusInfo = await IAAI_API.bonusImageInfo(imageInfo);
         
         // Fetch images
-        let walkaroundUrls, panoImageInfo;
+        let walkaroundUrls, panoUrls;
         try {
             walkaroundUrls = await IAAI_API.walkaroundObjectUrls(bonusInfo);
         } catch {}
         try {
-            panoImageInfo = await IAAI_API.panoramaObjectUrls(bonusInfo);
+            panoUrls = await IAAI_API.panoramaObjectUrls(bonusInfo);
         } catch {}
         
+        // Do some logging
+        if (!imageInfo.Image360Ind) {
+            console.log(`No 360 indicated. Walk: ${walkaroundUrls.length}. Pano: ${!!panoUrls}.`)
+        } else {
+            console.log(`Fetched/processed bonusImages. Walk: ${walkaroundUrls.length}. Pano: ${!!panoUrls}.`)
+        }
+        
         // Done!
-        return {walkaroundUrls, panoImageInfo};
+        return {walkaroundUrls, panoUrls};
     },
     bonusImageInfo: async (imageInfo)=>{
         try {
-            // Build request
+            // Build request, turning spincar viewer url into the raw images url.
             const spinUrl = imageInfo.Image360Url;
             const spinPath = /com\/(.*)/.exec(spinUrl)[1];
             const apiUrl = "https://api.spincar.com/spin/" + spinPath;
@@ -268,9 +275,9 @@ const IAAI_API = {
     },
     walkaroundObjectUrls: async (bonusInfo)=>{
         // Validate bonusInfo
-        if (!bonusInfo.info                 ) return [];
-        if (!bonusInfo.info.options         ) return [];
-        if (!bonusInfo.info.options.numImgEC) return [];
+        if (!bonusInfo.info                 ) return;
+        if (!bonusInfo.info.options         ) return;
+        if (!bonusInfo.info.options.numImgEC) return;
         
         // Extract data
         const walkaroundCount = bonusInfo.info.options.numImgEC;
@@ -295,16 +302,16 @@ const IAAI_API = {
     },
     panoramaObjectUrls: async (bonusInfo) =>{
         // Validate bonusInfo
-        if (!bonusInfo.cdn_image_prefix) return [];
+        if (!bonusInfo.cdn_image_prefix) return;
         
         // Build image URLs
         const faceNames = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'];
-        let panoUrls = faceNames.map(
+        let spincarUrls = faceNames.map(
             cubeFace=>(`https:${bonusInfo.cdn_image_prefix}pano/${cubeFace}.jpg`)
         );
         
         // Fetch image data, convert to object URLs
-        let panoPromises = panoUrls.map(url=>
+        let panoPromises = spincarUrls.map(url=>
             fetch(url)
                 .then(response=>response.blob())
                 .then(blob=>URL.createObjectURL(blob))
@@ -317,14 +324,10 @@ const IAAI_API = {
             const face = faceNames[idx];
             return [face, url];
         });
-        const faces = Object.fromEntries(panoObjectUrls);
+        const panoUrls = Object.fromEntries(panoObjectUrls);
         
         // Send back object URLs and information on how to interpret them
-        return {
-            cubemap: true,
-            equirectangular: false,
-            faces
-        }
+        return panoUrls;
     }
 }
 
