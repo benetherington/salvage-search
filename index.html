@@ -14,16 +14,27 @@
     <strong>FIREFOX</strong>
     <ul>
       <li>
-        <a href="https://benetherington.com/salvage-search/releases/salvage_search-2.3-fx.xpi">Firefox v2.3</a>
+        <a href="https://benetherington.com/salvage-search/releases/salvage_search-2.3.3-fx.xpi">Firefox v2.3.3</a>
+        <ul>
+          <li>Includes IAAI search hotfix.</li>
+          <li>Adds panorama/walkaround raw image downloads to IAAI.</li>
+          <li>2.3.3 should be published as an installable version soon, and is the last expected update until version 3.</li>
+        </ul>
       </li>
       <li>
-        <a href="https://benetherington.com/salvage-search/releases/salvage_search-2.3.3-fx.zip">Firefox v2.3.3</a> <i>(2/28/22) For advanced users. <a href="https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/">How to install.</a></i>
+        <a href="https://benetherington.com/salvage-search/releases/salvage_search-3.0.1-fx.zip">Firefox v3.0.1</a> <i>(2/28/22) For advanced users. <a href="https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/">How to install.</a></i>
+        <ul>
+          <li>A major update! Most of the work is in reorganization and stability improvements.</li>
+          <li>
+            Adds exterior walkaround 360 and interior panorama 360 image captures. These are the two features I'm most excited about!
+            <li>Quickly select the walkaround images that you want with a shopping cart-like interface.</li>
+            <li>View interior panoramas and get high resolution captures. This involves some annoying 3D graphics work: there are improvements to come, but it's pretty functional as-is</li>
+          </li>
+          <li>Adds panorama/walkaround downloads to Copart.</li>
+          <li>Fixes IAAI downloads. It looks like they no longer serve VIN search results, and they did a minor change to their image information variable names.</li>
+          <li>Adds a Copart/IAAI selector to the popup. If one is selected when you click SEARCH, only that yard will be searched. Importantly, this also allows you to specify a yard to download images from. Previously, if Copart and IAAI shared a lot number, the Copart images would be downloaded, and the IAAI images ignored.</li>
+        </ul>
       </li>
-      <ul>
-        <li>Includes IAAI search hotfix.</li>
-        <li>Adds panorama/walkaround raw image downloads to IAAI.</li>
-        <li>2.3.3 should be published as an installable version soon, and is the last expected update until version 3.</li>
-      </ul>
     </ul>
     <strong>CHROME</strong>
     <ul>
@@ -32,7 +43,7 @@
       </li>
       <ul>
         <li>
-          Chrome will not be updated until version 3, which will include a large stability update, as well as a panorama editor/viewer. It is several minor versions behind the Firefox extension.
+          Chrome will not be updated until version 3 is complete. The Chrome extension is several minor versions behind the Firefox extension.
         </li>
       </ul>
     </ul>
