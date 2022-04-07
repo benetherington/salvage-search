@@ -120,15 +120,15 @@ const COPART_API = {
     
     // Hero images
     heroImages: async (imageInfo)=>{
-        console.log("Copart downloading images.")
+        console.log("Copart downloading hero images.")
         
         // Validate imageInfo
-        const nope = ()=>{throw "Copart encountered a server error."}
-        if (!imageInfo.hasOwnProperty("returnCode")) nope();
-        if ( imageInfo.returnCode!=1               ) nope();
-        if (!imageInfo.data                        ) nope();
-        if (!imageInfo.data.imagesList             ) nope();
-        if (!imageInfo.data.imagesList.FULL_IMAGE  ) nope();
+        if (imageInfo.returnCode!=1) throw "Copart encountered a server error. Try again later?";
+        try {
+            const shouldBeDefined = imageInfo.data.imagesList.FULL_IMAGE[0];
+        } catch (ReferenceError) {
+            throw "Copart says there are no images associated with this lot number.";
+        }
         
         // Notify user
         sendNotification(`Processing ${imageInfo.data.imagesList.FULL_IMAGE.length} high-res images.`)
@@ -171,11 +171,9 @@ const COPART_API = {
     
     // Panorama/walkaround
     bonusImages: async (imageInfo)=>{
-        // TODO: Validate imageInfo
-        
-        let walkaroundUrls, panoUrls;
-        
+        console.log("Copart downloading bonus images.")
         // Fetch images
+        let walkaroundUrls, panoUrls;
         try {
             walkaroundUrls = await COPART_API.walkaroundObjectUrls(imageInfo);
         } catch {}
@@ -185,7 +183,9 @@ const COPART_API = {
         } catch {}
         
         // Do some logging
-        console.log(`Fetched/processed bonusImages. Walk: ${walkaroundUrls.length}. Pano: ${!!panoUrls}.`)
+        if (walkaroundUrls) console.log(`Fetched ${walkaroundUrls.length} walkaround images.`);
+        else console.log("Did not find walkaround images.");
+        console.log(`${panoUrls?"Fetched and processed":"Did not find"} panorama images.`)
         
         // Done!
         return {walkaroundUrls, panoUrls};
