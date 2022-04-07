@@ -124,10 +124,13 @@ const search = async (message)=>{
         
         // if no error was thrown, our search was successful.
         return;
-    } catch (AggrigateError) {
+    } catch (error) {
+        if (!(error instanceof AggregateError)) {
+            console.log(error)
+            sendNotification(`An error occurred: ${error}`, "error")
+        }
         if (message.salvageName) {
             console.log("Forced search came up empty")
-            return;
         } else {
             console.log("primary searches empty, trying archives")
         }
@@ -135,11 +138,17 @@ const search = async (message)=>{
     
     // Search archives
     try {
+        if (message.salvageName) throw AggregateError("");
         const searchResults = await searchArchives(message.query, notify);
         openTabAndSendMessage(searchResults)
         return;
-    } catch (AggrigateError) {
-        // Primaries and archives both failed.
+    } catch (error) {
+        // Let the user know if it's not Promise.all's error.
+        if (!(error instanceof AggregateError)) {
+            console.log(error)
+            sendNotification(`An error occurred: ${error}`, "error")
+        }
+        // Let the user know searches failed without unexpected errors.
         console.log("archive searches empty")
         sPort.postMessage({
             feedback: {
