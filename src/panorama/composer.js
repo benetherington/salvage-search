@@ -23,7 +23,7 @@ function downloadImages(e) {
 \*--------------------*/
 var salvageName, lotNumber;
 async function messageHandler(message) {
-    console.log(message);
+    // console.log(message);
     // Assign variables for download folder
     ({salvageName, lotNumber} = message)
     
@@ -40,7 +40,7 @@ async function messageHandler(message) {
     await stage.getPano().goToPassenger(); await saveThumb();
     await stage.getPano().goToIp();        await saveThumb();
     
-    console.log("message handled.")
+    // console.log("message handled.")
 }
 browser.runtime.onMessage.addListener(messageHandler);
 

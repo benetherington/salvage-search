@@ -456,8 +456,7 @@ void main() {
     gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
 }`;
 
-const PANO_CONTAINER_STYLE = `<style>
-        
+const PANO_CONTAINER_STYLE = `
 /* ELEMENT DEFAULTS */
 :host {
     /* Allow corner snipping */
@@ -559,8 +558,7 @@ input {
     /* Blur while focused */
     filter: blur(2px) opacity(60%);
     pointer-events: none;
-}
-</style>`
+}`
 
 
 /*-------*\
@@ -570,7 +568,10 @@ class PanoContainer extends HTMLElement {
     constructor() {
         super()
         this.attachShadow({mode:"open"});
-        this.shadowRoot.innerHTML = PANO_CONTAINER_STYLE;
+        
+        const style = document.createElement("style");
+        style.textContent = PANO_CONTAINER_STYLE;
+        this.shadowRoot.append(style);
         this.titleEl = new Object();
         // this.addEventListener("download", this.onDownload)
         // this.addEventListener("reset", this.onReset)
