@@ -1,4 +1,4 @@
-WALKAROUND_VIEWER_STYLE = `<style>
+WALKAROUND_VIEWER_STYLE = `
 :host {
     /* allow corner snipping */
     overflow: hidden;
@@ -13,8 +13,7 @@ WALKAROUND_VIEWER_STYLE = `<style>
 img {
     width: 100%;
     object-fit: cover;
-}
-</style>`
+}`
 
 
 class WalkaroundViewer extends HTMLElement {
@@ -33,7 +32,10 @@ class WalkaroundViewer extends HTMLElement {
         
         // attach shadow, add style
         this.attachShadow({mode:"open"})
-        this.shadowRoot.innerHTML = WALKAROUND_VIEWER_STYLE;
+        const style = document.createElement("style");
+        style.innerText = WALKAROUND_VIEWER_STYLE;
+        this.shadowRoot.append(style)
+        
         // add image element
         this.imageEl = document.createElement("img");
         this.imageEl.draggable = false;
