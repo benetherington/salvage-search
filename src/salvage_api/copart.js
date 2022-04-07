@@ -15,14 +15,11 @@ const COPART_API = {
         return new Promise( async (resolve, reject)=>{
             try {
                 const searchResults = await COPART_API.searcher(vin);
-                notify(
-                    `Copart: found a match!`,
-                    {displayAs:"success"}
-                )
+                notify("Copart: found a match!", "success")
                 resolve(searchResults)
             } catch (error) {
                 console.log(`Copart rejecting: ${error}`)
-                notify(`Copart: ${error}.`, {displayAs: "status"})
+                notify(`Copart: ${error}.`)
                 reject()
             }
         })

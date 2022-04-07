@@ -7,11 +7,11 @@ const ROW52_API = {
         return new Promise( async (resolve, reject)=>{
             try {
                 const searchResults = await ROW52_API.searcher(vin);
-                notify(`Row52: Found a match!`, {displayAs: "success"})
+                notify("Row52: Found a match!", "success")
                 resolve(searchResults)
             } catch (error) {
                 console.log(`R52 rejecting: ${error}`)
-                notify(`Row52: ${error}.`, {displayAs: "status"})
+                notify(`Row52: ${error}.`)
                 reject()
             }
         })

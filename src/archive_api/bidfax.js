@@ -13,14 +13,11 @@ const BIDFAX_API = {
         return new Promise( async (resolve, reject)=>{
             try {
                 const searchResults = await BIDFAX_API.searcher(vin);
-                notify(
-                    `BidFax: found a match!`,
-                    {displayAs: "success"}
-                )
+                notify("BidFax: found a match!", "success")
                 resolve(searchResults)
             } catch (error) {
                 console.log(`BidFax rejecting: ${error}`)
-                const sent = notify(`BidFax: ${error}.`, {displayAs: "status"})
+                const sent = notify(`BidFax: ${error}.`)
                 if (sent && error===captchaMessage) {
                     // Captcha failed. Only notify if another searcher has not
                     // yet been successful

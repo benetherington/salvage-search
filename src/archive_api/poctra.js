@@ -10,14 +10,11 @@ const POCTRA_API = {
         return new Promise( async (resolve, reject)=>{
             try {
                 const searchResults = await POCTRA_API.searcher(vin);
-                notify(
-                    `Poctra: found a match!`,
-                    {displayAs: "success"}
-                )
+                notify("Poctra: found a match!", "success")
                 resolve(searchResults)
             } catch (error) {
                 console.log(`Poctra rejecting: ${error}`)
-                notify(`Poctra: ${error}.`, {displayAs: "status"})
+                notify(`Poctra: ${error}.`)
                 reject()
             }
         })

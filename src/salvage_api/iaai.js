@@ -11,14 +11,11 @@ const IAAI_API = {
         return new Promise( async (resolve, reject)=>{
             try {
                 const searchResults = await IAAI_API.searcher(vin);
-                notify(
-                    `IAAI: found a match!`,
-                    {displayAs:"success"}
-                )
+                notify("IAAI: found a match!", "success")
                 resolve(searchResults)
             } catch (error) {
                 console.log(`IAAI rejecting: ${error}`)
-                notify(`IAAI: ${error}`, {displayAs: "status"})
+                notify(`IAAI: ${error}`)
                 reject()
             }
         })

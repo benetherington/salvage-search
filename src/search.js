@@ -103,7 +103,7 @@ const search = async (message)=>{
     */
     
     // Create a notifier tunnel
-    const notify = notifyUntilSuccess(sPort);
+    const notify = notifyUntilSuccess();
     
     // Search primaries
     try {

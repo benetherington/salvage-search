@@ -246,6 +246,7 @@ const addFeedbackMessage = (rawFeedback)=>{
 // two message ports.
 browser.runtime.onMessage.addListener(addFeedbackMessage)
 
+
 /*----------------*\
   PREFERENCES PAGE  
 \*----------------*/
