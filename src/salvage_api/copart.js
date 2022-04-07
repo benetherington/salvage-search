@@ -1,6 +1,19 @@
 
 const copartWorkers = [];
 const stopCopartWorkers = ()=>copartWorkers.forEach(w=>w.terminate());
+const notifyAtHalfway = ()=>{
+    const progress = {"px": 0, "nx": 0, "py": 0, "ny": 0, "pz": 0, "nz": 0};
+    let notifiedYet = false;
+    return (percentDone, direction) =>{
+        progress[direction] = percentDone;
+        const eachDone = Object.values(progress);
+        const totalDone = eachDone.reduce((cur,prev)=>cur+prev);
+        if (totalDone>50 && !notifiedYet) {
+            sendNotification("Halfway there!")
+            notifiedYet = true;
+        }
+    };
+};
 
 const COPART_API = {
     NAME: "copart",
@@ -247,17 +260,18 @@ const COPART_API = {
         }
     },
     convertEquirectangular: (imageData)=>{
+        const notifyProgress = notifyAtHalfway();
         const workerPromises = [
-            COPART_API.extractCubemapFace(imageData, "pano_r", "px"),
-            COPART_API.extractCubemapFace(imageData, "pano_l", "nx"),
-            COPART_API.extractCubemapFace(imageData, "pano_u", "py"),
-            COPART_API.extractCubemapFace(imageData, "pano_d", "ny"),
-            COPART_API.extractCubemapFace(imageData, "pano_f", "pz"),
-            COPART_API.extractCubemapFace(imageData, "pano_b", "nz")
+            COPART_API.extractCubemapFace(imageData, "pano_r", "px", notifyProgress),
+            COPART_API.extractCubemapFace(imageData, "pano_l", "nx", notifyProgress),
+            COPART_API.extractCubemapFace(imageData, "pano_u", "py", notifyProgress),
+            COPART_API.extractCubemapFace(imageData, "pano_d", "ny", notifyProgress),
+            COPART_API.extractCubemapFace(imageData, "pano_f", "pz", notifyProgress),
+            COPART_API.extractCubemapFace(imageData, "pano_b", "nz", notifyProgress)
         ];
         return Promise.all(workerPromises)
     },
-    extractCubemapFace: async (imageData, key, direction)=>{
+    extractCubemapFace: async (imageData, key, direction, notifyProgress=console.log)=>{
         // Create worker
         const worker = new Worker('./salvage_api/copart-pano-worker.js');
         copartWorkers.push(worker)
@@ -271,7 +285,7 @@ const COPART_API = {
             // Start at the end
             worker.onmessage = (message)=>{
                 const {imageData, percentDone} = message.data;
-                if (percentDone) console.log(`dir ${percentDone}%"`);
+                if (percentDone) notifyProgress(percentDone, direction);
                 if (imageData) resolve([key, imageData]);
             };
             
@@ -288,7 +302,6 @@ const COPART_API = {
         return extractionPromise;
     }
 };
-
 
 // ImageInfo looks like:
 // {
