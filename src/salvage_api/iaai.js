@@ -240,6 +240,9 @@ const IAAI_API = {
         return {walkaroundUrls, panoUrls};
     },
     bonusImageInfo: async (imageInfo)=>{
+        // Validate imageInfo
+        if (!imageInfo.Image360Url) return;
+        
         try {
             // Build request, turning spincar viewer url into the raw images url.
             const spinUrl = imageInfo.Image360Url;
