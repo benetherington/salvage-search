@@ -77,7 +77,7 @@ const COPART_API = {
         const extras = {listingUrls, lotNumbers};
         
         // Send back results
-        return {salvage: "copart", listingUrl, lotNumber, extras};
+        return {salvageName: "copart", listingUrl, lotNumber, extras};
     },
     
     

@@ -153,7 +153,7 @@ const onSearchMessage = (message)=>{
     if (message.feedback) addFeedbackMessage(message.feedback);
     
     // Update salvage slider and lot number
-    setSalvageNameInput(message.salvage);
+    setSalvageNameInput(message.salvageName);
     if (message.lotNumber) {
         document.getElementById("search-input").value = message.lotNumber;
     }

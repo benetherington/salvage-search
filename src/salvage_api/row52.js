@@ -88,7 +88,7 @@ const ROW52_API = {
         const extras = listingUrls;
         
         // Send back results
-        return {salvage: "row52", listingUrl, extras};
+        return {salvageName: "row52", listingUrl, extras};
         
         // Possible additional values
         // let yardNameElement = doc.querySelector("span[itemprop] strong");

@@ -67,11 +67,9 @@ const POCTRA_API = {
         
         // Split results
         const listingUrl = listingUrls.pop();
-        const lotNumber = lotNumbers.pop();
-        const extras = {listingUrls, lotNumbers};
         
         // Send back results
-        return {salvage: "poctra", listingUrl, lotNumber, extras};
+        return {salvageName: "poctra", listingUrl};
     },
     
     

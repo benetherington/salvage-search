@@ -45,7 +45,7 @@ const IAAI_API = {
         const extras = [];
         
         // Send back results
-        return {salvage: "iaai", listingUrl, lotNumber, extras};
+        return {salvageName: "iaai", listingUrl, lotNumber, extras};
     },
     getVehicleInfo: async (vehicle, options)=>{
         if (options.url) {

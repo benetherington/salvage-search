@@ -63,7 +63,6 @@ const BIDFAX_API = {
         
         // Get listing URLs
         const listingUrls = Array.from(searchResults).map(BIDFAX_API.getUrlFromCaption);
-        const lotNumbers = listingUrls.map(url=>/\d{8}/.exec(url)[0]);
         
         // Check listing URLs
         if (!listingUrls.some(el=>el)) {
@@ -73,11 +72,9 @@ const BIDFAX_API = {
         
         // Split results
         const listingUrl = listingUrls.pop();
-        const lotNumber = lotNumbers.pop();
-        const extras = {listingUrls, lotNumbers};
         
         // Send back results
-        return {salvage: "bidfax", listingUrl, lotNumber, extras};
+        return {salvageName: "bidfax", listingUrl};
     },
     fetchCaptchaToken: async ()=>{
         /*
@@ -147,13 +144,13 @@ const BIDFAX_API = {
       SCRAPE
     \*------*/
     URL_PATTERN: "*://en.bidfax.info/*",
-    lotNumberFromTab: async (poctraTab)=>{
+    lotNumberFromTab: async (bidfaxTab)=>{
         try {
             const code = `(${BIDFAX_API.getLotNumber.toString()})()`
-            const framesResults = await browser.tabs.executeScript(poctraTab.id, {code});
+            const framesResults = await browser.tabs.executeScript(bidfaxTab.id, {code});
             const frameResults = framesResults[0]
             return frameResults
-        } catch (error) {throw `Poctra: ${error}`}
+        } catch (error) {throw `Bidfax: ${error}`}
     },
     getLotNumber: ()=>{
         // Primary method, look at the grid of information
