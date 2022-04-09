@@ -12,7 +12,7 @@ function downloadImages(e) {
     document.querySelectorAll("#thumbs img").forEach((img, idx)=>{
         browser.downloads.download({
             url:img.src,
-            filename: `${salvageName}-${lotNumber}/panorama/${idx}.jpg`,
+            filename: `${salvageName}-${lotNumber}/interior360/interior-${idx}.jpg`,
             saveAs:false
         })
     })
