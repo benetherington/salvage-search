@@ -146,10 +146,7 @@ class PanoViewer extends HTMLCanvasElement {
         this.addEventListener("mousemove", this.onMouseMove.bind(this))
         this.addEventListener("wheel", this.onWheel.bind(this))
         document.addEventListener("keydown", this.onKeyDown.bind(this))
-        
-        // Listen for mouse events so we can set the zoom cursor if ctrl was already pressed.
-        this.addEventListener("mouseenter", this.onMouseEnter.bind(this))
-        this.addEventListener("mouseleave", this.onMouseLeave.bind(this))
+        document.addEventListener("keyup", this.onKeyUp.bind(this))
         
         // Do 3D stuff.
         this.initGl()
@@ -302,7 +299,11 @@ class PanoViewer extends HTMLCanvasElement {
         this.render()
     }
     onKeyDown(e) {
-        // Ignore all but the arrow keys
+        // Check for ctrl, but don't unset the cursor (until keyup)
+        const zooming = e.key==="Control";
+        if (zooming) this.setZoomCursor(true);
+        
+        // Check for arrow keys (pan/tilt/zoom)
         if (!e.key.startsWith("Arrow")) return;
         const keyUp    = e.key==="ArrowUp";
         const keyDown  = e.key==="ArrowDown";
@@ -346,20 +347,12 @@ class PanoViewer extends HTMLCanvasElement {
         }
         this.render()
     }
-    
-    
-    // ZOOM CURSOR
-    onMouseEnter(e) {
-        // add keypress listeners to change the cursor style for zooming
-        // this.ctrlKeyListener = this.ctrlKeyController.bind(this);
-        // document.addEventListener("keydown", this.ctrlKeyListener)
-        // document.addEventListener("keyup", this.ctrlKeyListener)
+    onKeyUp(e) {
+        // Check for end of zoom state
+        if (e.key==="Control") this.setZoomCursor(false);
     }
-    onMouseLeave(e) {
-        // remove keypress listeners
-        // document.removeEventListener("keydown", this.ctrlKeyListener)
-        // document.removeEventListener("keyup", this.ctrlKeyListener)
-    }
+    
+    // CURSOR ZOOM ICON
     setZoomCursor(zooming) {
         // ctrl => show zoom cursor
         if (zooming) this.style = "cursor: ns-resize;";
@@ -368,27 +361,29 @@ class PanoViewer extends HTMLCanvasElement {
     
     
     // WEB GRAPHICS LIBRARY
-    async getImage(height=1944, width=2592) {const gl = this.getContext("webgl");
-        // scale canvas to full resolution
+    async getImage(height=1944, width=2592) {
+        const gl = this.getContext("webgl");
+        
+        // Scale canvas to full resolution
         let origHeight = gl.canvas.height;
         let origWidth = gl.canvas.width;
         gl.canvas.height = height;
         gl.canvas.width = width;
         this.render()
-        // create image
-        let blobPromise = new Promise( (resolve, reject)=>{
-            gl.canvas.toBlob((blob)=>{
-                if (blob) {resolve(blob)} else {reject()}
-            })
+        
+        // Get blob using callback
+        const blobPromise = new Promise(resolve=>{
+            gl.canvas.toBlob(blob=>resolve(blob))
         });
-        let blob = await blobPromise;
-        // reset canvas
+        const blob = await blobPromise;
+        
+        // Reset canvas size
         gl.canvas.height = origHeight;
         gl.canvas.width = origWidth;
         this.render()
-        // return image
-        let url = URL.createObjectURL(blob);
-        return url
+        
+        // Return image URL
+        return URL.createObjectURL(blob);
     }
     
     initGl() {const gl = this.getContext("webgl");
