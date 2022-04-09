@@ -386,62 +386,75 @@ class PanoViewer extends HTMLCanvasElement {
         return URL.createObjectURL(blob);
     }
     
-    initGl() {const gl = this.getContext("webgl");
-        // compile shaders
-        let vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
-        let fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
+    initGl() {
+        const gl = this.getContext("webgl");
+        
+        // Compile shaders
+        const vertex_shader = gl.createShader(gl.VERTEX_SHADER);
+        const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(vertex_shader, VERTEX_SHADER_SOURCE);
         gl.shaderSource(fragment_shader, FRAGMENT_SHADER_SOURCE);
         gl.compileShader(vertex_shader);
         gl.compileShader(fragment_shader);
-        console.debug(`vertex_shader compile status: ${gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)}`)
-        console.debug(`fragment_shader compile status: ${gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)}`)
-        // attach shaders
+        
+        // Check for compile errors
+        const vertexShaderStatus = gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)
+        const fragmentShaderStatus = gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)
+        if (!vertexShaderStatus) console.error("The vertex shader failed to compile.");
+        if (!fragmentShaderStatus) console.error("The fragment shader failed to compile.")
+        
+        // Create a shader program
         this.program = gl.createProgram()
         gl.attachShader(this.program, vertex_shader)
         gl.attachShader(this.program, fragment_shader)
-        gl.linkProgram(this.program)
-        console.debug(`program link status: ${gl.getProgramParameter(this.program, gl.LINK_STATUS)}`)
         
-        // look up memory locations
+        // Link the program, check for errors
+        gl.linkProgram(this.program)
+        const programLinkStatus = gl.getProgramParameter(this.program, gl.LINK_STATUS)
+        if (!programLinkStatus) console.error("The shader program failed to link.");
+        
+        // Look up memory locations for later use
         this.locations.position = gl.getAttribLocation(this.program, "a_position");
         this.locations.skybox = gl.getUniformLocation(this.program, "u_skybox");
         this.locations.viewDirectionProjectionInverse = gl.getUniformLocation(this.program, "u_viewDirectionProjectionInverse");
 
-        // create and bind a buffer for positions
+        // Create, bind, and use a position buffer
         this.positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-        // load the buffer
         PanoViewer.setGeometry(gl);
         
-        // create cubemap
+        // Create a texture cubemap
         this.texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture)
-        // add images to cubemap
+        
+        // Load placeholder images
         this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X, this.pano_r || "images/pano_r.jpg")
         this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, this.pano_l || "images/pano_l.jpg")
         this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, this.pano_u || "images/pano_u.jpg")
         this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, this.pano_d || "images/pano_d.jpg")
         this.loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, this.pano_b || "images/pano_b.jpg")
         this.loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, this.pano_f || "images/pano_f.jpg")
-        // finish cubemap setup
+        
+        // Set cubemap parameters
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     }
-    loadTexture(target, url) {const gl = this.getContext("webgl");
-        // build fake texture for immediate results
-        let level = 0;
-        let internalFormat = gl.RGBA;
-        let width = 1712;
-        let height = 1712;
-        let format = gl.RGBA;
-        let type = gl.UNSIGNED_BYTE;
+    loadTexture(target, url) {
+        const gl = this.getContext("webgl");
+        
+        // Build an empty texture for immediate results
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 1712;
+        const height = 1712;
+        const format = gl.RGBA;
+        const type = gl.UNSIGNED_BYTE;
         gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null)
         
         // Asynchronously load the image
-        let image = new Image();
-        let imageLoadedPromise = new Promise((resolve)=>{
+        const image = new Image();
+        const imageLoadedPromise = new Promise((resolve)=>{
             image.addEventListener('load', ()=>{
                 // Now that the image has loaded make copy it to the texture.
                 gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture);
@@ -450,9 +463,13 @@ class PanoViewer extends HTMLCanvasElement {
                 })
         })
         image.src = url;
+        
+        // Return a promise so the calling function can wait on us
         return imageLoadedPromise;
     }
-    render(callback) {const gl = this.getContext("webgl");
+    render(callback) {
+        const gl = this.getContext("webgl");
+        
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
@@ -467,27 +484,27 @@ class PanoViewer extends HTMLCanvasElement {
         // Bind the position buffer.
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         // Tell the position attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-        let size = 2;          // 2 components per iteration
-        let type = gl.FLOAT;   // the data is 32bit floats
-        let normalize = false; // don't normalize the data
-        let stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-        let offset = 0;        // start at the beginning of the buffer
+        const size = 2;          // 2 components per iteration
+        const type = gl.FLOAT;   // the data is 32bit floats
+        const normalize = false; // don't normalize the data
+        const stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        const offset = 0;        // start at the beginning of the buffer
         gl.vertexAttribPointer(this.locations.position, size, type, normalize, stride, offset);
         
         // lookup view attributes
-        let pitch = Number(this.getAttribute("pitch"));
-        let yaw   = Number(this.getAttribute("yaw"));
-        let zoom  = Number(this.getAttribute("zoom"));
-        let fov   = Number(this.getAttribute("fov"));
+        const pitch = Number(this.getAttribute("pitch"));
+        const yaw   = Number(this.getAttribute("yaw"));
+        const zoom  = Number(this.getAttribute("zoom"));
+        const fov   = Number(this.getAttribute("fov"));
         
         // Compute the projection matrix
-        let fieldOfViewRadians = degToRad(fov);
-        let zoomRadians = degToRad(zoom);
-        let aspect = -gl.canvas.clientWidth / gl.canvas.clientHeight;
-        let projectionMatrix = perspective(fieldOfViewRadians-zoomRadians, aspect, 1, 2000);
+        const fieldOfViewRadians = degToRad(fov);
+        const zoomRadians = degToRad(zoom);
+        const aspect = -gl.canvas.clientWidth / gl.canvas.clientHeight;
+        const projectionMatrix = perspective(fieldOfViewRadians-zoomRadians, aspect, 1, 2000);
         // find camera angle
-        let yawRadians   = degToRad(-yaw);
-        let pitchRadians = degToRad(pitch);
+        const yawRadians   = degToRad(-yaw);
+        const pitchRadians = degToRad(pitch);
         // point the camera
         let cameraMatrix = new Float32Array([
             -1,  0,  0,  0,
