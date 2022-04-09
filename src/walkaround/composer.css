@@ -1,6 +1,12 @@
-
+/* FONTS */
 body * {
     font-family: 'Roboto', sans-serif;
+}
+em {
+    color: #194a5e;
+}
+b {
+    font-weight: bold;
 }
 
 /* LAYOUT */
