@@ -927,35 +927,46 @@ class PanoViewer extends HTMLCanvasElement {
         else {this.style = "";}
     }
     onKeyDown(e) {
-        if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"]
-             .includes(e.key)) {return;}
+        // Ignore all but the arrow keys
+        if (!e.key.startsWith("Arrow")) return;
+        const keyUp    = e.key==="ArrowUp";
+        const keyDown  = e.key==="ArrowDown";
+        const keyLeft  = e.key==="ArrowLeft";
+        const keyRight = e.key==="ArrowRight";
         
-        let moveAmount = 1;
-        if (e.shiftKey) {moveAmount = 5;}
+        // Set movement multiplier
+        let moveAmount = e.shiftKey ? 1 : 5;
         
+        // Decide whether we're zooming or panning
         if (e.ctrlKey) {
+            // Which way are we zooming?
+            let direction = 0;
+            if (keyUp)   direction = +1;
+            if (keyDown) direction = -1;
+            
+            // Get, change, and update the zoom attribute
             let zoom = Number(this.getAttribute("zoom"));
-            switch (e.key) {
-                case "ArrowUp":
-                    zoom += moveAmount; break
-                case "ArrowDown":
-                    zoom -= moveAmount; break
-            }
+            zoom += moveAmount * direction;
             this.setAttribute("zoom", zoom)
-        } else {
+        } else if (keyUp||keyDown) {
+            // Which way are we pitching?
+            let direction = 0;
+            if (keyUp)   direction = +1;
+            if (keyDown) direction = -1;
+            
+            // Get, change, and update the pitch attribute
             let pitch = Number(this.getAttribute("pitch"));
-            let yaw = Number(this.getAttribute("yaw"));
-            switch (e.key) {
-                case "ArrowLeft":
-                    yaw += moveAmount; break;
-                case "ArrowRight":
-                    yaw -= moveAmount; break;
-                case "ArrowUp":
-                    pitch += moveAmount; break;
-                case "ArrowDown":
-                    pitch -= moveAmount; break;
-            }
+            pitch += moveAmount * direction;
             this.setAttribute("pitch", pitch)
+        } else if (keyLeft||keyRight) {
+            // Which way are we yawing?
+            let direction = 0;
+            if (keyLeft)  direction = +1;
+            if (keyRight) direction = -1;
+            
+            // Get, change, and update the yaw attribute
+            let yaw = Number(this.getAttribute("yaw"));
+            yaw += moveAmount * direction;
             this.setAttribute("yaw", yaw)
         }
         this.render()
