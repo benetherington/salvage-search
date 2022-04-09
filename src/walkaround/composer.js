@@ -63,7 +63,7 @@ window.addEventListener("load", ()=>{
     
     // BUTTONS
     document.querySelector("#save-view").addEventListener("click", saveThumb)
-    document.querySelector("#dl-all").addEventListener("click", downloadAll)
+    document.querySelector("#dl-all").addEventListener("click", downloadImages)
     document.getElementById("help").addEventListener("click", toggleHelpPopup)
     
     // THUMBNAIL CREATION
