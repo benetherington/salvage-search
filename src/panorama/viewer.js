@@ -1,213 +1,137 @@
 // Helper functions are in viewer-helpers.js
 
-/*-------*\
-  DISPLAY
-\*-------*/
+/*-----*\
+  STAGE
+\*-----*/
 class PanoContainer extends HTMLElement {
     constructor() {
         super()
+        
+        // Create shadow DOM
         this.attachShadow({mode:"open"});
         
+        // Add shadow style
         const style = document.createElement("style");
         style.textContent = PANO_CONTAINER_STYLE;
         this.shadowRoot.append(style);
-        this.titleEl = new Object();
-        // this.addEventListener("download", this.onDownload)
-        // this.addEventListener("reset", this.onReset)
-        // this.addEventListener("remove", this.onRemove)
     }
-    // static get observedAttributes() {return ["name"]}
-    // attributeChangedCallback(attrName, oldValue, newValue) {
-    //     let titleEl = this.shadowRoot.querySelector("input");
-    //     if (titleEl) {
-    //         while (newValue.endsWith(".png")) {
-    //             newValue = newValue.slice(0,-4);
-    //         }
-    //         titleEl.value = newValue + ".png";
-    //         this.dispatchEvent(new Event("namechange", {bubbles:true}))
-    //     }
-    // }
     connectedCallback() {
-        if (!this.isConnected) {
-            // don't continue if disconnecting
-            return
-        }
-        if (this.shadowRoot.childElementCount>1) {
-            // don't continue if shadow contains more than style
-            return
-        }
-
-        // style self, attach shadowDOM
+        // Don't continue if disconnecting
+        if (!this.isConnected) return;
+        
+        // Don't continue if shadow already has elements other than style
+        if (this.shadowRoot.childElementCount>1) return;
+        
+        // Apply style rules
         this.classList.add("pano-container");
-        // add icon floater
-        let floater = document.createElement("div");
-        floater.classList.add("icon-floater")
-        this.shadowRoot.append(floater)
-        // add floater event
-        floater.onclick = ()=>{this.dispatchEvent(
-            new Event("swap", {bubbles:true})
-        )}
+        
         // add panoviewer
-        this.shadowRoot.append(this.getPano())
-        // add title input
-        // let titleEl = document.createElement("input");
-        // titleEl.value = (this.origName || this.getAttribute("name")) + ".png"
-        // this.shadowRoot.appendChild(titleEl)
-        // add input events
-        // this.attributeChangedCallback = (attrName, oldValue, newValue)=>{
-        //     if (attrName==="name") {
-        //         this.titlEl.value = newValue + ".png";
-        //     }
-        // }
-        // titleEl.addEventListener("click", e=>{
-        //     if (e.target.getRootNode().host.classList.contains("focused")){
-        //         e.preventDefault(); return;
-        //     }
-        //     let start = e.target.selectionStart;
-        //     let end = e.target.selectionEnd;
-        //     let name = e.target.getRootNode().host.getAttribute("name");
-        //     e.target.value = name;
-        //     e.target.setSelectionRange(start, end)
-        // })
-        // titleEl.addEventListener("blur", e=>{
-        //     let name = e.target.value;
-        //     while (name.endsWith(".png")) {
-        //         name = name.slice(0,-4);
-        //     }
-        //     e.target.value = name + ".png";
-        //     e.target.getRootNode().host.setAttribute("name", name)
-        // })
-    }
-    async onDownload(e) {
-        // let url = await this.getPano().getImage();
-        // let filename = `interior/${this.getAttribute('name')}.png`;
-        // let saveAs = false;
-        // browser.downloads.download({url, filename, saveAs})
-    }
-    onReset(e) {
-        // if (!this.origName) {return}
-        // this.resetName();
-        // this.resetView();
-    }
-    resetName() {
-        // this.setAttribute("name", this.origName)
-    }
-    resetView() {
-        // switch (this.origName) {
-        //     case "driver":
-        //         this.getPano().goToDriver()
-        //         break;
-        //     case "passenger":
-        //         this.getPano().goToPassenger()
-        //         break;
-        //     case "ip":
-        //         this.getPano().goToIp()
-        //         break;
-        //     case "rear":
-        //         this.getPano().goToRear()
-        // }
-    }
-    onRemove(e) {
-        console.log("remove")
+        this.panoViewer = document.createElement("canvas", {is:"pano-viewer"});
+        this.shadowRoot.append(this.panoViewer)
     }
     addPano(faces) {
-        return this.getPano().updateFaces(faces)
+        return this.panoViewer.updateFaces(faces)
     }
     getPano() {
-        if (this.panoViewer) {
-            return this.panoViewer
-        } else if (this.querySelector("canvas")) {
-            // find PanoViewer
-            this.panoViewer = this.querySelector("canvas");
-        } else {
-            // build PanoViewer
-            this.panoViewer = document.createElement("canvas", {is:"pano-viewer"})
-        }
-        return this.panoViewer
-    }
-    getClone() {
-        let clone = this.cloneNode(true);
-        clone.panoViewer = this.panoViewer.cloneNode(true);
-        clone.origName = this.origName;
-        return clone;
+        return this.panoViewer;
     }
     async getThumbnail() {
-        // create a container
-        let div = document.createElement("div");
-        div.classList.add("thumb-container")
-        // create hover toolbar
-        let divHover = document.createElement("div");
+        // Create a container
+        let thumbContainer = document.createElement("thumbContainer");
+        thumbContainer.classList.add("thumb-container")
+        
+        // Create hover toolbar
+        let divHover = document.createElement("thumbContainer");
         divHover.classList.add("hover-bar")
-        div.append(divHover)
-        // create toolbar buttons
+        thumbContainer.append(divHover)
+        
+        // Add edit button to toolbar
         let spanEdit = document.createElement("span");
         spanEdit.classList.add("hover-icon")
         spanEdit.classList.add("edit-icon")
         spanEdit.addEventListener("click", this.restoreFrom.bind(this))
         divHover.append(spanEdit)
+        
+        // Add delete button to toolbar
         let spanDelete = document.createElement("span");
         spanDelete.classList.add("hover-icon")
         spanDelete.classList.add("delete-icon")
-        spanDelete.addEventListener("click", e=>div.remove())
+        spanDelete.addEventListener("click", e=>thumbContainer.remove())
         divHover.append(spanDelete)
-        // add the current image
+        
+        // Create a placeholder image for the thumbnail
         let img = document.createElement("img");
         img.src = "/icons/hourglass-split.svg";
+        thumbContainer.append(img)
+        
+        // Start rendering the current view
         new Promise(async ()=>{
-            img.src = await this.getPano().getImage();
+            img.src = await this.panoViewer.getImage();
         })
-        div.append(img)
-        // save view data
+        
+        // Set view data so we can edit the thumbnail
         let view = {
-            pitch: Number(this.getPano().getAttribute("pitch")),
-            yaw:   Number(this.getPano().getAttribute("yaw")),
-            zoom:  Number(this.getPano().getAttribute("zoom")),
-            fov:   Number(this.getPano().getAttribute("fov")),
+            pitch: Number(this.panoViewer.getAttribute("pitch")),
+            yaw:   Number(this.panoViewer.getAttribute("yaw")),
+            zoom:  Number(this.panoViewer.getAttribute("zoom")),
+            fov:   Number(this.panoViewer.getAttribute("fov")),
         }
         spanEdit.setAttribute("view", JSON.stringify(view))
-        return div
+        
+        // Done!
+        return thumbContainer
     }
     restoreFrom(e) {
-        // restore view
-        let view = JSON.parse(e.target.getAttribute("view"))
-        this.getPano().setAttribute("pitch", view.pitch)
-        this.getPano().setAttribute("yaw", view.yaw)
-        this.getPano().setAttribute("zoom", view.zoom)
-        this.getPano().setAttribute("fov", view.fov)
+        // Get view attributes
+        const {pitch, yaw, zoom, fov} = JSON.parse(e.target.getAttribute("view"))
+        
+        // Set view attributes
+        this.panoViewer.setAttribute("pitch", pitch)
+        this.panoViewer.setAttribute("yaw",   yaw)
+        this.panoViewer.setAttribute("zoom",  zoom)
+        this.panoViewer.setAttribute("fov",   fov)
+        
+        // Delete thumbnail
         e.target.closest(".thumb-container").remove()
     }
 }
 customElements.define("pano-container", PanoContainer)
 
 
+
+
+/*-----------*\
+  3D PANORAMA
+\*-----------*/
 class PanoViewer extends HTMLCanvasElement {
     constructor() {
-        let canvas = super();
+        // Init from canvas element
+        const canvas = super();
+        
         // Get A WebGL context
-        let gl = canvas.getContext("webgl");
-        if (!gl) {
-            return;
-        }
-        this.initiated = false;
+        const gl = canvas.getContext("webgl");
+        if (!gl) return;
+        
+        // Initialize variables
         this.cursorPrev = {x:0, y:0, scrollY:0};
         this.locations = {
-            position:null,
-            skybox:null,
-            viewDirectionProjectionInverse:null,
+            position: null,
+            skybox: null,
+            viewDirectionProjectionInverse: null,
         };
     }
     connectedCallback() {
-        if (this.initiated) {
-            // Only add event listeners, etc once
-            return;
-        }
+        // Only add event listeners, etc once
+        if (this.initiated) return;
+        
         // patch in dataset values for cloning purposes
-        if (!this.hasAttribute("pitch")){
+        if (!this.hasAttribute("pitch")) {
             this.setAttribute("pitch", 0)
             this.setAttribute("yaw",   0)
             this.setAttribute("zoom",  -20)
             this.setAttribute("fov",   60)
         }
+        
         // if we get resized, we'll still generate the same pixels, and they'll
         // be mushed onto the canvas in the wrong resultion at best, and skewed
         // at worst. A ResizeObserver can trigger updates for us.
@@ -217,31 +141,31 @@ class PanoViewer extends HTMLCanvasElement {
             this.render()
         })
         resizeObserver.observe(this)
-        // add pan/zoom events
+        
+        // Listen for pan/zoom events
         this.addEventListener("mousemove", this.onMouseMove.bind(this))
         this.addEventListener("wheel", this.onWheel.bind(this))
         document.addEventListener("keydown", this.onKeyDown.bind(this))
-        // enable keyboard listening (for ctrl cursor change)
+        
+        // Listen for mouse events so we can set the zoom cursor if ctrl was already pressed.
         this.addEventListener("mouseenter", this.onMouseEnter.bind(this))
         this.addEventListener("mouseleave", this.onMouseLeave.bind(this))
+        
+        // Do 3D stuff.
         this.initGl()
         this.initiated = true;
     }
     
-    // INTERFACE
-    static get observedAttributes() {return ["pitch", "yaw", "zoom", "fov", "name"]}
+    
+    // COMPOSER INTERFACE
+    static get observedAttributes() {return ["pitch", "yaw", "zoom", "fov"]}
     attributeChangedCallback(attrName, oldValue, newValue) {
-        // if (attrName==="name" && this.titleEl) {
-        //     while (newValue.endsWith(".png")) {
-        //         newValue = newValue.slice(0,-4);
-        //     }
-        //     this.titleEl.value = newValue + ".png";
-        // }
-        if (["pitch", "yaw", "zoom", "fov"].includes(attrName)) {
-            this.render()
-        }
+        this.render()
     }
-    updateFaces(faces) {let gl = this.getContext("webgl");
+    updateFaces(faces) {
+        const gl = this.getContext("webgl");
+        
+        // Asynchronously load textures
         let texPromises = [];
         texPromises.push(
             this.loadTexture(
@@ -280,6 +204,8 @@ class PanoViewer extends HTMLCanvasElement {
             )
         )
         this.render()
+        
+        // Hand back a promise so that composer can wait for us when needed
         return Promise.all(texPromises)
     }
     goToDriver() {
@@ -311,59 +237,69 @@ class PanoViewer extends HTMLCanvasElement {
         return new Promise(resolve=>this.render(resolve))
     }
     
-    // EVENT HANDLERS
+    
+    // ZOOM/PAN EVENTS
     onMouseMove(e) {
-        // freeze view if we're in thumbnails
-        if (this.closest("#thumbs")) {return}
-        
-        if (e.ctrlKey && e.buttons) {
-            // ctrl-drag => zoom
-            let dz = e.y - this.cursorPrev.y;
-            dz *= 0.1;
-            let prevZoom = Number(this.getAttribute("zoom"));
-            this.setAttribute("zoom", prevZoom+dz);
-            this.render()
-        } else if (e.buttons) {
-            // drag => pan
-            let dx = e.x - this.cursorPrev.x;
-            let dy = e.y - this.cursorPrev.y;
-            dx *= 0.1; dy *= 0.1;
-            let prevPitch = Number(this.getAttribute("pitch"));
-            let prevYaw   = Number(this.getAttribute("yaw"));
-            this.setAttribute("pitch", (prevPitch + dy) % 360);
-            this.setAttribute("yaw",   (prevYaw   + dx) % 360);
-            this.render()
-        }
-        // save data for next time
+        // Save cursor position to compare against later
+        const {x: prevX, y: prevY} = this.cursorPrev;
         this.cursorPrev.x = e.x;
         this.cursorPrev.y = e.y;
-    }
-    onWheel(e) {
-        // zoom in or out
-        let multiplier = 0.01;
-        // shift => fast zoom
-        if (e.shiftKey) {multiplier = 0.1;}
-        let dScrollY = this.cursorPrev.scrollY - e.wheelDeltaY;
-        dScrollY *= multiplier;
-        let prevZoom = Number(this.getAttribute("zoom"))
-        this.setAttribute("zoom", prevZoom+dScrollY);
+        
+        // What are we doing?
+        const dragging = e.buttons;
+        const zooming = e.ctrlKey;
+        
+        // Update cursor
+        this.setZoomCursor(zooming);
+        
+        // If we're not dragging, we're done
+        if (!dragging) return;
+        
+        if (zooming) {
+            // Find how far the curor has moved up
+            const moveAmount = e.y - prevY;
+            
+            // Get, change, and update zoom attribute
+            let zoom = Number(this.getAttribute("zoom"));
+            zoom += moveAmount * 0.1;
+            this.setAttribute("zoom", zoom);
+        } else {
+            // Find out how far the cursor has moved
+            const yDistance = e.y - prevY;
+            const xDistance = e.x - prevX;
+            
+            // Get pitch and yaw attributes
+            let pitch = Number(this.getAttribute("pitch"));
+            let yaw   = Number(this.getAttribute("yaw"));
+            
+            // Increment pitch and yaw
+            pitch += yDistance * 0.1;
+            yaw += xDistance * 0.1;
+            pitch %= 360;
+            yaw %= 360;
+            
+            // Update pitch and yaw attributes
+            this.setAttribute("pitch", pitch)
+            this.setAttribute("yaw",   yaw)
+        }
+        
+        // Done!
         this.render()
     }
-    onMouseEnter(e) {
-        // add keypress listeners to change the cursor style for zooming
-        this.ctrlKeyListener = this.ctrlKeyController.bind(this);
-        document.addEventListener("keydown", this.ctrlKeyListener)
-        document.addEventListener("keyup", this.ctrlKeyListener)
-    }
-    onMouseLeave(e) {
-        // remove keypress listeners
-        document.removeEventListener("keydown", this.ctrlKeyListener)
-        document.removeEventListener("keyup", this.ctrlKeyListener)
-    }
-    ctrlKeyController(e) {
-        // ctrl => show zoom cursor
-        if (e.ctrlKey) {this.style = "cursor: ns-resize;";}
-        else {this.style = "";}
+    onWheel(e) {
+        // Set movement multiplier
+        const moveAmount = e.shiftKey ? 0.1 : 0.02;
+        
+        // Find out how far the wheel has moved
+        let scrollDistance = this.cursorPrev.scrollY - e.wheelDeltaY;
+        
+        // Get, change, and update the zoom attribute
+        let zoom = Number(this.getAttribute("zoom"))
+        zoom -= scrollDistance * moveAmount;
+        this.setAttribute("zoom", zoom);
+        
+        // Done!
+        this.render()
     }
     onKeyDown(e) {
         // Ignore all but the arrow keys
@@ -411,8 +347,28 @@ class PanoViewer extends HTMLCanvasElement {
         this.render()
     }
     
+    
+    // ZOOM CURSOR
+    onMouseEnter(e) {
+        // add keypress listeners to change the cursor style for zooming
+        // this.ctrlKeyListener = this.ctrlKeyController.bind(this);
+        // document.addEventListener("keydown", this.ctrlKeyListener)
+        // document.addEventListener("keyup", this.ctrlKeyListener)
+    }
+    onMouseLeave(e) {
+        // remove keypress listeners
+        // document.removeEventListener("keydown", this.ctrlKeyListener)
+        // document.removeEventListener("keyup", this.ctrlKeyListener)
+    }
+    setZoomCursor(zooming) {
+        // ctrl => show zoom cursor
+        if (zooming) this.style = "cursor: ns-resize;";
+        else this.style = "";
+    }
+    
+    
     // WEB GRAPHICS LIBRARY
-    async getImage(height=1944, width=2592) {let gl = this.getContext("webgl");
+    async getImage(height=1944, width=2592) {const gl = this.getContext("webgl");
         // scale canvas to full resolution
         let origHeight = gl.canvas.height;
         let origWidth = gl.canvas.width;
@@ -435,7 +391,7 @@ class PanoViewer extends HTMLCanvasElement {
         return url
     }
     
-    initGl() {let gl = this.getContext("webgl");
+    initGl() {const gl = this.getContext("webgl");
         // compile shaders
         let vertex_shader   = gl.createShader(gl.VERTEX_SHADER);
         let fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -478,7 +434,7 @@ class PanoViewer extends HTMLCanvasElement {
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     }
-    loadTexture(target, url) {let gl = this.getContext("webgl");
+    loadTexture(target, url) {const gl = this.getContext("webgl");
         // build fake texture for immediate results
         let level = 0;
         let internalFormat = gl.RGBA;
@@ -501,7 +457,7 @@ class PanoViewer extends HTMLCanvasElement {
         image.src = url;
         return imageLoadedPromise;
     }
-    render(callback) {let gl = this.getContext("webgl");
+    render(callback) {const gl = this.getContext("webgl");
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.CULL_FACE);
