@@ -11,17 +11,27 @@
     </head>
     <body>
 
-            <!-- Main viewer and buttons -->
-            <div id="stage-container" class="ungrouped has-hover">
-                <pano-container id="stage"></pano-container>
-                <button id="save-view" class="hover bottom right"></button>
-            </div>
-            
-            <!-- Thumbnails -->
-            <div id="thumbs" class="grouped has-hover">
-                <button id="dl-all" class="hover bottom right"></button>
-                <p class="placeholder">Click the camera button to add a snapshot...</p>
-            </div>
+        <!-- Main viewer and buttons -->
+        <div id="stage-container" class="ungrouped has-hover">
+            <pano-container id="stage"></pano-container>
+            <button id="help" class="hover bottom left"></button>
+            <button id="save-view" class="hover bottom right"></button>
+        </div>
+        
+        <!-- Thumbnails -->
+        <div id="thumbs" class="grouped has-hover">
+            <button id="dl-all" class="hover bottom right"></button>
+            <p class="placeholder">Click the camera button to add a snapshot...</p>
+        </div>
+        
+        <!-- Help popup -->
+        <div id="help-popup" class="fade-out">
+            <h3>Controls</h3>
+            <p><b>Rotate the camera:</b> Click-and-drag, or press the arrow keys to make big jumps, or press the arrow keys while holding Shift to make smaller jumps.</p>
+            <p><b>Zoom:</b> use the scroll wheel, or click-and-drag while holding CTRL. Hold Shift to zoom faster.</p>
+            <p><b>Hold on to an image:</b> Click the camera button, or press Enter, or double click on the vehicle.</p>
+            <p><b>Download held images:</b> Click the download button. Images will be saved to your downloads folder, inside this vehicle's folder.</p>
+        </div>
 
     </body>
 </html>

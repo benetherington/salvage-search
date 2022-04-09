@@ -56,6 +56,8 @@ body {
     display: none;
 }
 
+
+
 /* ELEMENTS */
 button {
     padding: 4px;
@@ -75,6 +77,8 @@ button.disabled, button.disabled:hover {
     opacity: 0.5;
     box-shadow: 0px 0px 2px 1px grey;
 }
+
+
 
 /* CONTAINERS */
 #stage-container {
@@ -135,6 +139,36 @@ button.disabled, button.disabled:hover {
     display: flex;
 }
 
+
+
+/* STAGE AND THUMBNAILS */
+walkaround-viewer {
+    /* For the life of me, I cannot figure out why 100% does not work below. It
+    winds up with unbounded height for very wide windows. What is the containing
+    block here, and why isn't it statically-positioned #stage-container?! It
+    cant be html, right? */
+    /* Subtract margin used by body and #stage-container */
+    max-height: calc(100vh - 16px - 1vh);
+}
+.placeholder {
+    /* appearance */
+    color: grey;
+    font-size: 2em;
+    user-select: none;
+    /* alignment, skewed slightly left to make room for download button */
+    width: 90%;
+    align-self: center;
+    text-align: center;
+}
+.placeholder:not(:last-child) {
+    /* Because thumbnails get added to the end of #thumbs,
+    the placeholder can hide itself when there's anything
+    below it. */
+    display: none;
+}
+
+
+
 /* THUMBNAIL HOVERING DELETE BUTTON */
 #thumbs:not(:hover) .hover-bar {visibility: hidden;}
 .delete-icon {
@@ -162,58 +196,66 @@ button.disabled, button.disabled:hover {
     filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.75))
 }
 
-/* SPECIFIC ITEMS */
-walkaround-viewer {
-    /* For the life of me, I cannot figure out why 100% does not work below. It
-    winds up with unbounded height for very wide windows. What is the containing
-    block here, and why isn't it statically-positioned #stage-container?! It
-    cant be html, right? */
-    /* Subtract margin used by body and #stage-container */
-    max-height: calc(100vh - 16px - 1vh);
+
+
+/* BUTTONS */
+button.hover {
+    height: 60px;
+    aspect-ratio: 1/1;
+    border-radius: 100%;
+    
+    background-size: 69%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+button.hover::after {
+    border-radius: 100%;
 }
 #save-view {
-    height: 60px;
-    aspect-ratio: 1/1;
-    border-radius: 100%;
-    
     background-image: url("/icons/camera-fill.svg");
-    background-size: 69%;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-    #save-view::after {
-        border-radius: 100%;
-    }
-.placeholder {
-    /* appearance */
-    color: grey;
-    font-size: 2em;
-    /* alignment, skewed slightly left to make room for download button */
-    width: 90%;
-    align-self: center;
-    text-align: center;
-}
-.placeholder:not(:last-child) {
-    /* Because thumbnails get added to the end of #thumbs,
-    the placeholder can hide itself when there's anything
-    below it. */
-    display: none;
 }
 #dl-all {
-    height: 60px;
-    aspect-ratio: 1/1;
-    border-radius: 100%;
-    
     background-image: url("/icons/download.svg");
-    background-size: 69%;
-    background-position: center;
-    background-repeat: no-repeat;
 }
-#dl-all::after {
-    border-radius: 100%;
+#help {
+    background-image: url("/icons/info-lg.svg");
 }
 
 
 
+/* HELP POPUP */
+#help-popup {
+    background-color: white;
+    
+    /* Look like a card, but add a fluffy cloud to help stand out */
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12),
+                0 1px 2px rgba(0,0,0,0.24),
+                0 0 30px 10px rgba(47, 47, 47, 0.3);
+    
+    /* Position in the middle of the window */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    
+    /* Allow appearance animation */
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s;
+}
+#help-popup.fade-out {
+    opacity: 0;
+    visibility: hidden;
+}
+#help-popup > * {
+    /* This goes here because (at least) Firefox adds inline margins. We need to
+   make sure margins are always overwritten evenly. */
+    margin: 16px;
+}
+#help-popup h3 {
+    text-align: center;
+}
 
 

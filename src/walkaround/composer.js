@@ -54,6 +54,7 @@ window.addEventListener("load", ()=>{
     
     // TOOLBAR: DOWNLOAD
     document.querySelector("#dl-all").addEventListener("click", downloadAll)
+    document.getElementById("help").addEventListener("click", toggleHelpPopup)
     
     // TOOLBAR: VIEWS
     document.querySelector("#save-view").addEventListener("click", saveThumb)

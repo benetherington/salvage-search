@@ -14,6 +14,7 @@
         <!-- Main viewer and buttons -->
         <div id="stage-container" class="ungrouped has-hover">
             <walkaround-viewer id="stage"></walkaround-viewer>
+            <button id="help" class="hover bottom left"></button>
             <button id="save-view" class="hover bottom right"></button>
         </div>
         
@@ -22,6 +23,15 @@
             <button id="dl-all" class="hover bottom right"></button>
             <p class="placeholder">Click the camera button to add a snapshot...</p>
         </div>
+        
+        <!-- Help popup -->
+        <div id="help-popup" class="fade-out">
+            <h3>Controls</h3>
+            <p><b>Rotate the vehicle:</b> Click-and-drag on the vehicle, or press left and right arrow keys. Hold Shift to rotate faster.</p>
+            <p><b>Hold on to an image:</b> Click the camera button, or press Enter, or double click on the vehicle.</p>
+            <p><b>Download held images:</b> Click the download button. Images will be saved to your downloads folder, inside this vehicle's folder.</p>
+        </div>
+
     </body>
 </html>
 
