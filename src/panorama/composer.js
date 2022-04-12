@@ -9,10 +9,17 @@ async function saveThumb() {
 }
 
 function downloadImages() {
+    // Name folder
+    let folder;
+    if (salvageName && lotNumber)      folder = `${salvageName}-${lotNumber}`;
+    else if (salvageName || lotNumber) folder = lotNumber || salvageName;
+    else                               folder = "salvage_photos";
+    
+    // Save images
     document.querySelectorAll("#thumbs img").forEach((img, idx)=>{
         browser.downloads.download({
             url:img.src,
-            filename: `${salvageName}-${lotNumber}/interior360/interior-${idx}.jpg`,
+            filename: `${folder}/interior360/interior-${idx}.jpg`,
             saveAs:false
         })
     })

@@ -9,10 +9,17 @@ function saveThumb() {
 }
 
 function downloadImages() {
+    // Name folder
+    let folder;
+    if (salvageName && lotNumber)      folder = `${salvageName}-${lotNumber}`;
+    else if (salvageName || lotNumber) folder = lotNumber || salvageName;
+    else                               folder = "salvage_photos";
+    
+    // Save images
     document.querySelectorAll("#thumbs img").forEach((img, idx)=>{
         browser.downloads.download({
             url:img.src,
-            filename: `${salvageName}-${lotNumber}/exterior360/exterior-${idx}.jpg`,
+            filename: `${folder}/exterior360/exterior-${idx}.jpg`,
             saveAs:false
         })
     })
