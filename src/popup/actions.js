@@ -128,14 +128,15 @@ document.addEventListener("DOMContentLoaded", ()=>{
 // Slider getter and setter
 const getSalvageNameInput = ()=>{
     const selected = document.querySelector("#salvage-selector input:checked").id;
-    if (selected == "unknown-salvage") return;
-    return selected;
+    if (     selected==="download-unknown") return;
+    else if (selected==="download-copart" ) return "copart";
+    else if (selected==="download-iaai"   ) return "iaai";
 }
 const setSalvageNameInput = (salvageName)=>{
     if (!salvageName) {
-        document.getElementById("unknown-salvage").checked = true;
+        document.getElementById("download-unknown").checked = true;
     } else {
-        document.getElementById(salvageName).checked = true;
+        document.getElementById("download-"+salvageName).checked = true;
     }
 }
 
@@ -254,11 +255,11 @@ const fetchStoredSettings = async ()=>{
     // Defined in shared-assets.js
     const settings = await defaultedSettings();
     
-    document.querySelector(".settings-grid input#copart").checked = settings.searchCopart;
-    document.querySelector(".settings-grid input#iaai"  ).checked = settings.searchIaai;
-    document.querySelector(".settings-grid input#row52" ).checked = settings.searchRow52;
-    document.querySelector(".settings-grid input#poctra").checked = settings.searchPoctra;
-    document.querySelector(".settings-grid input#bidfax").checked = settings.searchBidfax;
+    document.getElementById("settings-copart").checked = settings.searchCopart;
+    document.getElementById("settings-iaai"  ).checked = settings.searchIaai;
+    document.getElementById("settings-row52" ).checked = settings.searchRow52;
+    document.getElementById("settings-poctra").checked = settings.searchPoctra;
+    document.getElementById("settings-bidfax").checked = settings.searchBidfax;
 };
 
 const setStoredSettings = async ()=>{
@@ -266,11 +267,11 @@ const setStoredSettings = async ()=>{
     const settings = await defaultedSettings();
     
     // Update defaults from the page
-    settings.searchCopart   = document.getElementById("copart").checked;
-    settings.searchIaai     = document.getElementById("iaai"  ).checked;
-    settings.searchRow52    = document.getElementById("row52" ).checked;
-    settings.searchPoctra   = document.getElementById("poctra").checked;
-    settings.searchBidfax   = document.getElementById("bidfax").checked;
+    settings.searchCopart = document.getElementById("settings-copart").checked;
+    settings.searchIaai   = document.getElementById("settings-iaai"  ).checked;
+    settings.searchRow52  = document.getElementById("settings-row52" ).checked;
+    settings.searchPoctra = document.getElementById("settings-poctra").checked;
+    settings.searchBidfax = document.getElementById("settings-bidfax").checked;
     
     // Store settings
     browser.storage.local.set({settings})
@@ -278,19 +279,19 @@ const setStoredSettings = async ()=>{
 
 const setElementCallbacks = ()=>{
     // When any toggle changes, update the local storage.
-    document.querySelector(".settings-grid input#copart")
+    document.getElementById("settings-copart")
         .addEventListener("change", setStoredSettings)
     
-    document.querySelector(".settings-grid input#iaai")
+    document.getElementById("settings-iaai")
         .addEventListener("change", setStoredSettings)
     
-    document.querySelector(".settings-grid input#row52")
+    document.getElementById("settings-row52")
         .addEventListener("change", setStoredSettings)
     
-    document.querySelector(".settings-grid input#poctra")
+    document.getElementById("settings-poctra")
         .addEventListener("change", setStoredSettings)
     
-    document.querySelector(".settings-grid input#bidfax")
+    document.getElementById("settings-bidfax")
         .addEventListener("change", setStoredSettings)
 };
 
