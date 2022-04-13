@@ -132,6 +132,7 @@ button.disabled, button.disabled:hover {
     .thumb-container {
         /* basis includes #thumbs{gap:10px}, distributed over two "columns" */
         flex-basis: calc(50% - 10px / 2);
+        height: fit-content;
     }
 }
 .thumb-container img {
