@@ -45,8 +45,8 @@ body {
     position: absolute;
     z-index: 1;
 }
-.hover::after {
-    position:absolute;
+.hover > *::after {
+    position: absolute;
     content: "";
     height: 100%;
     width: 100%;
@@ -97,23 +97,27 @@ button.disabled, button.disabled:hover {
     /* Screen is wide, make stage grow */
     #stage-container {
         flex-grow: 6;
-        
     }
 }
+#thumbs-container {
+    flex-grow: 0;
+    min-height: 0;
+}
 #thumbs {
+    /* this element layout */
+    overflow: hidden auto;
+    scrollbar-width: thin;
+    /* set max-height to not overflow body {padding] */
+    max-height: calc(100% - 8px);
+    min-height: calc(20% + .5vh);
     /* child layout */
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    overflow: hidden auto;
-    scrollbar-width: thin;
     
-    /* this element layout */
-    min-height: calc(20% + .5vh);
-    flex-grow: 0;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
-    #thumbs {
+    #thumbs-container {
         flex-grow: 1;
         flex-basis: 200px;
     }
@@ -208,7 +212,7 @@ pano-container {
 
 
 /* BUTTONS */
-button.hover {
+.hover > button {
     height: 60px;
     aspect-ratio: 1/1;
     border-radius: 100%;
@@ -217,7 +221,7 @@ button.hover {
     background-position: center;
     background-repeat: no-repeat;
 }
-button.hover::after {
+.hover > button::after {
     border-radius: 100%;
 }
 #save-view {
