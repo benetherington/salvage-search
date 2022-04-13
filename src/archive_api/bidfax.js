@@ -17,7 +17,7 @@ const BIDFAX_API = {
                 resolve(searchResults)
             } catch (error) {
                 console.log(`BidFax rejecting: ${error}`)
-                const sent = notify(`BidFax: ${error}.`)
+                const sent = notify(`BidFax: ${error}.`);
                 if (sent && error===captchaMessage) {
                     // Captcha failed. Only notify if another searcher has not
                     // yet been successful
@@ -44,13 +44,13 @@ const BIDFAX_API = {
         const response = await fetch(searchUrl);
         
         // Check response
-        if (!response.ok) { throw "something went wrong on their end..." }
         if (response.status === 301) {
             // Moved Permanently is returned when the token is invalid or
             // missing.
             console.log("BidFax wants a CAPTCHA check")
             throw captchaMessage;
         }
+        if (!response.ok) { throw "something went wrong on their end..." }
         
         // Parse response content
         const parser = new DOMParser();
