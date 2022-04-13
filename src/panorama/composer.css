@@ -99,10 +99,6 @@ button.disabled, button.disabled:hover {
         flex-grow: 6;
     }
 }
-#thumbs-container {
-    flex-grow: 0;
-    min-height: 0;
-}
 #thumbs {
     /* this element layout */
     overflow: hidden auto;
@@ -115,12 +111,6 @@ button.disabled, button.disabled:hover {
     flex-wrap: wrap;
     gap: 10px;
     
-}
-@media screen and (min-aspect-ratio: 1000/978) {
-    #thumbs-container {
-        flex-grow: 1;
-        flex-basis: 200px;
-    }
 }
 .thumb-container {
     position: relative;
@@ -189,7 +179,7 @@ pano-container {
     /* For the life of me, I cannot figure out why 100% does not work below. It
     winds up with unbounded height for very wide windows. What is the containing
     block here, and why isn't it statically-positioned #stage-container?! It
-    cant be html, right? */
+    can't be html, right? */
     /* Subtract margin used by body and #stage-container */
     max-height: calc(100vh - 16px - 1vh);
 }
@@ -212,7 +202,23 @@ pano-container {
 
 
 
-/* BUTTONS */
+/* HOVERING BUTTONS */
+#thumbs-wrapper {
+    /* Because #thumbs scrolls, its button is placed in an invisible div wrapped
+   around #thumbs */
+    flex-grow: 0;
+    min-height: 0;
+}
+#thumbs-wrapper .hover {
+    /* This container has no padding */
+    margin: 5px;
+}
+@media screen and (min-aspect-ratio: 1000/978) {
+    #thumbs-wrapper {
+        flex-grow: 1;
+        flex-basis: 200px;
+    }
+}
 .hover > button {
     height: 60px;
     aspect-ratio: 1/1;
