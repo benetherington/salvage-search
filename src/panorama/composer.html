@@ -13,8 +13,8 @@
     <body>
 
         <!-- Main viewer and buttons -->
-        <div id="stage-container" class="ungrouped has-hover">
-            <pano-container id="stage"></pano-container>
+        <div id="stage-wrapper" class="card-wrapper has-hover">
+            <pano-container id="stage" class="card"></pano-container>
             <div class="hover bottom left">
                 <button id="help"></button>
             </div>
@@ -24,11 +24,11 @@
         </div>
         
         <!-- Thumbnails -->
-        <div id="thumbs-wrapper" class="has-hover">
+        <div id="thumbs-wrapper" class="card-wrapper has-hover">
             <div class="hover bottom right">
                 <button id="dl-all"></button>
             </div>
-            <div id="thumbs" class="grouped">
+            <div id="thumbs" class="card">
                 <p class="placeholder">Click the camera button to add a snapshot...</p>
             </div>
         </div>

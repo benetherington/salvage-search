@@ -37,25 +37,26 @@ class PanoContainer extends HTMLElement {
     }
     async getThumbnail() {
         // Create a container
-        let thumbContainer = document.createElement("thumbContainer");
-        thumbContainer.classList.add("thumb-container")
+        let thumbContainer = document.createElement("div");
+        thumbContainer.classList.add("thumbnail")
+        thumbContainer.classList.add("card")
+        thumbContainer.classList.add("has-hover")
         
         // Create hover toolbar
-        let divHover = document.createElement("thumbContainer");
+        let divHover = document.createElement("div");
         divHover.classList.add("hover-bar")
+        divHover.classList.add("card")
         thumbContainer.append(divHover)
         
         // Add edit button to toolbar
         let spanEdit = document.createElement("span");
-        spanEdit.classList.add("hover-icon")
-        spanEdit.classList.add("edit-icon")
+        spanEdit.classList.add("edit")
         spanEdit.addEventListener("click", this.restoreFrom.bind(this))
         divHover.append(spanEdit)
         
         // Add delete button to toolbar
         let spanDelete = document.createElement("span");
-        spanDelete.classList.add("hover-icon")
-        spanDelete.classList.add("delete-icon")
+        spanDelete.classList.add("delete")
         spanDelete.addEventListener("click", e=>thumbContainer.remove())
         divHover.append(spanDelete)
         

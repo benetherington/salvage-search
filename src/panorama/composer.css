@@ -9,7 +9,11 @@ b {
     font-weight: bold;
 }
 
-/* LAYOUT */
+
+
+/*----------------*\
+  TOP-LEVEL LAYOUT
+\*----------------*/
 body {
     display: flex;
     flex-direction: row;
@@ -24,164 +28,107 @@ body {
         flex-direction: column;
     }
 }
-.grouped {
+
+
+/*----------*\
+  CARD STYLE
+\*----------*/
+.card {
     height: fit-content;
     box-sizing: border-box;
-    margin: 0.5vh;
-    padding: 1vh;
+    margin: 5px;
+    padding: 10px;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
-.ungrouped {
-    height: fit-content;
-    box-sizing: border-box;
-    margin: 0.5vh;
-    padding: 1vh;
+.card-wrapper {
+    /* The two big cards have invisible wrappers around them. The margins need
+    to be "moved" to outside the wrapper. */
+    margin: 5px;
 }
-.has-hover {
-    position: relative;
-}
-.hover {
-    position: absolute;
-    z-index: 1;
-}
-.hover > *::after {
-    position: absolute;
-    content: "";
-    height: 100%;
-    width: 100%;
-    left: 0;
-    top: 0;
-    box-shadow: 0 0 10px rgba(1,1,1,0.3);
-}
-.hover.left   {left:   5px;}
-.hover.right  {right:  5px;}
-.hover.top    {top:    5px;}
-.hover.bottom {bottom: 5px;}
-.hidden {
-    display: none;
+.card-wrapper > card {
+    margin: 0;
 }
 
 
 
-/* ELEMENTS */
-button {
-    padding: 4px;
-    text-align: center;
-    font-size: 1em;
-    font-weight: 500;
-    color: #eee;
-    background: #32728C;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    cursor: pointer;
-    border: initial;
-}
-button.disabled, button.disabled:hover {
-    color:            #666666;
-    background-color: inherit;
-    pointer-events: none;
-    opacity: 0.5;
-    box-shadow: 0px 0px 2px 1px grey;
-}
-
-
-
-/* CONTAINERS */
-#stage-container {
+/*-----*\
+  STAGE
+\*-----*/
+#stage-wrapper {
+    /* flex-axis */
     flex-basis: 200px;
+    height: fit-content;
     
-    /* .ungrouped isn't intended for things that have full-size children */
-    padding: 0;
+    /* cross-axis */
+    width: 100%;
 }
 @media screen and (min-aspect-ratio: 1000/968) {
     /* Screen is wide, make stage grow */
-    #stage-container {
+    #stage-wrapper {
         flex-grow: 6;
     }
 }
+#stage {
+    /* TODO: add placeholder image */
+    /* background-image: url("panorama/images/pano_r.jpg");
+    background-size: cover; */
+    
+    /* Same thing as @thumbs... using a percentage does not work. */
+    /* Subtract margin used by body and #stage-container */
+    max-height: calc(100vh - 16px - 1vh);
+    padding: 0; /* override .card */
+}
+
+
+/*--------------*\
+  THUMBNAIL TRAY
+\*--------------*/
+#thumbs-wrapper {
+    /* flex-axis */
+    flex-grow: 0;
+    min-height: 0;
+    
+    /* cross-axis */
+    width: 100%;
+}
+@media screen and (min-aspect-ratio: 1000/978) {
+    #thumbs-wrapper {
+        /* flex-axis */
+        flex-grow: 1;
+        flex-basis: 200px;
+        
+        /* cross-axis */
+        height: fit-content;
+        max-height: calc(100% - 8px);
+    }
+}
 #thumbs {
-    /* this element layout */
     overflow: hidden auto;
-    scrollbar-width: thin;
-    /* set max-height to not overflow body {padding] */
-    max-height: calc(100% - 8px);
-    min-height: calc(20% + .5vh);
-    /* child layout */
+    scrollbar-width: none;
+    /* In order to scroll, this needs to constrain its size, */
+    /* including .card padding. */
+    max-height: calc(100% - 10px);
+    
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     
+    --scroll-height: 0;
+    --scroll-top: 0;
 }
-.thumb-container {
-    position: relative;
-    /* basis includes #thumbs{gap:10px}, times four gaps distributed over five "columns" */
-    flex-basis: calc(20% - 10px * 4 / 5);
-    flex-shrink: 1;
+#thumbs::-webkit-scrollbar {
+    /* Chrome compatibility */
+    display: none;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
-    .thumb-container {
-        /* basis includes #thumbs{gap:10px}, distributed over two "columns" */
-        flex-basis: calc(50% - 10px / 2);
-        height: fit-content;
+    #thumbs {
+        /* Using a percentage fails, inside or outside calc(). CSS bug in
+        Firefox? Set height based on vh, subtract #thumbs-wrapper{padding} and
+        body{wrapping} */
+        max-height: calc(100vh - 5px * 2 - 8px *2);
     }
 }
-.thumb-container img {
-    /* make thumbnails square */
-    width: 100%;
-    aspect-ratio: 1/1;
-    object-fit: cover;
-    
-    /* allow corner snipping */
-    overflow: hidden;
-    /* style container */
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    display: flex;
-}
-
-
-
-/* THUMBNAIL HOVERING TOOLBAR */
-#thumbs:not(:hover) .hover-bar {visibility: hidden;}
-.hover-bar {
-    /* style */
-    background: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    border-radius: 4px;
-    /* size and position */
-    position: absolute;
-    display: flex;
-    height: 40px;
-    right: -5px;
-    top: -5px;
-}
-.hover-icon {
-    /* style */
-    transition: background-color .1s;
-    /* size */
-    height: 100%;
-    aspect-ratio: 1/1;
-    background-size: 70%;
-    background-position: 50%;
-    background-repeat: no-repeat;
-    box-sizing: border-box;
-}
-.hover-icon:hover {background-color: lightgrey;}
-/* add a little border between items */
-.hover-icon:not(:last-child) {box-shadow: 2px 0 2px -1px rgba(0,0,0,0.24);}
-
-.edit-icon          {background-image: url("/icons/pencil-square.svg");}
-.delete-icon        {background-image: url("/icons/x-circle-fill.svg");}
-.delete-icon:hover  {background-color: lightpink;}
-
-/* STAGE AND THUMBNAILS */
-pano-container {
-    /* For the life of me, I cannot figure out why 100% does not work below. It
-    winds up with unbounded height for very wide windows. What is the containing
-    block here, and why isn't it statically-positioned #stage-container?! It
-    can't be html, right? */
-    /* Subtract margin used by body and #stage-container */
-    max-height: calc(100vh - 16px - 1vh);
 }
 #thumbs > .placeholder {
     /* appearance */
@@ -196,40 +143,110 @@ pano-container {
 .placeholder:not(:last-child) {
     /* Because thumbnails get added to the end of #thumbs,
     the placeholder can hide itself when there's anything
-    below it. */
+    after it. */
     display: none;
 }
 
 
 
-/* HOVERING BUTTONS */
-#thumbs-wrapper {
-    /* Because #thumbs scrolls, its button is placed in an invisible div wrapped
-   around #thumbs */
-    flex-grow: 0;
-    min-height: 0;
-}
-#thumbs-wrapper .hover {
-    /* This container has no padding */
-    margin: 5px;
+/*----------*\
+  THUMBNAILS
+\*----------*/
+.thumbnail {
+    flex-basis: calc(20% - 10px * 4 / 5);
+    flex-shrink: 1;
+    
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    /* override .card */
+    padding: 0;
+    margin: 0;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
-    #thumbs-wrapper {
-        flex-grow: 1;
-        flex-basis: 200px;
+    .thumbnail {
+        /* basis includes #thumbs{gap:10px}, distributed over two "columns" */
+        flex-basis: calc(50% - 10px / 2);
     }
 }
+.thumbnail img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+}
+
+
+
+/*--------------------------*\
+  THUMBNAIL HOVERING TOOLBAR
+\*--------------------------*/
+#thumbs:not(:hover) .hover-bar {visibility: hidden;}
+.hover-bar {
+    background: #fdfdf6;
+    
+    position: absolute;
+    display: flex;
+    height: 40px;
+    right: -5px;
+    top: -5px;
+    padding: 0; /* override .card */
+}
+.hover-bar span {
+    transition: background-color .1s;
+    
+    height: 100%;
+    aspect-ratio: 1/1;
+    background-size: 70%;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    box-sizing: border-box;
+}
+.hover-bar span:hover {background-color: lightgrey;}
+.hover-bar span:not(:last-child) {
+    /* add a little border between items */
+    box-shadow: 2px 0 2px -1px rgba(0,0,0,0.24);
+}
+.hover-bar .edit          {background-image: url("/icons/pencil-square.svg");}
+.hover-bar .delete        {background-image: url("/icons/x-circle-fill.svg");}
+.hover-bar .delete:hover  {background-color: lightpink;}
+
+
+
+/*-------------*\
+  HOVER BUTTONS
+\*-------------*/
+.has-hover {
+    position: relative;
+}
+.hover {
+    position: absolute;
+    z-index: 1;
+}
+.hover.left   {left:   0px;}
+.hover.right  {right:  0px;}
+.hover.top    {top:    0px;}
+.hover.bottom {bottom: 0px;}
 .hover > button {
     height: 60px;
+    background-color: #32728C;
+    cursor: pointer;
+    border: none; /* override user-agent */
+    
     aspect-ratio: 1/1;
     border-radius: 100%;
-    
     background-size: 69%;
     background-position: center;
     background-repeat: no-repeat;
 }
 .hover > button::after {
     border-radius: 100%;
+    box-shadow: 0 0 10px rgba(1,1,1,0.3);
+    
+    position: absolute;
+    content: "";
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
 }
 #save-view {
     background-image: url("/icons/camera-fill.svg");
@@ -243,7 +260,9 @@ pano-container {
 
 
 
-/* HELP POPUP */
+/*----------*\
+  HELP POPUP
+\*----------*/
 #help-popup {
     background-color: white;
     
@@ -277,5 +296,3 @@ pano-container {
 #help-popup h3 {
     text-align: center;
 }
-
-
