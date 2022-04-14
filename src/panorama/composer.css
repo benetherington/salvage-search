@@ -129,6 +129,16 @@ body {
         max-height: calc(100vh - 5px * 2 - 8px *2);
     }
 }
+#thumbs::after {
+    background-color: rgba(0, 0, 0, 0.37);
+    width: 4px;
+    border-radius: 2px;
+    
+    position: absolute;
+    content: "";
+    right: 7px;
+    height: var(--scroll-height);
+    top: var(--scroll-top)
 }
 #thumbs > .placeholder {
     /* appearance */
