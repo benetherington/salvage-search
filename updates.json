@@ -20,6 +20,9 @@
         }, {
           "version": "2.3",
           "update_link": "https://benetherington.com/salvage-search/releases/salvage_search-2.3-fx.xpi"
+        }, {
+          "version": "2.3.3",
+          "update_link": "https://benetherington.com/salvage-search/releases/salvage_search-2.3.3-fx.xpi"
         }
       ]
     }
