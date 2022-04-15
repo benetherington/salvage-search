@@ -4,3 +4,4 @@ src/manifest.json
 .venv
 workings-out/*
 node_modules
+*/*.zip~*.TMP
