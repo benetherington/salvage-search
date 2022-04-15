@@ -15,6 +15,13 @@ const notifyAtHalfway = ()=>{
     };
 };
 
+const throwCaptchaError = (logMessage) => {
+    console.log("Copart wants a CAPTCHA check")
+    if (logMessage) {console.log(logMessage)}
+    browser.tabs.create({url:"https://www.copart.com"})
+    throw "Please complete the CAPTCHA and try again."
+}
+
 const COPART_API = {
     NAME: "copart",
     PRETTY_NAME: "Copart",
@@ -62,7 +69,9 @@ const COPART_API = {
         if (!response.ok) throw `something went wrong on their end: ${response.status} error.`;
         
         // Check response content
-        let jsn = await response.json();
+        let jsn;
+        try {jsn = await response.json();}
+        catch (error) {throwCaptchaError(response)};
         if (!jsn.data.results               ) throw "something went wrong on their end...";
         if (!jsn.data.results.content       ) throw "something went wrong on their end...";
         if (!jsn.data.results.content.length) throw "query returned no results";
@@ -121,9 +130,7 @@ const COPART_API = {
         
         // Check response content
         if (!response.headers.get("content-type").startsWith("application/json")) {
-            console.log("Copart wants a CAPTCHA check")
-            browser.tabs.create({url:"https://www.copart.com"})
-            throw "Please complete the CAPTCHA and try again."
+            throwCaptchaError()
         };
         
         // Get response content
