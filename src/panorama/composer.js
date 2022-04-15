@@ -41,7 +41,6 @@ const moveThumbsScrollbar = ()=>{
     const barPosition = thumbs.scrollTop / scrollMax;
     
     // Stop now if there's no need to scroll
-    console.log({scrollMax})
     if (scrollMax<=0) return thumbs.style.setProperty("--scroll-height", "0");
     
     // Figure out how tall the scrollbar should be
