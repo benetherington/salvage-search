@@ -1,16 +1,17 @@
-/*---------------------*\
-  THUMBNAIL EDIT/DELETE
-\*---------------------*/
+/*-----------------------*\
+  THUMBNAIL SAVE/DOWNLOAD
+\*-----------------------*/
 async function saveThumb() {
-    // get thumbnail
+    // Get thumbnail
     let thumbnail = await document.querySelector("#stage").getThumbnail();
+    
     // Listen for thumbnail removal and update scrollbar
     thumbnail.querySelector(".delete").addEventListener("click", moveThumbsScrollbar)
-    // add thumbnail to tray
+    
+    // Add thumbnail to tray
     document.querySelector("#thumbs").append(thumbnail)
     moveThumbsScrollbar()
 }
-
 function downloadImages() {
     // Name folder
     let folder;
@@ -27,6 +28,7 @@ function downloadImages() {
         })
     })
 }
+
 
 /*-------------------*\
   THUMBNAIL SCROLLBAR
@@ -56,6 +58,7 @@ const moveThumbsScrollbar = ()=>{
     thumbs.style.setProperty("--scroll-height", barHeightPx-thumbsContentTop+"px")
     thumbs.style.setProperty("--scroll-top", barTop+thumbsContentTop+"px")
 }
+
 
 /*-----------*\
   HELP BUTTON

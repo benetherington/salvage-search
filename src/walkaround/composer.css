@@ -9,7 +9,11 @@ b {
     font-weight: bold;
 }
 
-/* LAYOUT */
+
+
+/*----------------*\
+  TOP-LEVEL LAYOUT
+\*----------------*/
 body {
     display: flex;
     flex-direction: row;
@@ -18,145 +22,125 @@ body {
     width: calc(100vw - 16px);
     overflow: hidden;
 }
-@media screen and (max-aspect-ratio: 1000/978) {
+@media screen and (max-aspect-ratio: 1000/968) {
     /* Screen is narrow, put thumbs below stage */
     body {
         flex-direction: column;
     }
 }
-.grouped {
+
+
+/*----------*\
+  CARD STYLE
+\*----------*/
+.card {
     height: fit-content;
     box-sizing: border-box;
-    margin: 0.5vh;
-    padding: 1vh;
+    margin: 5px;
+    padding: 10px;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
-.ungrouped {
-    height: fit-content;
-    box-sizing: border-box;
-    margin: 0.5vh;
-    padding: 1vh;
+.card-wrapper {
+    /* The two big cards have invisible wrappers around them. The margins need
+    to be "moved" to outside the wrapper. */
+    margin: 5px;
 }
-.has-hover {
-    position: relative;
-}
-.hover {
-    position: absolute;
-    z-index: 1;
-}
-.hover::after {
-    position:absolute;
-    content: "";
-    height: 100%;
-    width: 100%;
-    left: 0;
-    top: 0;
-    box-shadow: 0 0 10px rgba(1,1,1,0.3);
-}
-.hover.left   {left:   5px;}
-.hover.right  {right:  5px;}
-.hover.top    {top:    5px;}
-.hover.bottom {bottom: 5px;}
-.hidden {
-    display: none;
+.card-wrapper > card {
+    margin: 0;
 }
 
 
 
-/* ELEMENTS */
-button {
-    padding: 4px;
-    text-align: center;
-    font-size: 1em;
-    font-weight: 500;
-    color: #eee;
-    background: #32728C;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    cursor: pointer;
-    border: initial;
-}
-button.disabled, button.disabled:hover {
-    color:            #666666;
-    background-color: inherit;
-    pointer-events: none;
-    opacity: 0.5;
-    box-shadow: 0px 0px 2px 1px grey;
-}
-
-
-
-/* CONTAINERS */
-#stage-container {
+/*-----*\
+  STAGE
+\*-----*/
+#stage-wrapper {
+    /* flex-axis */
     flex-basis: 200px;
-    max-height: 80vh;
-    /* .ungrouped isn't intended for things that have full-size children */
-    padding: 0;
+    height: fit-content;
+    
+    /* cross-axis */
+    width: 100%;
+}
+@media screen and (min-aspect-ratio: 1000/968) {
+    /* Screen is wide, make stage grow */
+    #stage-wrapper {
+        flex-grow: 6;
+    }
+}
+#stage {
+    /* TODO: add placeholder image */
+    /* background-image: url("panorama/images/pano_r.jpg");
+    background-size: cover; */
+    
+    /* Same thing as @thumbs... using a percentage does not work. */
+    /* Subtract margin used by body and #stage-container */
+    max-height: calc(100vh - 16px - 1vh);
+    padding: 0; /* override .card */
+}
+
+
+/*--------------*\
+  THUMBNAIL TRAY
+\*--------------*/
+#thumbs-wrapper {
+    /* flex-axis */
+    flex-grow: 0;
+    min-height: 0;
+    
+    /* cross-axis */
+    width: 100%;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
-    /* Screen is wide, make stage grow */
-    #stage-container {
-        flex-grow: 6;
-        max-height: calc(100% - 16px)
+    #thumbs-wrapper {
+        /* flex-axis */
+        flex-grow: 1;
+        flex-basis: 200px;
+        
+        /* cross-axis */
+        height: fit-content;
+        max-height: calc(100% - 8px);
     }
 }
 #thumbs {
-    /* child layout */
+    overflow: hidden auto;
+    scrollbar-width: none;
+    /* In order to scroll, this needs to constrain its size, */
+    /* including .card padding. */
+    max-height: calc(100% - 10px);
+    
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    overflow: hidden auto;
-    scrollbar-width: thin;
     
-    /* this element layout */
-    /* min-height is the height of one .img-container */
-    min-height: 20%;
-    flex-grow: 0;
+    --scroll-height: 0;
+    --scroll-top: 0;
+}
+#thumbs::-webkit-scrollbar {
+    /* Chrome compatibility */
+    display: none;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
     #thumbs {
-        flex-grow: 1;
-        flex-basis: 200px;
+        /* Using a percentage fails, inside or outside calc(). CSS bug in
+        Firefox? Set height based on vh, subtract #thumbs-wrapper{padding} and
+        body{wrapping} */
+        max-height: calc(100vh - 5px * 2 - 8px *2);
     }
 }
-.img-container {
-    position: relative;
-    /* basis includes #thumbs{gap:10px}, times four gaps distributed over five "columns" */
-    flex-basis: calc(20% - 10px * 4 / 5);
-    flex-shrink: 1;
-}
-@media screen and (min-aspect-ratio: 1000/978) {
-    .img-container {
-        /* basis includes #thumbs{gap:10px}, distributed over two "columns" */
-        flex-basis: calc(50% - 10px / 2);
-    }
-}
-.img-container img {
-    /* make thumbnails square */
-    width: 100%;
-    aspect-ratio: 1/1;
-    object-fit: cover;
+#thumbs::after {
+    background-color: rgba(0, 0, 0, 0.37);
+    width: 4px;
+    border-radius: 2px;
     
-    /* allow corner snipping */
-    overflow: hidden;
-    /* style container */
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    display: flex;
+    position: absolute;
+    content: "";
+    right: 7px;
+    height: var(--scroll-height);
+    top: var(--scroll-top)
 }
-
-
-
-/* STAGE AND THUMBNAILS */
-walkaround-viewer {
-    /* For the life of me, I cannot figure out why 100% does not work below. It
-    winds up with unbounded height for very wide windows. What is the containing
-    block here, and why isn't it statically-positioned #stage-container?! It
-    cant be html, right? */
-    /* Subtract margin used by body and #stage-container */
-    max-height: calc(100vh - 16px - 1vh);
-}
-.placeholder {
+#thumbs > .placeholder {
     /* appearance */
     color: grey;
     font-size: 2em;
@@ -169,24 +153,82 @@ walkaround-viewer {
 .placeholder:not(:last-child) {
     /* Because thumbnails get added to the end of #thumbs,
     the placeholder can hide itself when there's anything
-    below it. */
+    after it. */
     display: none;
 }
 
 
 
-/* THUMBNAIL HOVERING DELETE BUTTON */
+/*----------*\
+  THUMBNAILS
+\*----------*/
+.thumbnail {
+    flex-basis: calc(20% - 10px * 4 / 5);
+    flex-shrink: 1;
+    
+    aspect-ratio: 1/1;
+}
+@media screen and (min-aspect-ratio: 1000/978) {
+    .thumbnail {
+        /* basis includes #thumbs{gap:10px}, distributed over two "columns" */
+        flex-basis: calc(50% - 10px / 2);
+    }
+}
+.thumbnail img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    /* override .card */
+    margin: 0;
+    padding: 0;
+}
+
+
+
+/*--------------------------*\
+  THUMBNAIL HOVERING TOOLBAR
+\*--------------------------*/
 #thumbs:not(:hover) .hover-bar {visibility: hidden;}
-.delete-icon {
-    /* style */
+.hover-bar {
+    position: absolute;
+    display: flex;
+    
+    height: 40px;
+    right: -5px;
+    top: -5px;
+    padding: 0; /* override .card */
+}
+.hover-bar span {
     background-color: black;
     transition: background-color .1s;
-    /* icon */
+    
+    mask-size: 100%;
+    mask-position: 100%;
+    mask-repeat: no-repeat;
+    /* background-size: 70%;
+    background-position: 50%;
+    background-repeat: no-repeat; */
+    
+    height: 100%;
+    aspect-ratio: 1/1;
+    box-sizing: border-box;
+}
+.hover-bar span:hover {background-color: #db392b;}
+.hover-bar .delete {mask-image: url("/icons/x-circle-fill.svg");}
+
+
+/* 
+#thumbs:not(:hover) .hover-bar {visibility: hidden;}
+.delete-icon {
+
+    background-color: black;
+    transition: background-color .1s;
+
     mask-image: url("/icons/x-circle-fill.svg");
     mask-size: 100%;
     mask-position: 100%;
     mask-repeat: no-repeat;
-    /* size and position */
+
     position: absolute;
     height: 20%;
     width: 20%;
@@ -200,22 +242,46 @@ walkaround-viewer {
 }
 .delete-icon::after {
     filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.75))
+} */
+
+
+
+/*-------------*\
+  HOVER BUTTONS
+\*-------------*/
+.has-hover {
+    position: relative;
 }
-
-
-
-/* BUTTONS */
-button.hover {
+.hover {
+    position: absolute;
+    z-index: 1;
+}
+.hover.left   {left:   0px;}
+.hover.right  {right:  0px;}
+.hover.top    {top:    0px;}
+.hover.bottom {bottom: 0px;}
+.hover > button {
     height: 60px;
+    background-color: #32728C;
+    cursor: pointer;
+    border: none; /* override user-agent */
+    
     aspect-ratio: 1/1;
     border-radius: 100%;
-    
     background-size: 69%;
     background-position: center;
     background-repeat: no-repeat;
 }
-button.hover::after {
+.hover > button::after {
     border-radius: 100%;
+    box-shadow: 0 0 10px rgba(1,1,1,0.3);
+    
+    position: absolute;
+    content: "";
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
 }
 #save-view {
     background-image: url("/icons/camera-fill.svg");
@@ -229,7 +295,9 @@ button.hover::after {
 
 
 
-/* HELP POPUP */
+/*----------*\
+  HELP POPUP
+\*----------*/
 #help-popup {
     background-color: white;
     
@@ -263,5 +331,3 @@ button.hover::after {
 #help-popup h3 {
     text-align: center;
 }
-
-

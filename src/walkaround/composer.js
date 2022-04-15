@@ -1,13 +1,17 @@
-/*------------------------*\
-  THUMBNAIL PROMOTE/DEMOTE
-\*------------------------*/
+/*-----------------------*\
+  THUMBNAIL SAVE/DOWNLOAD
+\*-----------------------*/
 function saveThumb() {
-    // get thumbnail
+    // Get thumbnail
     let thumbnail = document.querySelector("#stage").getThumbnail()
-    // add thumbnail to tray
+    
+    // Listen for thumbnail removal and update scrollbar
+    thumbnail.querySelector(".delete").addEventListener("click", moveThumbsScrollbar)
+    
+    // Add thumbnail to tray
     document.querySelector("#thumbs").append(thumbnail)
+    moveThumbsScrollbar()
 }
-
 function downloadImages() {
     // Name folder
     let folder;
@@ -23,6 +27,36 @@ function downloadImages() {
             saveAs:false
         })
     })
+}
+
+
+/*-------------------*\
+  THUMBNAIL SCROLLBAR
+\*-------------------*/
+const moveThumbsScrollbar = ()=>{
+    // TODO: also call this on window resize
+    const thumbs = document.getElementById("thumbs");
+    
+    // Find out how far down we've scrolled
+    const scrollMax = thumbs.scrollHeight - thumbs.clientHeight;
+    const barPosition = thumbs.scrollTop / scrollMax;
+    
+    // Stop now if there's no need to scroll
+    if (scrollMax<=0) return thumbs.style.setProperty("--scroll-height", "0");
+    
+    // Figure out how tall the scrollbar should be
+    const barHeight = thumbs.clientHeight / thumbs.scrollHeight;
+    const barHeightPx = thumbs.clientHeight * barHeight;
+    
+    // Figure out how much whitespace there is, and how much should be above the
+    // scrollbar
+    const whitespace = thumbs.clientHeight - barHeightPx;
+    const barTop = whitespace * barPosition;
+    
+    // Set properties, including margin and padding applied to #thumbs
+    const thumbsContentTop = 15;
+    thumbs.style.setProperty("--scroll-height", barHeightPx-thumbsContentTop+"px")
+    thumbs.style.setProperty("--scroll-top", barTop+thumbsContentTop+"px")
 }
 
 
@@ -58,15 +92,16 @@ const messageHandler = (message)=>{
 };
 browser.runtime.onMessage.addListener(messageHandler)
 
+
 /*---------------*\
   EVENT LISTENERS
 \*---------------*/
 window.addEventListener("load", ()=>{
     // FAKE LOADING FROM POPUP
-    // let walkaroundUrls = Array.from(Array(64).keys()).map(idx=>
-    //     "/walkaround/images/"+idx+".jpg"
-    // )
-    // messageHandler({walkaroundUrls})
+    let walkaroundUrls = Array.from(Array(64).keys()).map(idx=>
+        "/walkaround/images/"+idx+".jpg"
+    )
+    messageHandler({walkaroundUrls})
     
     // BUTTONS
     document.querySelector("#save-view").addEventListener("click", saveThumb)
@@ -80,4 +115,7 @@ window.addEventListener("load", ()=>{
     document.getElementById("stage").addEventListener("click", (e)=>{
         if (e.detail===2) saveThumb();
     })
+    
+    // THUMBS SCROLLING
+    document.getElementById("thumbs").addEventListener("scroll", moveThumbsScrollbar)
 })
