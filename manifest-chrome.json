@@ -2,8 +2,8 @@
   "description": "Searches salvage sites for a VIN and automates image downloads.",
   "manifest_version": 2,
   "name": "Salvage Search",
-  "version_name": "3.0.2",
-  "version": "3.0.2",
+  "version_name": "3.0.3",
+  "version": "3.0.3",
   "homepage_url": "https://benetherington.com/salvage-search/",
   "icons": {
     "16": "icons/SS-16.png",
