@@ -2,8 +2,8 @@
   "description": "Searches salvage sites for a VIN and automates image downloads.",
   "manifest_version": 2,
   "name": "Salvage Search",
-  "version_name": "2.3.3",
-  "version": "2.3.3",
+  "version_name": "3.0.3",
+  "version": "3.0.3",
   "homepage_url": "https://benetherington.com/salvage-search/",
   "icons": {
     "16": "icons/SS-16.png",
@@ -12,7 +12,7 @@
     "128": "icons/SS-128.png"
   },
   "permissions": [
-    "storage", "unlimitedStorage",
+    "storage",
     "clipboardRead",
     "tabs", "downloads",
     "*://*.copart.com/lot/*",
@@ -25,9 +25,13 @@
     "scripts": [
       "browser-polyfill.js",
       "shared-assets.js",
+      "salvage_api/copart.js",
+      "salvage_api/iaai.js",
+      "salvage_api/row52.js",
+      "archive_api/poctra.js",
+      "archive_api/bidfax.js",
       "search.js",
-      "download.js",
-      "background.js"
+      "download.js"
     ]
   },
   "browser_action": {

@@ -1,7 +1,6 @@
 /*-------*\
   TOOLBAR  
 \*-------*/
-
 // handle clicks
 document.addEventListener("click", (event) =>{
     if (event.target.id === "button-settings"){
@@ -28,239 +27,180 @@ document.addEventListener("click", (event) =>{
 });
 
 
-/*---------*\
-  MAIN PAGE  
-\*---------*/
-class ProgressButton {
-    constructor () {
-        this.el = undefined;
-        this.status = "enabled";
-        this.total = 1;
-        this.progress = 1;
-    }
-    start(total=0) {
-        this.el.className = this.el.dataset.styleOrig;
-        this.el.classList.add("feedback-busy");
-        this.total = total;
-        // If we got a total, set progress at zero. If not, set it at 1 so that
-        // we start full color, ie 100%
-        this.progress = total?0:1;
-        this.update()
-    }
-    increment() {
-        this.el.className = this.el.dataset.styleOrig
-        this.el.classList.add("feedback-progress")
-        ++this.progress
-        this.update()
-    }
-    update() {
-        this.el.style.setProperty(
-            "--progress-percentage",
-            `${this.progress/this.total*100}%`
-        )
-    }
-    enable() {
-        this.el.className = this.el.dataset.styleOrig;
-    }
-    disable() {
-        this.el.className = this.el.dataset.styleOrig;
-        this.el.classList.add("disabled");
-        this.total = this.progress = 1;
-    }
-    attention() {
-        this.el.className = this.el.dataset.styleOrig;
-        this.el.classList.add("success-attention");
-        this.total = this.progress = 1;
-    }
-}
 
-class GuiVehicle extends VehicleABC {
-    constructor() {
-        super()
-        this.clipboard = null;
-        this.activate()
-    }
-    activate() {
-        this.searchInput = document.querySelector('#search-input');
-        this.searchInput.addEventListener('input', this.onInput.bind(this))
-        window.addEventListener("focus", this.onFocus.bind(this))
-        
-        this.searchButton = document.querySelector("#search-button");
-        searchProgressButton.el = this.searchButton;
-        this.searchButton.addEventListener("click", this.submitSearch.bind(this))
-        this.searchPort = browser.runtime.connect({name:"search"});
-        this.searchPort.onMessage.addListener(this.onSearchMessage.bind(this))
-        
-        this.downloadButton = document.querySelector("#download-button");
-        dlProgressButton.el = this.downloadButton;
-        this.downloadButton.addEventListener("click", this.submitDownload.bind(this))
-        this.downloadPort = browser.runtime.connect({name:"download"});
-        this.downloadPort.onMessage.addListener(this.onDownloadMessage.bind(this))
-    }
+/*---------*\
+  MESSAGING
+\*---------*/
+// Connect messaging ports
+let searchPort, downloadPort;
+document.addEventListener("DOMContentLoaded", ()=>{
+    searchPort = browser.runtime.connect({name:"search"});
+    searchPort.onMessage.addListener(onSearchMessage)
     
-    // INPUTS
-    onSearchMessage(message) {
-        super.onMessage(message)
-        if (message.search && this.listingUrl) {dlProgressButton.attention(); this.openTab()}
-        searchProgressButton.enable()
-    }
-    onDownloadMessage(message) {
-        super.onMessage(message)
-        if (message.download) {this.download()}
-        if (message.findTabs) {this.loadTabOrClipboard()}
-    }
-    async onFocus() {
-        // TODO: to request access in Chrome, we need to load a new tab
-        if (this.vin || this.lotNumber) {return}
-        this.clipboard = await navigator.clipboard.readText().then(s=>s.trim());
-        let findTabs = true;
-        this.send(this.downloadPort, {findTabs})
-        setTimeout(()=>{this.clipboard = null;}, 500)
-    }
-    loadTabOrClipboard() {
-        if (this.vin) {
-            this.setVin()
-            addFeedbackMessage({message: `Found VIN from open tab.`})
-        }
-        else if (this.lotNumber) {
-            this.setLot()
-            addFeedbackMessage({message: `Found lot number from open tab.`})
-        }
-        else {
-            let filledValue = this.fillInput(this.clipboard)
-            if (filledValue) {
-                addFeedbackMessage({message: `Pasted ${filledValue} from clipboard.`})
-            }
-        }
-    }
-    onInput() {
-        let input = this.searchInput.value;
-        this.fillInput(input)
-    }
-    fillInput(vinOrLot) {
-        if      (this.validateVin(vinOrLot)) {this.setVin(vinOrLot); return 'VIN'}
-        else if (this.validateLot(vinOrLot)) {this.setLot(vinOrLot); return 'lot number'}
-        else                                 {this.clear()}
-    }
-    setVin(newVin) {
-        if (newVin) {
-            this.vin = newVin;
-            this.lotNumber = null;
-        }
-        this.searchInput.value = this.vin
-        searchProgressButton.enable()
-    }
-    setLot(newLot) {
-        if (newLot) {
-            this.vin = null;
-            this.lotNumber = newLot;
-        }
-        this.searchInput.value = this.lotNumber
-        dlProgressButton.enable()
-    }
-    clear() {
-        this.vin = null;
-        this.lotNumber = null;
-        searchProgressButton.disable()
-        dlProgressButton.disable()
-    }
-    
-    // OUTPUTS
-    submitSearch(event) {
-        searchProgressButton.start()
-        let search = true;
-        this.send(this.searchPort, {search})
-        event.stopPropagation()
-    }
-    submitDownload(event) {
-        dlProgressButton.start()
-        let download = true;
-        this.send(this.downloadPort, {download})
-        event.stopPropagation()
-    }
-    send(port, options={}) {
-        let values = this.serialize();
-        port.postMessage({values, ...options})
-    }
-    async openTab() {
-        let url = this.listingUrl || this.salvage.listingUrl(this.lotNumber)
-        let tab = await browser.tabs.create({url})
-        this.tabId = tab.id
-    }
-    download() {
-        this.imageUrls.forEach( (url, idx) => {
-            console.log(`downloading ${idx}`)
-            browser.downloads.download({
-                url, saveAs: false,
-                filename: `${this.salvage}-${this.lotNumber}/${this.salvage}-${idx}.jpg`
-            })
-        })
-        addFeedbackMessage({
-            message:`${this.imageUrls.length} images sent to downloads folder!`,
-            displayAs: "success"
-        })
-        if (this.walkaroundUrls) {
-            this.walkaroundUrls.forEach( (url, idx) => {
-                console.log(`downloading walkaround ${idx}`)
-                browser.downloads.download({
-                    url, saveAs: false,
-                    filename: `${this.salvage}-${this.lotNumber}/walkaround/${idx}.jpg`
-                })
-            })
-            addFeedbackMessage({
-                message:`${this.walkaroundUrls.length} walkaround images sent to downloads folder!`,
-                displayAs: "success"
-            })
-        }
-        if (this.panoUrls) {
-            const names = ['pano_f', 'pano_l', 'pano_b', 'pano_r', 'pano_u', 'pano_d'];
-            this.panoUrls.forEach( (url, idx) => {
-                console.log(`downloading pano ${names[idx]}`)
-                browser.downloads.download({
-                    url, saveAs: false,
-                    filename: `${this.salvage}-${this.lotNumber}/pano/${names[idx]}.jpg`
-                })
-            })
-            addFeedbackMessage({
-                message:`Panoramic images sent to downloads folder!`,
-                displayAs: "success"
-            })
-        }
-        dlProgressButton.enable()
-    }
-}
-let guiVehicle
-window.addEventListener("load", ()=>{
-    guiVehicle = new GuiVehicle
+    downloadPort = browser.runtime.connect({name:"download"});
+    downloadPort.onMessage.addListener(onDownloadMessage)
 })
 
-// SEARCH //
-let searchProgressButton = new ProgressButton();
 
-// DOWNLOAD //
-let dlProgressButton = new ProgressButton();
+
+/*-----*\
+  INPUT
+\*-----*/
+// Clipboard input
+window.addEventListener("focus", async ()=>{
+    // TODO: to request access in Chrome, we need to load a new tab
+
+    // Skip if there's already something to search for
+    const searchInput = document.getElementById("search-input");
+    if (searchInput.value) return;
+    
+    // Request open tabs check
+    downloadPort.postMessage({findTabs: true})
+    
+    // Grab clipboard
+    const clipboard = await navigator.clipboard.readText().then(s=>s.trim());
+    
+    // Check clipboard contents
+    if ( !(validateLot(clipboard)||validateVin(clipboard)) ) return;
+    
+    // Load clipboard contents after a delay, allowing open tabs to load
+    // instead. We could load immediately, but this might result in flickering.
+    setTimeout(()=>{
+        if (searchInput.value) return;
+        searchInput.value = clipboard;
+        inputChanged()
+        addFeedbackMessage({message:"Pasted value from clipbard."})
+    }, 20)
+});
+
+// Typed input
+document.addEventListener("DOMContentLoaded", ()=>{
+    document
+    .getElementById('search-input')
+    .addEventListener('input', inputChanged)
+})
+const inputChanged = ()=>{
+    const inputValue = document.getElementById('search-input').value;
+    
+    // Validate VINs, enable search
+    if (validateVin(inputValue)) {
+        document.getElementById("search-button").enable()
+        return;
+    } else {
+        document.getElementById("search-button").disable()
+    }
+    
+    // Validate lot numbers, enable download
+    if (validateLot(inputValue) && getSalvageNameInput()) {
+        // valid lot and salvage selected
+        document.getElementById("download-button").enable()
+    } else if (validateLot(inputValue) && !getSalvageNameInput()) {
+        // valid lot but missing salvage
+        document.querySelector("#salvage-selector .slider")
+                .classList.add("error-attention")
+        document.getElementById("download-button").disable()
+    } else {
+        document.getElementById("download-button").disable()
+    }
+}
+
+
+/*------*\
+  SEARCH
+\*------*/
+// Search Button
+document.addEventListener("DOMContentLoaded", ()=>{
+    document
+    .getElementById("search-button")
+    .addEventListener("click", ()=>{
+        document.getElementById("search-button").start()
+        const query = document.getElementById("search-input").value;
+        const salvageName = getSalvageNameInput();
+        searchPort.postMessage({query, salvageName})
+    })
+})
+// Salvage yard radio buttons
+// Listen for slider change, validate input
+document.addEventListener("DOMContentLoaded", ()=>{
+    document.querySelector("#salvage-selector")
+            .addEventListener("click", inputChanged)
+})
+// Slider getter and setter
+const getSalvageNameInput = ()=>{
+    const selected = document.querySelector("#salvage-selector input:checked").id;
+    if (     selected==="download-unknown") return;
+    else if (selected==="download-copart" ) return "copart";
+    else if (selected==="download-iaai"   ) return "iaai";
+}
+const setSalvageNameInput = (salvageName)=>{
+    if (!salvageName) {
+        document.getElementById("download-unknown").checked = true;
+    } else {
+        document.getElementById("download-"+salvageName).checked = true;
+    }
+}
+
+// Handle search messages
+const onSearchMessage = (message)=>{
+    // Flash the download button
+    if (message.found) {
+        document.getElementById("download-button").attention();
+    }
+    
+    // Reset the search button
+    if (message.complete) document.getElementById("search-button").enable();
+    
+    // Display feedback messages
+    if (message.feedback) addFeedbackMessage(message.feedback);
+    
+    // Update salvage slider and lot number
+    setSalvageNameInput(message.salvageName);
+    if (message.lotNumber) {
+        document.getElementById("search-input").value = message.lotNumber;
+    }
+    
+};
+
+
+
+/*--------*\
+  DOWNLOAD
+\*--------*/
+// Download button
+document.addEventListener("DOMContentLoaded", ()=>{
+    document
+    .getElementById("download-button")
+    .addEventListener("click", ()=>{
+        document.getElementById("download-button").start()
+        const query = document.getElementById("search-input").value;
+        const salvageName = getSalvageNameInput();
+        downloadPort.postMessage({query, salvageName})
+    })
+})
+
+// Handle download messages
+const onDownloadMessage = (message)=>{
+    // Reset the download button
+    if (message.complete) document.getElementById("download-button").enable();
+    
+    // Update query fields from open tab
+    if (message.lotNumber) {
+        document.getElementById("search-input").value = message.lotNumber;
+        setSalvageNameInput(message.salvageName);
+        inputChanged()
+        addFeedbackMessage({message: "Loaded lot number from open tab."})
+    };
+    
+    // Display feedback messages
+    if (message.feedback) addFeedbackMessage(message.feedback);
+}
+
 
 
 /*--------*\
   FEEDBACK  
 \*--------*/
-// message handler
-browser.runtime.onMessage.addListener((message)=>{
-    if (message.type === "feedback") {
-        for (value of message.values) {
-            switch (value.action) {
-                case "feedback-message":
-                    addFeedbackMessage(value)
-                    break;
-            }
-        }
-        return Promise.resolve('done');
-    };
-    return false;
-});
-
-// drawer
-var addFeedbackMessage = (rawFeedback)=>{
+const addFeedbackMessage = (rawFeedback)=>{
     // PROCESS
     let feedback = {};
     // make sure there's a message
@@ -278,7 +218,7 @@ var addFeedbackMessage = (rawFeedback)=>{
         feedback.closeable = closeable;
         feedback.displayAs = displayAs;
         feedback.createdAt = performance.now().toString();
-    } else {console.log("empty message");return;}
+    } else {console.debug("empty message");return;}
 
     // CREATE ELEMENT
     let notification = document.createElement("div");
@@ -292,7 +232,6 @@ var addFeedbackMessage = (rawFeedback)=>{
 
     // PREPARE FOR THE END
     closeUp = ()=>{
-
         // remove from drawer
         notification.remove()
         // close drawer
@@ -304,59 +243,70 @@ var addFeedbackMessage = (rawFeedback)=>{
     // show the drawer
     drawer.classList.remove("hidden")
 }
+// Listen for messages from API interfaces. Messages are also passed over the
+// two message ports.
+browser.runtime.onMessage.addListener(addFeedbackMessage)
 
 
 /*----------------*\
   PREFERENCES PAGE  
 \*----------------*/
-var preferences = {
-    copartCheckEl: undefined,
-    iaaiCheckEl: undefined,
-    row52CheckEl: undefined,
-    poctraCheckEl: undefined,
-    bidfaxCheckEl: undefined,
-    fetchStoredSettings: async ()=>{
-        let settings = await defaultedSettings() // defined in shared-assets.js
-        
-        preferences.copartCheckEl.checked   = settings.searchCopart;
-        preferences.iaaiCheckEl.checked     = settings.searchIaai;
-        preferences.row52CheckEl.checked    = settings.searchRow52;
-        preferences.poctraCheckEl.checked    = settings.searchPoctra;
-        preferences.bidfaxCheckEl.checked    = settings.searchBidfax;
-    },
-    setElementCallbacks: ()=>{
-        [ preferences.copartCheckEl,
-          preferences.iaaiCheckEl,
-          preferences.row52CheckEl,
-          preferences.poctraCheckEl,
-          preferences.bidfaxCheckEl ]
-        .forEach(element=>{
-            element.addEventListener("change", preferences.setStoredSettings)
-        })
-    },
-    setStoredSettings: async (event=null)=>{
-        let settings = Object.assign(DEFAULT_SETTINGS);
-        settings.searchCopart   = preferences.copartCheckEl.checked;
-        settings.searchIaai     = preferences.iaaiCheckEl.checked;
-        settings.searchRow52    = preferences.row52CheckEl.checked;
-        settings.searchPoctra   = preferences.poctraCheckEl.checked;
-        settings.searchBidfax   = preferences.bidfaxCheckEl.checked;
-        browser.storage.local.set({settings})
-    }
-}
+const fetchStoredSettings = async ()=>{
+    // Defined in shared-assets.js
+    const settings = await defaultedSettings();
+    
+    document.getElementById("settings-copart").checked = settings.searchCopart;
+    document.getElementById("settings-iaai"  ).checked = settings.searchIaai;
+    document.getElementById("settings-row52" ).checked = settings.searchRow52;
+    document.getElementById("settings-poctra").checked = settings.searchPoctra;
+    document.getElementById("settings-bidfax").checked = settings.searchBidfax;
+};
+
+const setStoredSettings = async ()=>{
+    // Start with defaults from shared-assets.js
+    const settings = await defaultedSettings();
+    
+    // Update defaults from the page
+    settings.searchCopart = document.getElementById("settings-copart").checked;
+    settings.searchIaai   = document.getElementById("settings-iaai"  ).checked;
+    settings.searchRow52  = document.getElementById("settings-row52" ).checked;
+    settings.searchPoctra = document.getElementById("settings-poctra").checked;
+    settings.searchBidfax = document.getElementById("settings-bidfax").checked;
+    
+    // Store settings
+    browser.storage.local.set({settings})
+};
+
+const setElementCallbacks = ()=>{
+    // When any toggle changes, update the local storage.
+    document.getElementById("settings-copart")
+        .addEventListener("change", setStoredSettings)
+    
+    document.getElementById("settings-iaai")
+        .addEventListener("change", setStoredSettings)
+    
+    document.getElementById("settings-row52")
+        .addEventListener("change", setStoredSettings)
+    
+    document.getElementById("settings-poctra")
+        .addEventListener("change", setStoredSettings)
+    
+    document.getElementById("settings-bidfax")
+        .addEventListener("change", setStoredSettings)
+};
+
 window.addEventListener("load", async ()=>{
-    // store UI elements
-    preferences.copartCheckEl   = document.querySelector(".settings-grid input#copart")
-    preferences.iaaiCheckEl     = document.querySelector(".settings-grid input#iaai")
-    preferences.row52CheckEl    = document.querySelector(".settings-grid input#row52")
-    preferences.poctraCheckEl   = document.querySelector(".settings-grid input#poctra")
-    preferences.bidfaxCheckEl   = document.querySelector(".settings-grid input#bidfax")
-    // load and display stored preferences
-    await preferences.fetchStoredSettings()
-    preferences.setElementCallbacks()
-    // set version display
+    // Set toggle elements to the values in local storage
+    await fetchStoredSettings();
+    
+    // Add onChange callbacks
+    setElementCallbacks()
+    
+    // Set version display
     let versionName = browser.runtime.getManifest().version
     document.querySelector("#version").textContent = 'v' + versionName;
 })
+
+
 
 console.log("popup action loaded!")

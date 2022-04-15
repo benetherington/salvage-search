@@ -138,12 +138,12 @@ body {
     position: relative;
     pointer-events: none;
     font-weight: 700;
-    background-image: repeating-linear-gradient(-45deg, 
-                        #223945 10px 30px, /* 223945 */
-                        #32728C 30px 50px, /* 32728C */
-                        #508a77 50px 70px, /* 61A690 */
-                        #bdbdb8 70px 90px, /* EFEFE7 */
-                        #bb5c53 90px 110px /* F0786D */
+    background-image: repeating-linear-gradient(-45deg,
+                        #223945 10px 30px, /* 223945*/
+                        #32728C 30px 50px, /* 32728C*/
+                        #508a77 50px 70px, /* 61A690*/
+                        #bdbdb8 70px 90px, /* EFEFE7*/
+                        #bb5c53 90px 110px /* F0786D*/
                     );
     background-size: 141px 100%; /* trig maybe? Makes ends match when color wraps */
     animation-name: backgroundsweep;
@@ -153,8 +153,8 @@ body {
     --progress-percentage: 50%;
 }
 @keyframes backgroundsweep {
-    from { background-position: 141px center; } /* same as background size for */
-    to   { background-position: 0     center; } /* smooth animation */
+    from { background-position: 141px center; }
+    to   { background-position: 0     center; }
 }
 .feedback-busy::before, .feedback-progress::before {
     position: absolute;
@@ -225,6 +225,56 @@ input.disabled, input.disabled:hover {
 #download-button {       background-color: #61A690; }
 #download-button:hover { background-color: #8BACA9; }
 
+/* SALVAGE TOGGLE */
+.slide-radio {
+    background-color: #4096B9;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    
+    display: grid;
+    grid-template-columns: repeat(3, 33%);
+    
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+}
+.slide-radio .slider {
+    background-color: #FFFFFFAD;
+    border-radius: 3px;
+    
+    height: calc(100% - 6px);
+    width: 33%;
+    
+    position: absolute;
+    align-self: center;
+    transition: all .2s ease;
+}
+.slide-radio input {
+    display: none;
+}
+.slide-radio label {
+    color: white;
+    transition: color 0.1s ease;
+    
+    padding: 3px;
+    text-align: center;
+    display: block;
+    margin: 3px;
+    cursor: pointer;
+    z-index: 1;
+}
+.slide-radio input:checked + label {
+    color: black;
+}
+.slide-radio input:nth-of-type(1):checked ~ .slider {
+    left: calc(0% + 3px);
+}
+.slide-radio input:nth-of-type(2):checked ~ .slider {
+    left: 33%;
+}
+.slide-radio input:nth-of-type(3):checked ~ .slider {
+    left: 66%;
+}
 
 /*---------------------------*\
   ------ SETTINGS PAGE ------  
@@ -246,7 +296,7 @@ input.disabled, input.disabled:hover {
     background-color: white;
 }
 .settings-title::after {
-    /* build shadow boarder/separator */
+    /* build shadow border/separator */
     content:"";
     position:absolute;
     width:100%;
