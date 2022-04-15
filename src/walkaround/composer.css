@@ -188,61 +188,44 @@ body {
 /*--------------------------*\
   THUMBNAIL HOVERING TOOLBAR
 \*--------------------------*/
-#thumbs:not(:hover) .hover-bar {visibility: hidden;}
+#thumbs:not(:hover) .hover-bar {
+    visibility: hidden;
+    opacity: 0;
+}
 .hover-bar {
+    background: #fdfdf6;
+    overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transition: visibility .1s, opacity .1s;
+    
     position: absolute;
     display: flex;
-    
     height: 40px;
     right: -5px;
     top: -5px;
-    padding: 0; /* override .card */
+    /* override .card */
+    padding: 0;
+    margin: 0;
 }
 .hover-bar span {
-    background-color: black;
     transition: background-color .1s;
-    
-    mask-size: 100%;
-    mask-position: 100%;
-    mask-repeat: no-repeat;
-    /* background-size: 70%;
-    background-position: 50%;
-    background-repeat: no-repeat; */
     
     height: 100%;
     aspect-ratio: 1/1;
+    background-size: 70%;
+    background-position: 50%;
+    background-repeat: no-repeat;
     box-sizing: border-box;
 }
-.hover-bar span:hover {background-color: #db392b;}
-.hover-bar .delete {mask-image: url("/icons/x-circle-fill.svg");}
-
-
-/* 
-#thumbs:not(:hover) .hover-bar {visibility: hidden;}
-.delete-icon {
-
-    background-color: black;
-    transition: background-color .1s;
-
-    mask-image: url("/icons/x-circle-fill.svg");
-    mask-size: 100%;
-    mask-position: 100%;
-    mask-repeat: no-repeat;
-
-    position: absolute;
-    height: 20%;
-    width: 20%;
-    right: -2%;
-    top: -5%;
-    content: "";
-    
+.hover-bar span:hover {background-color: lightgrey;}
+.hover-bar span:not(:last-child) {
+    /* add a little border between items */
+    box-shadow: 2px 0 2px -1px rgba(0,0,0,0.24);
 }
-.delete-icon:hover {
-    background-color: #db392b;
-}
-.delete-icon::after {
-    filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.75))
-} */
+.hover-bar .edit          {background-image: url("/icons/pencil-square.svg");}
+.hover-bar .delete        {background-image: url("/icons/x-circle-fill.svg");}
+.hover-bar .delete:hover  {background-color: lightpink;}
 
 
 

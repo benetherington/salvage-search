@@ -60,6 +60,7 @@ class WalkaroundViewer extends HTMLElement {
         // Create hover toolbar
         const divHover = document.createElement("div");
         divHover.classList.add("hover-bar")
+        divHover.classList.add("card")
         thumbContainer.append(divHover)
         
         // Add delete button to toolbar
