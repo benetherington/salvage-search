@@ -167,10 +167,6 @@ body {
     flex-shrink: 1;
     
     aspect-ratio: 1/1;
-    overflow: hidden;
-    /* override .card */
-    padding: 0;
-    margin: 0;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
     .thumbnail {
@@ -182,6 +178,9 @@ body {
     width: 100%;
     aspect-ratio: 1/1;
     object-fit: cover;
+    /* override .card */
+    margin: 0;
+    padding: 0;
 }
 
 
@@ -189,16 +188,25 @@ body {
 /*--------------------------*\
   THUMBNAIL HOVERING TOOLBAR
 \*--------------------------*/
-#thumbs:not(:hover) .hover-bar {visibility: hidden;}
+#thumbs:not(:hover) .hover-bar {
+    visibility: hidden;
+    opacity: 0;
+}
 .hover-bar {
     background: #fdfdf6;
+    overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transition: visibility .1s, opacity .1s;
     
     position: absolute;
     display: flex;
     height: 40px;
     right: -5px;
     top: -5px;
-    padding: 0; /* override .card */
+    /* override .card */
+    padding: 0;
+    margin: 0;
 }
 .hover-bar span {
     transition: background-color .1s;

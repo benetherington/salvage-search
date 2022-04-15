@@ -39,7 +39,6 @@ class PanoContainer extends HTMLElement {
         // Create a container
         let thumbContainer = document.createElement("div");
         thumbContainer.classList.add("thumbnail")
-        thumbContainer.classList.add("card")
         thumbContainer.classList.add("has-hover")
         
         // Create hover toolbar
@@ -62,6 +61,7 @@ class PanoContainer extends HTMLElement {
         
         // Create a placeholder image for the thumbnail
         let img = document.createElement("img");
+        img.classList.add("card")
         img.src = "/icons/hourglass-split.svg";
         thumbContainer.append(img)
         
@@ -93,7 +93,7 @@ class PanoContainer extends HTMLElement {
         this.panoViewer.setAttribute("fov",   fov)
         
         // Delete thumbnail
-        e.target.closest(".thumb-container").remove()
+        e.target.closest(".thumbnail").remove()
     }
 }
 customElements.define("pano-container", PanoContainer)
