@@ -34,7 +34,6 @@ function downloadImages() {
   THUMBNAIL SCROLLBAR
 \*-------------------*/
 const moveThumbsScrollbar = ()=>{
-    // TODO: also call this on window resize
     const thumbs = document.getElementById("thumbs");
     
     // Find out how far down we've scrolled
@@ -118,4 +117,5 @@ window.addEventListener("load", ()=>{
     
     // THUMBS SCROLLING
     document.getElementById("thumbs").addEventListener("scroll", moveThumbsScrollbar)
+    window.addEventListener("resize", moveThumbsScrollbar)
 })

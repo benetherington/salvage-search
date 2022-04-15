@@ -130,4 +130,5 @@ window.addEventListener("load", ()=>{
     
     // THUMBS SCROLLING
     document.getElementById("thumbs").addEventListener("scroll", moveThumbsScrollbar)
+    window.addEventListener("resize", moveThumbsScrollbar)
 })
