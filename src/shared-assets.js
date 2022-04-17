@@ -7,6 +7,11 @@ const DEFAULT_SETTINGS = {
     searchPoctra: true,
     searchBidfax: true
 }
+const browserIsChrome = async ()=>{
+    const manifest = await browser.runtime.getManifest();
+    return manifest.hasOwnProperty("version_name");
+}
+
 
 /*---------------------*\
   IMAGE DATA CONVERTERS

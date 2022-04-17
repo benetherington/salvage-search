@@ -21,7 +21,9 @@ const BIDFAX_API = {
                 if (sent && error===captchaMessage) {
                     // Captcha failed. Only notify if another searcher has not
                     // yet been successful
-                    browser.tabs.create({url:"https://en.bidfax.info"})
+                    const newTabHidesPopup = await browserIsChrome();
+                    const active = !newTabHidesPopup;
+                    browser.tabs.create({url:"https://en.bidfax.info", active})
                 }
                 reject()
             }

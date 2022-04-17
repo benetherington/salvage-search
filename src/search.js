@@ -50,8 +50,11 @@ const searchArchives = async (query, notify)=>{
 
 
 const openTabAndSendMessage = async (searchResults)=>{
-    // Open new tab to the listing page
-    const resultsTab = browser.tabs.create({url: searchResults.listingUrl})
+    // Open new tab to the listing page, keeping it in the background if
+    // activating it will hide the popup (and displayed messages).
+    const newTabHidesPopup = await browserIsChrome();
+    const active = !newTabHidesPopup
+    const resultsTab = browser.tabs.create({url: searchResults.listingUrl, active})
     
     // Send success message, updating button states
     sPort.postMessage({
