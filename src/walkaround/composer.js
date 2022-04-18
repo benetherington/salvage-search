@@ -97,10 +97,10 @@ browser.runtime.onMessage.addListener(messageHandler)
 \*---------------*/
 window.addEventListener("load", ()=>{
     // FAKE LOADING FROM POPUP
-    let walkaroundUrls = Array.from(Array(64).keys()).map(idx=>
-        "/walkaround/images/"+idx+".jpg"
-    )
-    messageHandler({walkaroundUrls})
+    // let walkaroundUrls = Array.from(Array(64).keys()).map(idx=>
+    //     "/walkaround/images/"+idx+".jpg"
+    // )
+    // messageHandler({walkaroundUrls})
     
     // BUTTONS
     document.querySelector("#save-view").addEventListener("click", saveThumb)
