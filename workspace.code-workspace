@@ -7,5 +7,7 @@
 			"path": "src"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"prettier.configPath": "C:\\salvage-search\\.prettierrc"
+	}
 }

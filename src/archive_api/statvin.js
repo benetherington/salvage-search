@@ -13,12 +13,7 @@ const STATVIN_API = {
                 resolve(searchResults);
             } catch (error) {
                 console.log(`Statvin rejecting: ${error}`);
-                const sent = notify(`Stat.vin: ${error}.`);
-                // if (sent && error===captchaMessage) {
-                //     // Captcha failed. Only notify if another searcher has not
-                //     // yet been successful
-                //     browser.tabs.create({url:"https://en.bidfax.info"})
-                // }
+                notify(`Stat.vin: ${error}.`);
                 reject();
             }
         });
@@ -34,6 +29,9 @@ const STATVIN_API = {
         if (response.status === 419) {
             // Token expired.
         }
+        if (response.url.endsWith("car-not-found")) {
+            throw "search returned no results";
+        }
         if (!response.ok) {
             throw "something went wrong on their end...";
         }
@@ -43,13 +41,46 @@ const STATVIN_API = {
         const doc = parser.parseFromString(await response.text(), "text/html");
 
         // Run each scraper strategy
-        const scraped = {};
-        Object.assign(scraped, STATVIN_API.salvageAndLotScraperLivewire(doc));
-        Object.assign(scraped, STATVIN_API.salvageAndLotScraperGui(doc));
-        Object.assign(scraped, STATVIN_API.lotNumberScraperMeta(doc));
-        Object.assign(scraped, STATVIN_API.lotNumberScraperSeo(doc));
-        Object.assign(scraped, STATVIN_API.salvageNameScraperDataset(doc));
-        Object.assign(scraped, STATVIN_API.salvageNameScraperImages(doc));
+        let lotNumber, salvageName;
+        const final = {};
+
+        // Initial strategy
+        ({lotNumber, salvageName} =
+            STATVIN_API.salvageAndLotScraperLivewire(doc));
+        final.lotNumber = lotNumber;
+        final.salvageName = salvageName;
+        if (final.lotNumber && final.salvageName) return final;
+
+        // First fallback
+        ({lotNumber, salvageName} = STATVIN_API.salvageAndLotScraperGui(doc));
+        final.lotNumber ||= lotNumber;
+        final.salvageName ||= salvageName;
+        if (final.lotNumber && final.salvageName) return final;
+
+        // lotNumber-only fallbacks
+        if (!final.lotNumber) {
+            final.lotNumber = STATVIN_API.lotNumberScraperMeta(doc);
+            if (final.lotNumber && final.salvageName) return final;
+        }
+        if (!final.lotNumber) {
+            final.lotNumber = STATVIN_API.lotNumberScraperSeo(doc);
+            if (final.lotNumber && final.salvageName) return final;
+        }
+
+        // salvageName-only fallbacks
+        if (!final.salvageName) {
+            final.salvageName = STATVIN_API.salvageNameScraperDataset(doc);
+            if (final.lotNumber && final.salvageName) return final;
+        }
+        if (!final.salvageName) {
+            final.salvageName = STATVIN_API.salvageNameScraperImages(doc);
+            if (final.lotNumber && final.salvageName) return final;
+        }
+
+        // Parsing failed
+        console.error("statvin scraping was unsuccessful");
+        console.error(final);
+        throw "parsing failed";
     },
     lotNumberScraperMeta: (doc) => {
         // Fetch all the strings that potentially contain the lotNumber
@@ -93,7 +124,7 @@ const STATVIN_API = {
 
         // Return the first. Should we do consensus checking with reduce?
         const lotNumber = lotNumbers[0];
-        return {lotNumber};
+        return lotNumber;
     },
     lotNumberScraperSeo: (doc) => {
         // There's a giant SEO paragraph in the footer sometimes
@@ -104,7 +135,7 @@ const STATVIN_API = {
                 carAboutParagraph,
             )[3];
         } catch {}
-        return {lotNumber};
+        return lotNumber;
     },
     salvageAndLotScraperLivewire: (doc) => {
         // Scrape the page looking for the right Livewire object
@@ -148,7 +179,7 @@ const STATVIN_API = {
             salvageName = doc.querySelector("div[data-auction-name]").dataset
                 .auctionName;
         } catch {}
-        return {salvageName};
+        return salvageName;
     },
     salvageNameScraperImages: (doc) => {
         // Statvin stores their cached images in named directories. Fetch
@@ -178,7 +209,7 @@ const STATVIN_API = {
 
         // Return the first. Should we do consensus checking with reduce?
         const salvageName = salvageNames[0];
-        return {salvageName};
+        return salvageName;
     },
     salvageAndLotScraperGui: (doc) => {
         // Both salvageName and lotNumber are displayed on the page in the lot
@@ -217,8 +248,8 @@ const STATVIN_API = {
 
         return {lotNumber, salvageName};
     },
-    fetchToken: () => {
-        new URL(`https://stat.vin/cars/${vin}`);
-        doc.querySelector("input[name=_token]").value;
-    },
+    // fetchToken: () => {
+    //     // used when searching, rather than going directly to a VIN page
+    //     doc.querySelector("input[name=_token]").value;
+    // },
 };
