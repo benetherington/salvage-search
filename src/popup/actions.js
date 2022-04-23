@@ -259,6 +259,8 @@ const fetchStoredSettings = async () => {
     document.getElementById("settings-row52").checked = settings.searchRow52;
     document.getElementById("settings-poctra").checked = settings.searchPoctra;
     document.getElementById("settings-bidfax").checked = settings.searchBidfax;
+    document.getElementById("settings-statvin").checked =
+        settings.searchStatvin;
 };
 
 const setStoredSettings = async () => {
@@ -271,6 +273,8 @@ const setStoredSettings = async () => {
     settings.searchRow52 = document.getElementById("settings-row52").checked;
     settings.searchPoctra = document.getElementById("settings-poctra").checked;
     settings.searchBidfax = document.getElementById("settings-bidfax").checked;
+    settings.searchStatvin =
+        document.getElementById("settings-statvin").checked;
 
     // Store settings
     browser.storage.local.set({settings});
@@ -279,24 +283,10 @@ const setStoredSettings = async () => {
 const setElementCallbacks = () => {
     // When any toggle changes, update the local storage.
     document
-        .getElementById("settings-copart")
-        .addEventListener("change", setStoredSettings);
-
-    document
-        .getElementById("settings-iaai")
-        .addEventListener("change", setStoredSettings);
-
-    document
-        .getElementById("settings-row52")
-        .addEventListener("change", setStoredSettings);
-
-    document
-        .getElementById("settings-poctra")
-        .addEventListener("change", setStoredSettings);
-
-    document
-        .getElementById("settings-bidfax")
-        .addEventListener("change", setStoredSettings);
+        .querySelectorAll("#settings input")
+        .forEach((element) =>
+            element.addEventListener("change", setStoredSettings),
+        );
 };
 
 window.addEventListener("load", async () => {
