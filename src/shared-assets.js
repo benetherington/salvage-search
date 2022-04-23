@@ -70,35 +70,36 @@ const fetchObjectUrl = (imageUrl) => {
 /*----------------*\
   INPUT VALIDATION
 \*----------------*/
+// Validate and sanitize user input. These should be used liberally.
 const validateVin = (vin) => {
-    if (!vin) {
-        return;
-    }
-    let safe = encodeURIComponent(vin.replace(/\s/g, ""));
-    if (VINREGEX.test(safe)) {
-        return safe;
-    }
+    if (!vin) return;
+    const safe = encodeURIComponent(vin.replace(/\s/g, ""));
+    if (VINREGEX.test(safe)) return safe;
 };
 const validateLot = (lot) => {
-    if (!lot) {
-        return;
-    }
-    let safe = encodeURIComponent(lot.replace(/\s/g, ""));
-    if (LOTREGEX.test(safe)) {
-        return safe;
-    }
+    if (!lot) return;
+    const safe = encodeURIComponent(lot.replace(/\s/g, ""));
+    if (LOTREGEX.test(safe)) return safe;
 };
 
 /*--------*\
   SETTINGS
 \*--------*/
 const defaultedSettings = async () => {
-    let storage = await browser.storage.local.get("settings");
+    // Fetch stored settings
+    const storage = await browser.storage.local.get("settings");
+
+    // Make sure we have something to work with
     let settings = storage.settings || new Object();
-    if (
-        !Object.keys(DEFAULT_SETTINGS).every((k) => settings.hasOwnProperty(k))
-    ) {
+
+    const noKeysMissing = Object.keys(DEFAULT_SETTINGS).every((k) =>
+        settings.hasOwnProperty(k),
+    );
+    if (!noKeysMissing) {
+        // Add missing keys by "overwriting" default settings
         settings = Object.assign(DEFAULT_SETTINGS, settings);
+
+        // Store the now-complete settings
         browser.storage.local.set({settings});
     }
     return settings;
