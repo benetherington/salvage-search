@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS = {
     searchRow52: true,
     searchPoctra: true,
     searchBidfax: true,
+    searchStatvin: true,
 };
 
 /*---------------------*\
