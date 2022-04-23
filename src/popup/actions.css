@@ -1,7 +1,6 @@
 :root {
-    --popup-width: 310px
+    --popup-width: 310px;
 }
-
 
 /*---------------------------*\
   ------ SLIDING PAGES ------  
@@ -10,7 +9,7 @@ body {
     margin: 0;
     width: var(--popup-width);
     overflow-x: clip;
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
 }
 .slider {
     width: var(--popup-width);
@@ -38,7 +37,7 @@ body {
     margin: 1%;
     padding: 0 2% 2%; /* pad the bottom and sides. >* gets top margin for equal vertical spacing */
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 .grouped > * {
     margin-top: 2%; /* margin top doesn't overlap .grouped padding */
@@ -55,11 +54,12 @@ body {
     font-size: 1.8em;
     font-weight: 500;
     color: #ffffff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     cursor: pointer;
 }
-.button.disabled, .button.disabled:hover {
-    color:            #666666;
+.button.disabled,
+.button.disabled:hover {
+    color: #666666;
     background-color: inherit;
     pointer-events: none;
     opacity: 0.5;
@@ -81,24 +81,43 @@ body {
     animation-iteration-count: infinite;
 }
 @keyframes flash {
-    0% {box-shadow: 0 0 14px -4px #32728C}
-    10% {box-shadow: 0 0 6px  3px #32728C}
-    20% {box-shadow: 0 0 14px -4px #32728C}
+    0% {
+        box-shadow: 0 0 14px -4px #32728c;
+    }
+    10% {
+        box-shadow: 0 0 6px 3px #32728c;
+    }
+    20% {
+        box-shadow: 0 0 14px -4px #32728c;
+    }
 }
 .error-attention {
     animation-name: shakehead;
     animation-duration: 250ms;
 }
 @keyframes shakehead {
-    0%   {transform: translate( 0px, 0px);}
-    10%  {transform: translate( 3px, 0px);}
-    30%  {transform: translate(-3px, 0px);}
-    50%  {transform: translate( 3px, 0px);}
-    70%  {transform: translate(-3px, 0px);}
-    80%  {transform: translate( 3px, 0px);}
-    100% {transform: translate( 0px, 0px);}
+    0% {
+        transform: translate(0px, 0px);
+    }
+    10% {
+        transform: translate(3px, 0px);
+    }
+    30% {
+        transform: translate(-3px, 0px);
+    }
+    50% {
+        transform: translate(3px, 0px);
+    }
+    70% {
+        transform: translate(-3px, 0px);
+    }
+    80% {
+        transform: translate(3px, 0px);
+    }
+    100% {
+        transform: translate(0px, 0px);
+    }
 }
-
 
 /*---------------------*\
   ------ TOOLBAR ------  
@@ -111,7 +130,7 @@ body {
 .toolbar > .button {
     box-shadow: none;
     height: 0.3em;
-    width:  0.3em;
+    width: 0.3em;
     margin: 1% 1%;
 }
 .gear-fill {
@@ -128,23 +147,23 @@ body {
     justify-self: left;
 }
 
-
-
 /*-----------------------*\
   ------ MAIN PAGE ------  
 \*-----------------------*/
 /* user feedback */
-.feedback-busy, .feedback-progress {
+.feedback-busy,
+.feedback-progress {
     position: relative;
     pointer-events: none;
     font-weight: 700;
-    background-image: repeating-linear-gradient(-45deg,
-                        #223945 10px 30px, /* 223945*/
-                        #32728C 30px 50px, /* 32728C*/
-                        #508a77 50px 70px, /* 61A690*/
-                        #bdbdb8 70px 90px, /* EFEFE7*/
-                        #bb5c53 90px 110px /* F0786D*/
-                    );
+    background-image: repeating-linear-gradient(
+        -45deg,
+        #223945 10px 30px,
+        /* 223945*/ #32728c 30px 50px,
+        /* 32728C*/ #508a77 50px 70px,
+        /* 61A690*/ #bdbdb8 70px 90px,
+        /* EFEFE7*/ #bb5c53 90px 110px /* F0786D*/
+    );
     background-size: 141px 100%; /* trig maybe? Makes ends match when color wraps */
     animation-name: backgroundsweep;
     animation-timing-function: linear;
@@ -153,10 +172,15 @@ body {
     --progress-percentage: 50%;
 }
 @keyframes backgroundsweep {
-    from { background-position: 141px center; }
-    to   { background-position: 0     center; }
+    from {
+        background-position: 141px center;
+    }
+    to {
+        background-position: 0 center;
+    }
 }
-.feedback-busy::before, .feedback-progress::before {
+.feedback-busy::before,
+.feedback-progress::before {
     position: absolute;
     top: 0;
     left: 0;
@@ -164,7 +188,7 @@ body {
     height: 100%;
     box-sizing: border-box;
     content: "";
-    background-image: linear-gradient(90deg, #FFF0 0 50%, #FFF6 50% 100%);
+    background-image: linear-gradient(90deg, #fff0 0 50%, #fff6 50% 100%);
     background-size: 200%;
     background-attachment: fixed;
     background-position: center right -100%;
@@ -178,7 +202,7 @@ body {
 p {
     font-size: 1.5em;
     margin-block-start: 0.5em; /* Override Firefox */
-    margin-block-end:   0.5em;
+    margin-block-end: 0.5em;
 }
 input {
     /* clear Chrome injected style */
@@ -192,7 +216,7 @@ input {
     padding: 0.4em 0.2em 0em 0.2em;
     /* sizing */
     box-sizing: border-box;
-    width: 100%
+    width: 100%;
 }
 .input-big {
     /* styling */
@@ -202,52 +226,61 @@ input {
 .input-small {
     font-size: 1em;
 }
-input::placeholder{
+input::placeholder {
     color: #666666;
 }
-input:hover{
+input:hover {
     background-color: #c4d7e0;
 }
 input:focus {
     border: none;
-    border-bottom: 2px solid #32728C;
+    border-bottom: 2px solid #32728c;
     background-color: #d5f3ff;
 }
-input.disabled, input.disabled:hover {
+input.disabled,
+input.disabled:hover {
     border: none;
     box-shadow: none;
-    background-color:  #e8e8e8;;
+    background-color: #e8e8e8;
 }
 
 /* BUTTONS */
-#search-button {         background-color: #61A690; }
-#search-button:hover {   background-color: #8BACA9; }
-#download-button {       background-color: #61A690; }
-#download-button:hover { background-color: #8BACA9; }
+#search-button {
+    background-color: #61a690;
+}
+#search-button:hover {
+    background-color: #8baca9;
+}
+#download-button {
+    background-color: #61a690;
+}
+#download-button:hover {
+    background-color: #8baca9;
+}
 
 /* SALVAGE TOGGLE */
 .slide-radio {
-    background-color: #4096B9;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    
+    background-color: #4096b9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+
     display: grid;
     grid-template-columns: repeat(3, 33%);
-    
+
     position: relative;
     overflow: hidden;
     padding: 0;
     position: relative;
 }
 .slide-radio .slider {
-    background-color: #FFFFFFAD;
+    background-color: #ffffffad;
     border-radius: 3px;
-    
+
     height: calc(100% - 6px);
     width: 33%;
-    
+
     position: absolute;
     align-self: center;
-    transition: all .2s ease;
+    transition: all 0.2s ease;
 }
 .slide-radio input {
     display: none;
@@ -255,7 +288,7 @@ input.disabled, input.disabled:hover {
 .slide-radio label {
     color: white;
     transition: color 0.1s ease;
-    
+
     padding: 3px;
     text-align: center;
     display: block;
@@ -284,7 +317,7 @@ input.disabled, input.disabled:hover {
     grid-template-columns: auto 100fr;
     grid-auto-rows: 36px;
     gap: 10px;
-    align-items:center
+    align-items: center;
 }
 .settings-title {
     grid-column: 1/3;
@@ -297,14 +330,14 @@ input.disabled, input.disabled:hover {
 }
 .settings-title::after {
     /* build shadow border/separator */
-    content:"";
-    position:absolute;
-    width:100%;
+    content: "";
+    position: absolute;
+    width: 100%;
     left: 0;
-    bottom:1px;
-    z-index:-1;
-    transform:scale(.9);
-    box-shadow: 0px 0px 13px 2px #32728C;
+    bottom: 1px;
+    z-index: -1;
+    transform: scale(0.9);
+    box-shadow: 0px 0px 13px 2px #32728c;
 }
 .settings-label {
     grid-column: 2;
@@ -313,25 +346,24 @@ input.disabled, input.disabled:hover {
     font-size: smaller;
 }
 .helper-wrapper {
-    display:flex;
+    display: flex;
 }
 .helper-wrapper::after {
     content: "(?)";
     font-size: small;
-    margin-left: 5px
+    margin-left: 5px;
 }
 .helpertext {
     position: absolute;
     box-sizing: border-box;
-    width: calc(var(--popup-width)*0.9);
-    left: calc(var(--popup-width)*0.05); /* (100-0.9)/2 */
+    width: calc(var(--popup-width) * 0.9);
+    left: calc(var(--popup-width) * 0.05); /* (100-0.9)/2 */
     bottom: 80px; /* aligned by hand, be careful with placement! */
     padding: 9px 13px;
     background-color: white;
     z-index: 4;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12),
-                0 1px 2px rgba(0,0,0,0.24), /* material design shadow */
-                0 0 40px 0 #888; /* puffy float shadow */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24),
+        /* material design shadow */ 0 0 40px 0 #888; /* puffy float shadow */
     opacity: 0%;
     transition: opacity 0.2s;
     pointer-events: none;
@@ -348,7 +380,9 @@ input.disabled, input.disabled:hover {
     box-shadow: 0px 3px 5px 0px grey;
     border-radius: 4px;
 }
-.toggle-cover, .knobs, .layer {
+.toggle-cover,
+.knobs,
+.layer {
     width: 74px;
     height: 36px;
     top: 0;
@@ -384,7 +418,9 @@ input.disabled, input.disabled:hover {
     transition: 0.3s ease all;
     z-index: 1;
 }
-.knobs:before, .knobs:after, .knobs span {
+.knobs:before,
+.knobs:after,
+.knobs span {
     position: absolute;
     top: 4px;
     width: 20px;
@@ -397,36 +433,32 @@ input.disabled, input.disabled:hover {
     border-radius: 2px;
     transition: 0.3s ease all;
 }
-.knobs:before, .knobs:after {
+.knobs:before,
+.knobs:after {
     color: #4e4e4e;
     z-index: 1;
 }
 .knobs:before {
-    content: 'ON';
+    content: "ON";
     left: 4px;
 }
 .knobs:after {
-    content: 'OFF';
+    content: "OFF";
     right: 4px;
 }
 .knobs span {
     width: 25px;
     left: 37px;
-    background-color: #03A9F4;
+    background-color: #03a9f4;
     z-index: 2;
 }
 .checkbox:not(:checked) + .knobs span {
     left: 4px;
-    background-color: #F44336;
+    background-color: #f44336;
 }
 .checkbox:not(:checked) ~ .layer {
     background-color: #fcebeb;
 }
-
-
-
-
-
 
 /*----------------------------*\
   ------ MESSAGE DRAWER ------  
@@ -460,7 +492,7 @@ input.disabled, input.disabled:hover {
     padding: 1% 2%;
     text-align: center;
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 .notification.error {
     background-color: #f0aea8;

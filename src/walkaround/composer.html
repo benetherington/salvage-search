@@ -1,37 +1,46 @@
 <!DOCTYPE html>
 <html>
-
     <head>
-        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-        <meta content="utf-8" http-equiv="encoding">
-        <link rel="stylesheet" href="composer.css"/>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+        <meta content="utf-8" http-equiv="encoding" />
+        <link rel="stylesheet" href="composer.css" />
         <script src="../shared-assets.js"></script>
         <script src="viewer.js"></script>
         <script src="composer.js"></script>
     </head>
     <body>
-
         <!-- Main viewer and buttons -->
         <div id="stage-container" class="ungrouped has-hover">
             <walkaround-viewer id="stage"></walkaround-viewer>
             <button id="help" class="hover bottom left"></button>
             <button id="save-view" class="hover bottom right"></button>
         </div>
-        
+
         <!-- Thumbnails -->
         <div id="thumbs" class="grouped has-hover">
             <button id="dl-all" class="hover bottom right"></button>
-            <p class="placeholder">Click the camera button to add a snapshot...</p>
+            <p class="placeholder">
+                Click the camera button to add a snapshot...
+            </p>
         </div>
-        
+
         <!-- Help popup -->
         <div id="help-popup" class="fade-out">
             <h3>Controls</h3>
-            <p><b>Rotate the vehicle:</b> <em>Click-and-drag</em> on the vehicle, or press <em>left and right arrow keys</em>. Hold <em>Shift</em> to rotate faster.</p>
-            <p><b>Hold on to an image:</b> Click the <em>camera button</em>, or press <em>Enter</em>, or <em>double click</em> on the vehicle.</p>
-            <p><b>Download held images:</b> Click the <em>download button</em>. Images will be saved to your downloads folder, inside this vehicle's folder.</p>
+            <p>
+                <b>Rotate the vehicle:</b> <em>Click-and-drag</em> on the
+                vehicle, or press <em>left and right arrow keys</em>. Hold
+                <em>Shift</em> to rotate faster.
+            </p>
+            <p>
+                <b>Hold on to an image:</b> Click the <em>camera button</em>, or
+                press <em>Enter</em>, or <em>double click</em> on the vehicle.
+            </p>
+            <p>
+                <b>Download held images:</b> Click the <em>download button</em>.
+                Images will be saved to your downloads folder, inside this
+                vehicle's folder.
+            </p>
         </div>
-
     </body>
 </html>
-

@@ -1,6 +1,6 @@
 /* FONTS */
 body * {
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
 }
 em {
     color: #194a5e;
@@ -13,7 +13,7 @@ b {
 body {
     display: flex;
     flex-direction: row;
-    
+
     height: calc(100vh - 16px);
     width: calc(100vw - 16px);
     overflow: hidden;
@@ -30,7 +30,7 @@ body {
     margin: 0.5vh;
     padding: 1vh;
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 .ungrouped {
     height: fit-content;
@@ -46,23 +46,29 @@ body {
     z-index: 1;
 }
 .hover::after {
-    position:absolute;
+    position: absolute;
     content: "";
     height: 100%;
     width: 100%;
     left: 0;
     top: 0;
-    box-shadow: 0 0 10px rgba(1,1,1,0.3);
+    box-shadow: 0 0 10px rgba(1, 1, 1, 0.3);
 }
-.hover.left   {left:   5px;}
-.hover.right  {right:  5px;}
-.hover.top    {top:    5px;}
-.hover.bottom {bottom: 5px;}
+.hover.left {
+    left: 5px;
+}
+.hover.right {
+    right: 5px;
+}
+.hover.top {
+    top: 5px;
+}
+.hover.bottom {
+    bottom: 5px;
+}
 .hidden {
     display: none;
 }
-
-
 
 /* ELEMENTS */
 button {
@@ -71,25 +77,23 @@ button {
     font-size: 1em;
     font-weight: 500;
     color: #eee;
-    background: #32728C;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    background: #32728c;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     cursor: pointer;
     border: initial;
 }
-button.disabled, button.disabled:hover {
-    color:            #666666;
+button.disabled,
+button.disabled:hover {
+    color: #666666;
     background-color: inherit;
     pointer-events: none;
     opacity: 0.5;
     box-shadow: 0px 0px 2px 1px grey;
 }
 
-
-
 /* CONTAINERS */
 #stage-container {
     flex-basis: 200px;
-    
     /* .ungrouped isn't intended for things that have full-size children */
     padding: 0;
 }
@@ -97,7 +101,6 @@ button.disabled, button.disabled:hover {
     /* Screen is wide, make stage grow */
     #stage-container {
         flex-grow: 6;
-        
     }
 }
 #thumbs {
@@ -107,9 +110,8 @@ button.disabled, button.disabled:hover {
     gap: 10px;
     overflow: hidden auto;
     scrollbar-width: thin;
-    
     /* this element layout */
-    min-height: calc(20% + .5vh);
+    min-height: calc(20% + 0.5vh);
     flex-grow: 0;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
@@ -135,23 +137,22 @@ button.disabled, button.disabled:hover {
     width: 100%;
     aspect-ratio: 1/1;
     object-fit: cover;
-    
     /* allow corner snipping */
     overflow: hidden;
     /* style container */
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     display: flex;
 }
 
-
-
 /* THUMBNAIL HOVERING TOOLBAR */
-#thumbs:not(:hover) .hover-bar {visibility: hidden;}
+#thumbs:not(:hover) .hover-bar {
+    visibility: hidden;
+}
 .hover-bar {
     /* style */
     background: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     border-radius: 4px;
     /* size and position */
     position: absolute;
@@ -162,7 +163,7 @@ button.disabled, button.disabled:hover {
 }
 .hover-icon {
     /* style */
-    transition: background-color .1s;
+    transition: background-color 0.1s;
     /* size */
     height: 100%;
     aspect-ratio: 1/1;
@@ -171,13 +172,23 @@ button.disabled, button.disabled:hover {
     background-repeat: no-repeat;
     box-sizing: border-box;
 }
-.hover-icon:hover {background-color: lightgrey;}
+.hover-icon:hover {
+    background-color: lightgrey;
+}
 /* add a little border between items */
-.hover-icon:not(:last-child) {box-shadow: 2px 0 2px -1px rgba(0,0,0,0.24);}
+.hover-icon:not(:last-child) {
+    box-shadow: 2px 0 2px -1px rgba(0, 0, 0, 0.24);
+}
 
-.edit-icon          {background-image: url("/icons/pencil-square.svg");}
-.delete-icon        {background-image: url("/icons/x-circle-fill.svg");}
-.delete-icon:hover  {background-color: lightpink;}
+.edit-icon {
+    background-image: url("/icons/pencil-square.svg");
+}
+.delete-icon {
+    background-image: url("/icons/x-circle-fill.svg");
+}
+.delete-icon:hover {
+    background-color: lightpink;
+}
 
 /* STAGE AND THUMBNAILS */
 pano-container {
@@ -205,14 +216,12 @@ pano-container {
     display: none;
 }
 
-
-
 /* BUTTONS */
 button.hover {
     height: 60px;
     aspect-ratio: 1/1;
     border-radius: 100%;
-    
+
     background-size: 69%;
     background-position: center;
     background-repeat: no-repeat;
@@ -230,25 +239,20 @@ button.hover::after {
     background-image: url("/icons/info-lg.svg");
 }
 
-
-
 /* HELP POPUP */
 #help-popup {
     background-color: white;
-    
+
     /* Look like a card, but add a fluffy cloud to help stand out */
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12),
-                0 1px 2px rgba(0,0,0,0.24),
-                0 0 30px 10px rgba(47, 47, 47, 0.3);
-    
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24),
+        0 0 30px 10px rgba(47, 47, 47, 0.3);
     /* Position in the middle of the window */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 5;
-    
     /* Allow appearance animation */
     opacity: 1;
     visibility: visible;
@@ -266,5 +270,3 @@ button.hover::after {
 #help-popup h3 {
     text-align: center;
 }
-
-

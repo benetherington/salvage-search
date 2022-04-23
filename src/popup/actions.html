@@ -1,108 +1,154 @@
 <!DOCTYPE html>
 <html>
-
     <head>
-        <meta charset="utf-8">
-        <link rel="stylesheet" href="actions.css"/>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="actions.css" />
         <script src="/browser-polyfill.js"></script>
         <script src="/shared-assets.js"></script>
         <script src="/popup/actions.js"></script>
         <script src="/popup/progressButton.js"></script>
     </head>
     <body>
-<!-- STATIC TOOLBAR -->
+        <!-- STATIC TOOLBAR -->
         <div class="toolbar">
             <div id="button-main" class="button arrow-left hidden"></div>
             <div id="button-settings" class="button gear-fill"></div>
         </div>
 
+        <!-- SLIDING PAGES -->
+        <div id="slider" class="slider">
+            <div class="slider-holder">
+                <!-- MAIN PAGE -->
+                <div id="main" class="slider-page active">
+                    <div class="grouped">
+                        <input
+                            id="search-input"
+                            type="text"
+                            class="input-big"
+                            size="17"
+                            placeholder="VIN OR LOT" />
 
+                        <div id="salvage-selector">
+                            <div class="slide-radio">
+                                <input
+                                    id="download-unknown"
+                                    type="radio"
+                                    class="toggle-option"
+                                    name="salvage-name"
+                                    checked />
+                                <label for="download-unknown">Unknown</label>
 
-<!-- SLIDING PAGES -->
-        <div id="slider" class="slider"><div class="slider-holder">
+                                <input
+                                    id="download-copart"
+                                    type="radio"
+                                    class="toggle-option"
+                                    name="salvage-name" />
+                                <label for="download-copart">Copart</label>
 
-        <!-- MAIN PAGE -->
-            <div id="main" class="slider-page active">
-                <div class="grouped">
-                    <input id="search-input" type="text" class="input-big" size="17" placeholder="VIN OR LOT">
-                    
-                    <div id="salvage-selector">
-                        <div class="slide-radio">
-                            <input id="download-unknown" type="radio" class="toggle-option" name="salvage-name" checked>
-                            <label for="download-unknown">Unknown</label>
-                            
-                            <input id="download-copart" type="radio" class="toggle-option" name="salvage-name">
-                            <label for="download-copart">Copart</label>
-                            
-                            <input id="download-iaai" type="radio" class="toggle-option" name="salvage-name">
-                            <label for="download-iaai">IAAI</label>
-                            
-                            <div class="slider"></div>
+                                <input
+                                    id="download-iaai"
+                                    type="radio"
+                                    class="toggle-option"
+                                    name="salvage-name" />
+                                <label for="download-iaai">IAAI</label>
+
+                                <div class="slider"></div>
+                            </div>
+                        </div>
+
+                        <div
+                            id="search-button"
+                            is="progress-button"
+                            class="button disabled"
+                            data-style-orig="button">
+                            Search
                         </div>
                     </div>
-                    
-                    <div id="search-button" is="progress-button" class="button disabled" data-style-orig="button">
-                        Search
+                    <div
+                        id="download-button"
+                        is="progress-button"
+                        class="button ungrouped disabled"
+                        data-style-orig="button ungrouped">
+                        Download Images
                     </div>
                 </div>
-                <div id="download-button" is="progress-button"
-                     class="button ungrouped disabled" data-style-orig="button ungrouped">
-                    Download Images
-                </div>
-            </div>
 
-        <!-- SETTINGS PAGE -->
-            <div id="settings" class="slider-page">
-                <div class="settings-grid grouped">
-                    <div class="settings-title">Salvage search:</div>
+                <!-- SETTINGS PAGE -->
+                <div id="settings" class="slider-page">
+                    <div class="settings-grid grouped">
+                        <div class="settings-title">Salvage search:</div>
 
-                    <div class="toggle-cover"><div class="toggle">
-                        <input id="settings-copart" type="checkbox" class="checkbox">
-                        <div class="knobs">
-                            <span></span>
+                        <div class="toggle-cover">
+                            <div class="toggle">
+                                <input
+                                    id="settings-copart"
+                                    type="checkbox"
+                                    class="checkbox" />
+                                <div class="knobs">
+                                    <span></span>
+                                </div>
+                                <div class="layer"></div>
+                            </div>
                         </div>
-                        <div class="layer"></div>
-                    </div></div>
-                    <div class="settings-label">Copart.com</div>
+                        <div class="settings-label">Copart.com</div>
 
-                    <div class="toggle-cover"><div class="toggle">
-                        <input id="settings-iaai" type="checkbox" class="checkbox">
-                        <div class="knobs">
-                            <span></span>
+                        <div class="toggle-cover">
+                            <div class="toggle">
+                                <input
+                                    id="settings-iaai"
+                                    type="checkbox"
+                                    class="checkbox" />
+                                <div class="knobs">
+                                    <span></span>
+                                </div>
+                                <div class="layer"></div>
+                            </div>
                         </div>
-                        <div class="layer"></div>
-                    </div></div>
-                    <div class="settings-label">IAAI.com</div>
+                        <div class="settings-label">IAAI.com</div>
 
-                    <div class="toggle-cover"><div class="toggle">
-                        <input id="settings-row52" type="checkbox" class="checkbox">
-                        <div class="knobs">
-                            <span></span>
+                        <div class="toggle-cover">
+                            <div class="toggle">
+                                <input
+                                    id="settings-row52"
+                                    type="checkbox"
+                                    class="checkbox" />
+                                <div class="knobs">
+                                    <span></span>
+                                </div>
+                                <div class="layer"></div>
+                            </div>
                         </div>
-                        <div class="layer"></div>
-                    </div></div>
-                    <div class="settings-label">Row52.com</div>
+                        <div class="settings-label">Row52.com</div>
 
-                    <div class="toggle-cover"><div class="toggle">
-                        <input id="settings-poctra" type="checkbox" class="checkbox">
-                        <div class="knobs">
-                            <span></span>
+                        <div class="toggle-cover">
+                            <div class="toggle">
+                                <input
+                                    id="settings-poctra"
+                                    type="checkbox"
+                                    class="checkbox" />
+                                <div class="knobs">
+                                    <span></span>
+                                </div>
+                                <div class="layer"></div>
+                            </div>
                         </div>
-                        <div class="layer"></div>
-                    </div></div>
-                    <div class="settings-label">Poctra.com</div>
+                        <div class="settings-label">Poctra.com</div>
 
-                    <div class="toggle-cover"><div class="toggle">
-                        <input id="settings-bidfax" type="checkbox" class="checkbox">
-                        <div class="knobs">
-                            <span></span>
+                        <div class="toggle-cover">
+                            <div class="toggle">
+                                <input
+                                    id="settings-bidfax"
+                                    type="checkbox"
+                                    class="checkbox" />
+                                <div class="knobs">
+                                    <span></span>
+                                </div>
+                                <div class="layer"></div>
+                            </div>
                         </div>
-                        <div class="layer"></div>
-                    </div></div>
-                    <div class="settings-label">BidFax.info</div>
+                        <div class="settings-label">BidFax.info</div>
 
-
-                    <!-- <input type="text" id="zip" class="input-small" size="5" maxlength="5">
+                        <!-- <input type="text" id="zip" class="input-small" size="5" maxlength="5">
                     <div class="settings-label">ZIP for fallback searches</div>
                     
                     <div class="toggle-cover"><div class="toggle">
@@ -126,18 +172,15 @@
                             </div>
                         </div>
                     </span> -->
-
+                    </div>
+                    <p id="version" class="tiny ungrouped">vX.X</p>
                 </div>
-                <p id="version" class="tiny ungrouped">vX.X</p>
+
+                <!-- END SLIDING PAGES -->
             </div>
-
-<!-- END SLIDING PAGES -->
-        </div></div>
-
-<!-- STATIC notification BAR -->
-        <div id="notification-drawer" class="drawer hidden">
         </div>
 
-
+        <!-- STATIC notification BAR -->
+        <div id="notification-drawer" class="drawer hidden"></div>
     </body>
 </html>
