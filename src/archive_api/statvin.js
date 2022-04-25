@@ -21,7 +21,7 @@ const STATVIN_API = {
     },
     searcher: async (vin) => {
         // Configure VIN search
-        const searchUrl = new URL(`https://stat.vin/cars/${vin}`);
+        const searchUrl = `https://stat.vin/cars/${vin}`;
 
         // Fetch search results
         const response = await fetch(searchUrl);
@@ -41,6 +41,18 @@ const STATVIN_API = {
         const parser = new DOMParser();
         const doc = parser.parseFromString(await response.text(), "text/html");
 
+        // Scrape results
+        const {lotNumber, salvageName} = STATVIN_SCRAPER.scrape(doc);
+
+        // Done!
+        const listingUrl = searchUrl;
+        return {lotNumber, salvageName, listingUrl};
+    },
+
+    /*------*\
+      SCRAPE
+    \*------*/
+    lotNumberFromTab: async (statvinTab) => {
         // Run each scraper strategy
         let lotNumber, salvageName;
         const final = {};
