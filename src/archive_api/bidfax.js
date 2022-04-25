@@ -68,22 +68,19 @@ const BIDFAX_API = {
             throw "search returned no results.";
         }
 
-        // Get listing URLs
-        const listingUrls = Array.from(searchResults).map(
-            BIDFAX_API.getUrlFromCaption,
+        // Get listing details
+        const resultsDetails = Array.from(searchResults).map(
+            BIDFAX_API.getDetailsFromCaption,
         );
 
-        // Check listing URLs
-        if (!listingUrls.some((el) => el)) {
-            console.log("BidFax found results, but not listing URLs.");
-            throw "search returned a result, but it's invalid.";
-        }
-
-        // Split results
-        const listingUrl = listingUrls.pop();
+        // Get the first complete result
+        let resultDetails = resultsDetails.find(
+            (detail) =>
+                detail.listingUrl && detail.lotNumber && detail.salvageName,
+        );
 
         // Send back results
-        return {salvageName: "bidfax", listingUrl};
+        return resultDetails;
     },
     fetchCaptchaToken: async () => {
         /*
@@ -142,10 +139,35 @@ const BIDFAX_API = {
             }, checkInterval);
         });
     },
-    getUrlFromCaption: (el) => {
-        const anchor = el.querySelector("a");
-        if (!anchor) return;
-        return anchor.href;
+    getDetailsFromCaption: (el) => {
+        let listingUrl;
+        try {
+            listingUrl = el.querySelector("a").href;
+        } catch {}
+
+        let salvageName;
+        try {
+            const auction = el.querySelector(".short-storyup").innerText;
+            isIaai = auction.toLowerCase().includes("iaai");
+            isCopart = auction.toLowerCase().includes("copart");
+            if (!isIaai && !isCopart) throw "";
+            if (isIaai && isCopart) throw "";
+            salvageName = isIaai ? "iaai" : "copart";
+            // can also do qS(".short-storyup span").classList[0]
+        } catch {}
+
+        let lotNumber;
+        try {
+            const maybeLotNumbers = Array.from(
+                el.querySelectorAll(".short-story"),
+            );
+            const lotPara = maybeLotNumbers.find((p) =>
+                p.innerText.toLowerCase().includes("lot"),
+            );
+            lotNumber = /\d{8}/.exec(lotPara.innerText)[0];
+        } catch {}
+
+        return {listingUrl, salvageName, lotNumber};
     },
 
     /*------*\
