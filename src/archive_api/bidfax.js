@@ -14,6 +14,8 @@ const BIDFAX_API = {
             try {
                 const searchResults = await BIDFAX_API.searcher(vin);
                 notify("BidFax: found a match!", "success");
+                // TODO: if initial scrape didn't work, load the tab and get
+                // data from there.
                 resolve(searchResults);
             } catch (error) {
                 console.log(`BidFax rejecting: ${error}`);
