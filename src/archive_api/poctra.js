@@ -55,29 +55,46 @@ const POCTRA_API = {
             throw "search returned no results.";
         }
 
-        // Get listing URLs
-        const listingUrls = [];
-        searchResults.forEach((el) =>
-            listingUrls.push(el.querySelector("a").href),
+        // Get listing details
+        const resultsDetails = Array.from(searchResults).map(
+            POCTRA_API.getDetailsFromClickableRow,
         );
 
-        // Check listing URLs
-        if (!listingUrls.some((el) => el)) {
-            console.log("POCTRA found results, but not listing URLs.");
-            throw "search returned a result, but it's invalid.";
-        }
-
-        // Extract lot numbers
-        const lotNumbers = [];
-        searchResults.forEach((el) =>
-            lotNumbers.push(/\d{8}/.exec(el.innerHTML)[0]),
+        // Get the first complete result
+        let resultDetails = resultsDetails.find(
+            (detail) =>
+                detail.listingUrl && detail.lotNumber && detail.salvageName,
         );
-
-        // Split results
-        const listingUrl = listingUrls.pop();
 
         // Send back results
-        return {salvageName: "poctra", listingUrl};
+        return resultDetails;
+    },
+    getDetailsFromClickableRow: (el) => {
+        let listingUrl;
+        try {
+            listingUrl = el.querySelector("a").href;
+        } catch {}
+
+        let infoText;
+        try {
+            infoText = el.querySelector("p").innerText;
+        } catch {}
+
+        let salvageName;
+        try {
+            isIaai = infoText.toLowerCase().includes("iaai");
+            isCopart = infoText.toLowerCase().includes("copart");
+            if (!isIaai && !isCopart) throw "";
+            if (isIaai && isCopart) throw "";
+            salvageName = isIaai ? "iaai" : "copart";
+        } catch {}
+
+        let lotNumber;
+        try {
+            lotNumber = /\d{8}/.exec(infoText)[0];
+        } catch {}
+
+        return {listingUrl, salvageName, lotNumber};
     },
 
     /*------*\
