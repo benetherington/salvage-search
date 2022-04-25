@@ -48,10 +48,12 @@ const openTabAndSendMessage = async (searchResults) => {
     // Open new tab to the listing page
     const resultsTab = browser.tabs.create({url: searchResults.listingUrl});
 
+    const downloadable = ["iaai", "copart"].includes(searchResults.salvageName);
+    const complete = true;
     // Send success message, updating button states
     sPort.postMessage({
-        complete: true,
-        found: true,
+        downloadable,
+        complete,
         ...searchResults,
     });
 

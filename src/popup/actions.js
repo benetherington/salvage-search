@@ -146,7 +146,7 @@ const setSalvageNameInput = (salvageName) => {
 // Handle search messages
 const onSearchMessage = (message) => {
     // Flash the download button
-    if (message.found) {
+    if (message.downloadable) {
         document.getElementById("download-button").attention();
     }
 
