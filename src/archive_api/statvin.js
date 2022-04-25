@@ -53,40 +53,61 @@ const STATVIN_API = {
       SCRAPE
     \*------*/
     lotNumberFromTab: async (statvinTab) => {
+        try {
+            const stringified = Object.getOwnPropertyNames(STATVIN_SCRAPER).map(
+                (name) => `${name} = ${STATVIN_SCRAPER[name].toString()};`,
+            );
+            const code = stringified.join("") + "scrape(document);";
+            const framesResults = await browser.tabs.executeScript(
+                statvinTab.id,
+                {code},
+            );
+            const frameResults = framesResults[0];
+            return frameResults;
+        } catch (error) {
+            //     throw `Stat.vin: ${error}`;
+        }
+    },
+};
+const STATVIN_SCRAPER = {
+    // In the following function, this refers to STATVIN_SCRAPER when called as
+    // STATVIN_SCRAPER.scrape. However, when STATVIN_SCRAPER's properties are
+    // stringified and run as a content script, this will instead refer to
+    // window. Either way, the function below will be able to call its helpers.
+    scrape: function (doc) {
         // Run each scraper strategy
         let lotNumber, salvageName;
         const final = {};
 
         // Initial strategy
-        ({lotNumber, salvageName} =
-            STATVIN_API.salvageAndLotScraperLivewire(doc));
+        ({lotNumber, salvageName} = this.salvageAndLotScraperLivewire(doc));
         final.lotNumber = lotNumber;
         final.salvageName = salvageName;
         if (final.lotNumber && final.salvageName) return final;
 
         // First fallback
-        ({lotNumber, salvageName} = STATVIN_API.salvageAndLotScraperGui(doc));
+        ({lotNumber, salvageName} = this.salvageAndLotScraperGui(doc));
         final.lotNumber ||= lotNumber;
         final.salvageName ||= salvageName;
         if (final.lotNumber && final.salvageName) return final;
 
         // lotNumber-only fallbacks
         if (!final.lotNumber) {
-            final.lotNumber = STATVIN_API.lotNumberScraperMeta(doc);
+            final.lotNumber = this.lotNumberScraperMeta(doc);
             if (final.lotNumber && final.salvageName) return final;
         }
         if (!final.lotNumber) {
-            final.lotNumber = STATVIN_API.lotNumberScraperSeo(doc);
+            final.lotNumber = this.lotNumberScraperSeo(doc);
             if (final.lotNumber && final.salvageName) return final;
         }
 
         // salvageName-only fallbacks
         if (!final.salvageName) {
-            final.salvageName = STATVIN_API.salvageNameScraperDataset(doc);
+            final.salvageName = this.salvageNameScraperDataset(doc);
             if (final.lotNumber && final.salvageName) return final;
         }
         if (!final.salvageName) {
-            final.salvageName = STATVIN_API.salvageNameScraperImages(doc);
+            final.salvageName = this.salvageNameScraperImages(doc);
             if (final.lotNumber && final.salvageName) return final;
         }
 
@@ -179,7 +200,7 @@ const STATVIN_API = {
             lotNumber = foundCar.lot_number;
         } catch {}
         try {
-            salvageName = foundCar.auction.auction_name;
+            salvageName = foundCar.auction.auction_name.toLowerCase();
         } catch {}
 
         // Done!
@@ -190,7 +211,7 @@ const STATVIN_API = {
         let salvageName;
         try {
             salvageName = doc.querySelector("div[data-auction-name]").dataset
-                .auctionName;
+                .auctionName.toLowerCase();
         } catch {}
         return salvageName;
     },
@@ -218,7 +239,7 @@ const STATVIN_API = {
         );
         const salvageNames = salvageNameMatches
             .filter((e) => e)
-            .map((match) => match[0]);
+            .map((match) => match[0].toLowerCase());
 
         // Return the first. Should we do consensus checking with reduce?
         const salvageName = salvageNames[0];
@@ -256,7 +277,7 @@ const STATVIN_API = {
             const salvageNameIdx = infoTitles.findIndex((t) =>
                 /auction/i.exec(t),
             );
-            salvageName = infoTexts[salvageNameIdx];
+            salvageName = infoTexts[salvageNameIdx].toLowerCase();
         } catch {}
 
         return {lotNumber, salvageName};
