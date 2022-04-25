@@ -4,6 +4,7 @@ const captchaMessage =
 const BIDFAX_API = {
     NAME: "bidfax",
     URL_PATTERN: "*://en.bidfax.info/*",
+    URL_REGEXP: /bidfax\.info/,
 
     /*------*\
       SEARCH
@@ -223,3 +224,5 @@ const BIDFAX_API = {
         return {lotNumber, salvageName};
     },
 };
+
+SALVAGE_APIS.bidfax = BIDFAX_API;

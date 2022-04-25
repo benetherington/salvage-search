@@ -9,6 +9,8 @@ const DEFAULT_SETTINGS = {
     searchBidfax: true,
     searchStatvin: true,
 };
+// {"name": this} assigned in each API document
+const SALVAGE_APIS = {};
 
 /*---------------------*\
   IMAGE DATA CONVERTERS

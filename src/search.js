@@ -35,6 +35,9 @@ const searchArchives = async (query, notify) => {
     if (settings.searchBidfax) {
         archivePromises.push(BIDFAX_API.search(query, notify));
     }
+    if (settings.searchStatvin) {
+        archivePromises.push(STATVIN_API.search(query, notify));
+    }
 
     // Return search results, with a guaranteed rejection in case none were
     // enabled in settings.
@@ -55,9 +58,7 @@ const openTabAndSendMessage = async (searchResults) => {
     // Fetch data from tab if this was an archive
     if (!searchResults.lotNumber) {
         // Find the correct API
-        const salvage = {bidfax: BIDFAX_API, poctra: POCTRA_API}[
-            searchResults.salvageName
-        ];
+        const salvage = SALVAGE_APIS[searchResults.salvageName];
 
         // Fetch info
         const tabInfo = await salvage.lotNumberFromTab(await resultsTab);

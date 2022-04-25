@@ -1,6 +1,7 @@
 const STATVIN_API = {
     NAME: "statvin",
     URL_PATTERN: "*://stat.vin/*",
+    URL_REGEXP: /stat\.vin/,
 
     /*------*\
       SEARCH
@@ -253,3 +254,5 @@ const STATVIN_API = {
     //     doc.querySelector("input[name=_token]").value;
     // },
 };
+
+SALVAGE_APIS.statvin = STATVIN_API;

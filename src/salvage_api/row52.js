@@ -3,6 +3,10 @@
 \*------*/
 const ROW52_API = {
     NAME: "row52",
+    // Image downloads are not supported. URL_PATTERN can be not included, but
+    // URL_REGEXP needs to be defined but never match.
+    URL_REGEXP: /<(?!x)x/,
+    
     search: (vin, notify = sendNotification) => {
         return new Promise(async (resolve, reject) => {
             try {
@@ -96,3 +100,5 @@ const ROW52_API = {
         // let yardName = yardNameElement.innerText.trim()
     },
 };
+
+SALVAGE_APIS.row52 = ROW52_API;

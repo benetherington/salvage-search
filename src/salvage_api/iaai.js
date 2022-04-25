@@ -1,6 +1,7 @@
 const IAAI_API = {
     NAME: "iaai",
-    PRETTY_NAME: "IAAI",
+    URL_PATTERN: "*://*.iaai.com/*ehicle*etail*",
+    URL_REGEXP: /iaai\.com/,
 
     /*------*\
       SEARCH  
@@ -69,7 +70,6 @@ const IAAI_API = {
     /*------*\
       SCRAPE
     \*------*/
-    URL_PATTERN: "*://*.iaai.com/*ehicle*etail*",
     lotNumberFromTab: async (tab) => {
         try {
             // Execute content script
@@ -452,3 +452,5 @@ const IAAI_API = {
 //       "wa_360": true
 //     }
 //   }
+
+SALVAGE_APIS.iaai = IAAI_API;

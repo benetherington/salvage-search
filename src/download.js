@@ -1,22 +1,15 @@
-const salvageNameToObject = {
-    iaai: IAAI_API,
-    copart: COPART_API,
-    poctra: POCTRA_API,
-    bidfax: BIDFAX_API,
-};
-
 /*----------*\
   TAB FINDER
 \*----------*/
 const findBestTab = async () => {
+    // Get tab URL patterns from loaded APIs
+    const urlPatterns = Object.values(SALVAGE_APIS)
+        .map((api) => api.URL_PATTERN)
+        .filter((u) => u);
+
     // Find all salvage tabs
     let salvageTabs = await browser.tabs.query({
-        url: [
-            COPART_API.URL_PATTERN,
-            IAAI_API.URL_PATTERN,
-            POCTRA_API.URL_PATTERN,
-            BIDFAX_API.URL_PATTERN,
-        ],
+        url: urlPatterns,
     });
 
     // Decide which tab is best
@@ -31,13 +24,10 @@ const findBestTab = async () => {
     return recentTabs.pop();
 };
 const getSalvageFromTab = (tab) => {
-    // Identify primary sites
-    if (/copart\.com/i.test(tab.url)) return COPART_API;
-    if (/iaai\.com/i.test(tab.url)) return IAAI_API;
-
-    // Identify archive sites
-    if (/poctra\.com/i.test(tab.url)) return POCTRA_API;
-    if (/bidfax\.info/i.test(tab.url)) return BIDFAX_API;
+    const salvage = Object.values(SALVAGE_APIS).find((api) =>
+        api.URL_REGEXP.exec(tab.url),
+    );
+    return salvage;
 };
 const getTabInfo = async () => {
     const bestTab = await findBestTab();
@@ -52,7 +42,7 @@ const getTabInfo = async () => {
 \*---------------*/
 const fetchImageUrls = async (lotNumber, salvageName) => {
     // Fetch image info
-    const salvage = salvageNameToObject[salvageName];
+    const salvage = SALVAGE_APIS[salvageName];
     const imageInfo = await salvage.imageInfoFromLotNumber(lotNumber);
 
     // Fetch image urls

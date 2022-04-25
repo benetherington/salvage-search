@@ -1,6 +1,7 @@
 const POCTRA_API = {
     NAME: "poctra",
     URL_PATTERN: "*://*.poctra.com/*/id-*/*",
+    URL_REGEXP: /poctra\.com/,
 
     /*------*\
       SEARCH
@@ -195,3 +196,5 @@ const POCTRA_API = {
         return {lotNumber, salvageName};
     },
 };
+
+SALVAGE_APIS.poctra = POCTRA_API;

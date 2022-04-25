@@ -16,7 +16,8 @@ const notifyAtHalfway = () => {
 
 const COPART_API = {
     NAME: "copart",
-    PRETTY_NAME: "Copart",
+    URL_PATTERN: "*://*.copart.com/lot/*",
+    URL_REGEXP: /copart\.com/,
 
     /*------*\
       SEARCH  
@@ -82,7 +83,6 @@ const COPART_API = {
     /*------*\
       SCRAPE
     \*------*/
-    URL_PATTERN: "*://*.copart.com/lot/*",
     lotNumberFromTab: async (tab) => {
         const lotExecuting = browser.tabs.executeScript(tab.id, {
             code: `
@@ -422,3 +422,5 @@ const COPART_API = {
 //         }
 //     }
 // }
+
+SALVAGE_APIS.copart = COPART_API;
