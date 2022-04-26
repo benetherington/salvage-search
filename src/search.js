@@ -42,11 +42,14 @@ const searchArchives = async (query, notify) => {
     // Return search results, with a guaranteed rejection in case none were
     // enabled in settings.
     return Promise.any([...archivePromises, Promise.reject()]);
-};
+}
 
 const openTabAndSendMessage = async ({listingUrl, lotNumber, salvageName}) => {
-    // Open new tab to the listing page
-    const resultsTab = browser.tabs.create({url: listingUrl});
+    // Open new tab to the listing page, keeping it in the background if
+    // activating it will hide the popup (and displayed messages).
+    const newTabHidesPopup = await browserIsChrome();
+    const active = !newTabHidesPopup
+    const resultsTab = browser.tabs.create({url: searchResults.listingUrl, active})
 
     // Determine button states
     const downloadable = ["iaai", "copart"].includes(salvageName);

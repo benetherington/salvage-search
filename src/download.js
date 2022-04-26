@@ -79,10 +79,17 @@ const saveImages = (
 };
 const openWalkEditor = async (salvageName, lotNumber, walkaroundUrls) => {
     // Build an event listener in this scope
-    const updatedListener = async (tabId, changeInfo) => {
+    const listenUrl = await browser.runtime.getURL("/walkaround/composer.html");
+    const updatedListener = async (tabId, changeInfo)=>{
         // Wait for tab to finish loading
-        if (changeInfo.status !== "complete") return;
-
+        if (changeInfo.status!=="complete") return;
+        
+        // Make sure this is the right tab (Chrome doesn't include url in
+        // changeInfo after loading status)
+        const tab = await browser.tabs.get(tabId);
+        const tabUrl = tab.url;
+        if (tabUrl !== listenUrl) return;
+        
         // Send panorama data
         await browser.tabs.sendMessage(tabId, {
             salvageName,
@@ -95,20 +102,23 @@ const openWalkEditor = async (salvageName, lotNumber, walkaroundUrls) => {
     };
 
     // Start listening for changes on the tab we're about to open
-    browser.tabs.onUpdated.addListener(updatedListener, {
-        urls: [browser.runtime.getURL("/walkaround/composer.html")],
-        properties: ["status"],
-    });
-
+    browser.tabs.onUpdated.addListener(updatedListener)
+    
     // Open a panorama viewer tab
     await browser.tabs.create({url: "/walkaround/composer.html"});
 };
 const openPanoEditor = async (salvageName, lotNumber, panoUrls) => {
     // Build an event listener in this scope
-    const updatedListener = async (tabId, changeInfo) => {
+    const listenUrl = await browser.runtime.getURL("/panorama/composer.html");
+    const updatedListener = async (tabId, changeInfo)=>{
         // Wait for tab to finish loading
-        if (changeInfo.status !== "complete") return;
-
+        if (changeInfo.status!=="complete") return;
+        
+        // Make sure this is the right tab
+        const tab = await browser.tabs.get(tabId);
+        const tabUrl = tab.url;
+        if (tabUrl !== listenUrl) return;
+        
         // Send panorama data
         await browser.tabs.sendMessage(tabId, {
             salvageName,
@@ -121,11 +131,8 @@ const openPanoEditor = async (salvageName, lotNumber, panoUrls) => {
     };
 
     // Start listening for changes on the tab we're about to open
-    browser.tabs.onUpdated.addListener(updatedListener, {
-        urls: [browser.runtime.getURL("/panorama/composer.html")],
-        properties: ["status"],
-    });
-
+    browser.tabs.onUpdated.addListener(updatedListener)
+    
     // Open a panorama viewer tab
     await browser.tabs.create({url: "/panorama/composer.html"});
 };
@@ -142,7 +149,7 @@ browser.runtime.onConnect.addListener(async (connectingPort) => {
 });
 
 // Handle messages
-const download = async (message) => {
+const download = async (message)=>{
     try {
         // Find tabs on request
         if (message.findTabs) return dPort.postMessage(await getTabInfo());

@@ -49,7 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // Clipboard input
 window.addEventListener("focus", async () => {
     // TODO: to request access in Chrome, we need to load a new tab
-
     // Skip if there's already something to search for
     const searchInput = document.getElementById("search-input");
     if (searchInput.value) return;
@@ -177,7 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Handle download messages
-const onDownloadMessage = (message) => {
+const onDownloadMessage = (message)=>{
+    // Assuage polyfill implementation for empty messages
+    if (message===null) return;
+    
     // Reset the download button
     if (message.complete) document.getElementById("download-button").enable();
 

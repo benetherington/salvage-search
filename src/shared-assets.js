@@ -11,6 +11,11 @@ const DEFAULT_SETTINGS = {
 };
 // {"name": this} assigned in each API document
 const SALVAGE_APIS = {};
+const browserIsChrome = async ()=>{
+    const manifest = await browser.runtime.getManifest();
+    return manifest.hasOwnProperty("version_name");
+}
+
 
 /*---------------------*\
   IMAGE DATA CONVERTERS
