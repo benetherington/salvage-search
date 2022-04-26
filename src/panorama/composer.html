@@ -1,17 +1,15 @@
 <!DOCTYPE html>
 <html>
-
     <head>
-        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-        <meta content="utf-8" http-equiv="encoding">
-        <link rel="stylesheet" href="composer.css"/>
-        <script src="../shared-assets.js"></script>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+        <meta content="utf-8" http-equiv="encoding" />
+        <link rel="stylesheet" href="composer.css" />
+        <script src="../browser-polyfill.js"></script>
         <script src="viewer-helpers.js"></script>
         <script src="viewer.js"></script>
         <script src="composer.js"></script>
     </head>
     <body>
-
         <!-- Main viewer and buttons -->
         <div id="stage-wrapper" class="card-wrapper has-hover">
             <pano-container id="stage" class="card"></pano-container>
@@ -22,26 +20,42 @@
                 <button id="save-view"></button>
             </div>
         </div>
-        
+
         <!-- Thumbnails -->
         <div id="thumbs-wrapper" class="card-wrapper has-hover">
             <div class="hover bottom right">
                 <button id="dl-all"></button>
             </div>
             <div id="thumbs" class="card">
-                <p class="placeholder">Click the camera button to add a snapshot...</p>
+                <p class="placeholder">
+                    Click the camera button to add a snapshot...
+                </p>
             </div>
         </div>
-        
+
         <!-- Help popup -->
         <div id="help-popup" class="fade-out">
             <h3>Controls</h3>
-            <p><b>Rotate the camera:</b> <em>Click-and-drag</em>, or press the <em>arrow keys</em> to make big jumps. You can also hold <em>Shift</em> to make smaller jumps.</p>
-            <p><b>Zoom:</b> use the <em>scroll wheel</em>. You can also <em>CTRL</em> and either <em>drag up and down</em>, or use the <em>up and down arrow keys</em>. Hold <em>Shift</em> to zoom faster.</p>
-            <p><b>Hold on to an image:</b> Click the <em>camera button</em>, or press <em>Enter</em>, or <em>double click</em> on the vehicle.</p>
-            <p><b>Download held images:</b> Click the <em>download button</em>. Images will be saved to your downloads folder, inside this vehicle's folder.</p>
+            <p>
+                <b>Rotate the camera:</b> <em>Click-and-drag</em>, or press the
+                <em>arrow keys</em> to make big jumps. You can also hold
+                <em>Shift</em> to make smaller jumps.
+            </p>
+            <p>
+                <b>Zoom:</b> use the <em>scroll wheel</em>. You can also
+                <em>CTRL</em> and either <em>drag up and down</em>, or use the
+                <em>up and down arrow keys</em>. Hold <em>Shift</em> to zoom
+                faster.
+            </p>
+            <p>
+                <b>Hold on to an image:</b> Click the <em>camera button</em>, or
+                press <em>Enter</em>, or <em>double click</em> on the vehicle.
+            </p>
+            <p>
+                <b>Download held images:</b> Click the <em>download button</em>.
+                Images will be saved to your downloads folder, inside this
+                vehicle's folder.
+            </p>
         </div>
-
     </body>
 </html>
-

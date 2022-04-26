@@ -13,78 +13,81 @@ WALKAROUND_VIEWER_STYLE = `
 img {
     width: 100%;
     object-fit: cover;
-}`
-
+}`;
 
 class WalkaroundViewer extends HTMLElement {
     constructor() {
-        super()
-        
+        super();
+
         this.DRAG_DISTANCE = 10;
-        
+
         this.angles = [];
         this.currentIdx = 0;
         this.saved = [];
         this.cursorPrev = null;
     }
     connectedCallback() {
-        if (!this.isConnected) {return}
-        
+        if (!this.isConnected) {
+            return;
+        }
+
         // attach shadow, add style
-        this.attachShadow({mode:"open"})
+        this.attachShadow({mode: "open"});
         const style = document.createElement("style");
         style.innerText = WALKAROUND_VIEWER_STYLE;
-        this.shadowRoot.append(style)
-        
+        this.shadowRoot.append(style);
+
         // add image element
         this.imageEl = document.createElement("img");
         this.imageEl.draggable = false;
-        this.shadowRoot.append(this.imageEl)
+        this.shadowRoot.append(this.imageEl);
         // add pointer events
-        this.addEventListener("mousemove", this.onMouseMove.bind(this))
-        this.addEventListener("wheel", this.onWheel.bind(this))
+        this.addEventListener("mousemove", this.onMouseMove.bind(this));
+        this.addEventListener("wheel", this.onWheel.bind(this));
         // add keyboard events
-        document.addEventListener("keydown", this.onKeyDown.bind(this))
+        document.addEventListener("keydown", this.onKeyDown.bind(this));
     }
     setAngles(urls) {
         this.angles = urls;
-        this.render()
+        this.render();
     }
     getThumbnail() {
         // Create a container
         const thumbContainer = document.createElement("div");
-        thumbContainer.classList.add("thumbnail")
-        thumbContainer.classList.add("has-hover")
-        thumbContainer.setAttribute("idx", this.currentIdx)
-        
+        thumbContainer.classList.add("thumbnail");
+        thumbContainer.classList.add("has-hover");
+        thumbContainer.setAttribute("idx", this.currentIdx);
+
         // Create hover toolbar
         const divHover = document.createElement("div");
-        divHover.classList.add("hover-bar")
-        divHover.classList.add("card")
-        thumbContainer.append(divHover)
-        
+        divHover.classList.add("hover-bar");
+        divHover.classList.add("card");
+        thumbContainer.append(divHover);
+
         // Add delete button to toolbar
         let spanDelete = document.createElement("span");
-        spanDelete.classList.add("delete")
-        spanDelete.addEventListener("click", (e)=>{thumbContainer.remove()})
-        divHover.append(spanDelete)
-        
+        spanDelete.classList.add("delete");
+        spanDelete.addEventListener("click", (e) => {
+            thumbContainer.remove();
+        });
+        divHover.append(spanDelete);
+
         // add the current image
         let img = this.imageEl.cloneNode();
-        img.classList.add("card")
-        thumbContainer.append(img)
+        img.classList.add("card");
+        thumbContainer.append(img);
         return thumbContainer;
     }
     render() {
         // Check currentIdx and wrap around edges. This will break if
         // idx is +/- length*2, but whatever.
-        if (this.currentIdx>=this.angles.length) {
+        if (this.currentIdx >= this.angles.length) {
             // wrap around to the beginning
-            this.currentIdx = this.currentIdx-this.angles.length;
+            this.currentIdx = this.currentIdx - this.angles.length;
         }
-        if (this.currentIdx<0) {
+        if (this.currentIdx < 0) {
             // wrap around to the end
-            this.currentIdx = this.angles.length+this.currentIdx;
+            this.currentIdx = this.angles.length + this.currentIdx;
         }
         this.imageEl.src = this.angles[this.currentIdx];
     }
@@ -94,7 +97,7 @@ class WalkaroundViewer extends HTMLElement {
             this.cursorPrev = e.x;
             return;
         }
-        let dragDelta     =  Math.abs( e.x - this.cursorPrev);
+        let dragDelta = Math.abs(e.x - this.cursorPrev);
         let dragDirection = -Math.sign(e.x - this.cursorPrev);
         if (Math.abs(dragDelta) < this.DRAG_DISTANCE) {
             // drag is not long enough to pop in the next image
@@ -105,17 +108,17 @@ class WalkaroundViewer extends HTMLElement {
         if (e.shiftKey) {
             shiftMultiplier = 5;
         }
-        this.currentIdx += dragDirection*shiftMultiplier;
+        this.currentIdx += dragDirection * shiftMultiplier;
         this.cursorPrev = e.x;
-        this.render()
+        this.render();
     }
     onWheel(e) {
         let shiftMultiplier = 1;
         if (e.shiftKey) {
             shiftMultiplier = 5;
         }
-        this.currentIdx += Math.sign(e.wheelDeltaY)*shiftMultiplier;
-        this.render()
+        this.currentIdx += Math.sign(e.wheelDeltaY) * shiftMultiplier;
+        this.render();
     }
     onKeyDown(e) {
         let shiftMultiplier = 1;
@@ -124,15 +127,15 @@ class WalkaroundViewer extends HTMLElement {
         }
         switch (e.key) {
             case "ArrowLeft":
-                this.currentIdx += -1*shiftMultiplier;
-                this.render()
+                this.currentIdx += -1 * shiftMultiplier;
+                this.render();
                 break;
             case "ArrowRight":
-                this.currentIdx += +1*shiftMultiplier;
-                this.render()
+                this.currentIdx += +1 * shiftMultiplier;
+                this.render();
                 break;
         }
     }
 }
 
-window.customElements.define("walkaround-viewer", WalkaroundViewer)
+window.customElements.define("walkaround-viewer", WalkaroundViewer);

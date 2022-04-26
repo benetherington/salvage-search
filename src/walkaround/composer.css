@@ -1,6 +1,6 @@
 /* FONTS */
 body * {
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
 }
 em {
     color: #194a5e;
@@ -9,15 +9,13 @@ b {
     font-weight: bold;
 }
 
-
-
 /*----------------*\
   TOP-LEVEL LAYOUT
 \*----------------*/
 body {
     display: flex;
     flex-direction: row;
-    
+
     height: calc(100vh - 16px);
     width: calc(100vw - 16px);
     overflow: hidden;
@@ -29,7 +27,6 @@ body {
     }
 }
 
-
 /*----------*\
   CARD STYLE
 \*----------*/
@@ -39,7 +36,7 @@ body {
     margin: 5px;
     padding: 10px;
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 .card-wrapper {
     /* The two big cards have invisible wrappers around them. The margins need
@@ -50,8 +47,6 @@ body {
     margin: 0;
 }
 
-
-
 /*-----*\
   STAGE
 \*-----*/
@@ -59,7 +54,7 @@ body {
     /* flex-axis */
     flex-basis: 200px;
     height: fit-content;
-    
+
     /* cross-axis */
     width: 100%;
 }
@@ -73,13 +68,12 @@ body {
     /* TODO: add placeholder image */
     /* background-image: url("panorama/images/pano_r.jpg");
     background-size: cover; */
-    
+
     /* Same thing as @thumbs... using a percentage does not work. */
     /* Subtract margin used by body and #stage-container */
     max-height: calc(100vh - 16px - 1vh);
     padding: 0; /* override .card */
 }
-
 
 /*--------------*\
   THUMBNAIL TRAY
@@ -88,7 +82,7 @@ body {
     /* flex-axis */
     flex-grow: 0;
     min-height: 0;
-    
+
     /* cross-axis */
     width: 100%;
 }
@@ -97,7 +91,7 @@ body {
         /* flex-axis */
         flex-grow: 1;
         flex-basis: 200px;
-        
+
         /* cross-axis */
         height: fit-content;
         max-height: calc(100% - 8px);
@@ -109,11 +103,11 @@ body {
     /* In order to scroll, this needs to constrain its size, */
     /* including .card padding. */
     max-height: calc(100% - 10px);
-    
+
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    
+
     --scroll-height: 0;
     --scroll-top: 0;
 }
@@ -126,19 +120,19 @@ body {
         /* Using a percentage fails, inside or outside calc(). CSS bug in
         Firefox? Set height based on vh, subtract #thumbs-wrapper{padding} and
         body{wrapping} */
-        max-height: calc(100vh - 5px * 2 - 8px *2);
+        max-height: calc(100vh - 5px * 2 - 8px * 2);
     }
 }
 #thumbs::after {
     background-color: rgba(0, 0, 0, 0.37);
     width: 4px;
     border-radius: 2px;
-    
+
     position: absolute;
     content: "";
     right: 7px;
     height: var(--scroll-height);
-    top: var(--scroll-top)
+    top: var(--scroll-top);
 }
 #thumbs > .placeholder {
     /* appearance */
@@ -157,15 +151,13 @@ body {
     display: none;
 }
 
-
-
 /*----------*\
   THUMBNAILS
 \*----------*/
 .thumbnail {
     flex-basis: calc(20% - 10px * 4 / 5);
     flex-shrink: 1;
-    
+
     aspect-ratio: 1/1;
 }
 @media screen and (min-aspect-ratio: 1000/978) {
@@ -183,8 +175,6 @@ body {
     padding: 0;
 }
 
-
-
 /*--------------------------*\
   THUMBNAIL HOVERING TOOLBAR
 \*--------------------------*/
@@ -197,8 +187,8 @@ body {
     overflow: hidden;
     opacity: 1;
     visibility: visible;
-    transition: visibility .1s, opacity .1s;
-    
+    transition: visibility 0.1s, opacity 0.1s;
+
     position: absolute;
     display: flex;
     height: 40px;
@@ -209,8 +199,8 @@ body {
     margin: 0;
 }
 .hover-bar span {
-    transition: background-color .1s;
-    
+    transition: background-color 0.1s;
+
     height: 100%;
     aspect-ratio: 1/1;
     background-size: 70%;
@@ -218,16 +208,22 @@ body {
     background-repeat: no-repeat;
     box-sizing: border-box;
 }
-.hover-bar span:hover {background-color: lightgrey;}
+.hover-bar span:hover {
+    background-color: lightgrey;
+}
 .hover-bar span:not(:last-child) {
     /* add a little border between items */
-    box-shadow: 2px 0 2px -1px rgba(0,0,0,0.24);
+    box-shadow: 2px 0 2px -1px rgba(0, 0, 0, 0.24);
 }
-.hover-bar .edit          {background-image: url("/icons/pencil-square.svg");}
-.hover-bar .delete        {background-image: url("/icons/x-circle-fill.svg");}
-.hover-bar .delete:hover  {background-color: lightpink;}
-
-
+.hover-bar .edit {
+    background-image: url("/icons/pencil-square.svg");
+}
+.hover-bar .delete {
+    background-image: url("/icons/x-circle-fill.svg");
+}
+.hover-bar .delete:hover {
+    background-color: lightpink;
+}
 
 /*-------------*\
   HOVER BUTTONS
@@ -239,16 +235,24 @@ body {
     position: absolute;
     z-index: 1;
 }
-.hover.left   {left:   0px;}
-.hover.right  {right:  0px;}
-.hover.top    {top:    0px;}
-.hover.bottom {bottom: 0px;}
+.hover.left {
+    left: 0px;
+}
+.hover.right {
+    right: 0px;
+}
+.hover.top {
+    top: 0px;
+}
+.hover.bottom {
+    bottom: 0px;
+}
 .hover > button {
     height: 60px;
-    background-color: #32728C;
+    background-color: #32728c;
     cursor: pointer;
     border: none; /* override user-agent */
-    
+
     aspect-ratio: 1/1;
     border-radius: 100%;
     background-size: 69%;
@@ -257,8 +261,8 @@ body {
 }
 .hover > button::after {
     border-radius: 100%;
-    box-shadow: 0 0 10px rgba(1,1,1,0.3);
-    
+    box-shadow: 0 0 10px rgba(1, 1, 1, 0.3);
+
     position: absolute;
     content: "";
     height: 100%;
@@ -276,27 +280,24 @@ body {
     background-image: url("/icons/info-lg.svg");
 }
 
-
-
 /*----------*\
   HELP POPUP
 \*----------*/
 #help-popup {
     background-color: white;
-    
+
     /* Look like a card, but add a fluffy cloud to help stand out */
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12),
-                0 1px 2px rgba(0,0,0,0.24),
-                0 0 30px 10px rgba(47, 47, 47, 0.3);
-    
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24),
+        0 0 30px 10px rgba(47, 47, 47, 0.3);
+
     /* Position in the middle of the window */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 5;
-    
+
     /* Allow appearance animation */
     opacity: 1;
     visibility: visible;
