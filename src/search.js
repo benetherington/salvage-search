@@ -44,28 +44,35 @@ const searchArchives = async (query, notify) => {
     return Promise.any([...archivePromises, Promise.reject()]);
 };
 
-const openTabAndSendMessage = async (searchResults) => {
+const openTabAndSendMessage = async ({listingUrl, lotNumber, salvageName}) => {
     // Open new tab to the listing page
-    const resultsTab = browser.tabs.create({url: searchResults.listingUrl});
+    const resultsTab = browser.tabs.create({url: listingUrl});
 
-    const downloadable = ["iaai", "copart"].includes(searchResults.salvageName);
+    // Determine button states
+    const downloadable = ["iaai", "copart"].includes(salvageName);
     const complete = true;
-    // Send success message, updating button states
+
+    // Send success message
     sPort.postMessage({
         downloadable,
         complete,
-        ...searchResults,
+        listingUrl,
+        lotNumber,
+        salvageName,
     });
 
-    // Fetch data from tab if this was an archive
-    if (!searchResults.lotNumber) {
+    // If we didn't get the lot number, we need to send a follow-up message
+    if (!lotNumber && downloadable) {
         // Find the correct API
-        const salvage = SALVAGE_APIS[searchResults.salvageName];
+        const salvage = SALVAGE_APIS[salvageName];
 
         // Fetch info
         const tabInfo = await salvage.lotNumberFromTab(await resultsTab);
-
         sPort.postMessage({...tabInfo});
+    } else if (!lotNumber) {
+        sendNotification(
+            "This salvage yard is not supported for image downloads.",
+        );
     }
 };
 
