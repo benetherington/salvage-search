@@ -176,10 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Handle download messages
-const onDownloadMessage = (message)=>{
+const onDownloadMessage = (message) => {
     // Assuage polyfill implementation for empty messages
-    if (message===null) return;
-    
+    if (message === null) return;
+
     // Reset the download button
     if (message.complete) document.getElementById("download-button").enable();
 

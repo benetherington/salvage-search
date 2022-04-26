@@ -103,7 +103,7 @@ window.addEventListener("load", () => {
     //     "/walkaround/images/"+idx+".jpg"
     // )
     // messageHandler({walkaroundUrls})
-    
+
     // BUTTONS
     document.querySelector("#save-view").addEventListener("click", saveThumb);
     document.querySelector("#dl-all").addEventListener("click", downloadImages);

@@ -25,7 +25,10 @@ const BIDFAX_API = {
                     // yet been successful
                     const newTabHidesPopup = await browserIsChrome();
                     const active = !newTabHidesPopup;
-                    browser.tabs.create({url:"https://en.bidfax.info", active})
+                    browser.tabs.create({
+                        url: "https://en.bidfax.info",
+                        active,
+                    });
                 }
                 reject();
             }

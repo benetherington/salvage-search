@@ -48,8 +48,7 @@ const openTabAndSendMessage = async ({listingUrl, lotNumber, salvageName}) => {
     // Open new tab to the listing page, keeping it in the background if
     // activating it will hide the popup (and displayed messages).
     const newTabHidesPopup = await browserIsChrome();
-    const active = !newTabHidesPopup
-    const resultsTab = browser.tabs.create({url: searchResults.listingUrl, active})
+    const active = !newTabHidesPopup;
 
     // Determine button states
     const downloadable = ["iaai", "copart"].includes(salvageName);
