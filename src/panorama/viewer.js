@@ -37,30 +37,31 @@ class PanoContainer extends HTMLElement {
     }
     async getThumbnail() {
         // Create a container
-        let thumbContainer = document.createElement("thumbContainer");
-        thumbContainer.classList.add("thumb-container");
-
+        let thumbContainer = document.createElement("div");
+        thumbContainer.classList.add("thumbnail")
+        thumbContainer.classList.add("has-hover")
+        
         // Create hover toolbar
-        let divHover = document.createElement("thumbContainer");
-        divHover.classList.add("hover-bar");
-        thumbContainer.append(divHover);
-
+        let divHover = document.createElement("div");
+        divHover.classList.add("hover-bar")
+        divHover.classList.add("card")
+        thumbContainer.append(divHover)
+        
         // Add edit button to toolbar
         let spanEdit = document.createElement("span");
-        spanEdit.classList.add("hover-icon");
-        spanEdit.classList.add("edit-icon");
-        spanEdit.addEventListener("click", this.restoreFrom.bind(this));
-        divHover.append(spanEdit);
-
+        spanEdit.classList.add("edit")
+        spanEdit.addEventListener("click", this.restoreFrom.bind(this))
+        divHover.append(spanEdit)
+        
         // Add delete button to toolbar
         let spanDelete = document.createElement("span");
-        spanDelete.classList.add("hover-icon");
-        spanDelete.classList.add("delete-icon");
-        spanDelete.addEventListener("click", (e) => thumbContainer.remove());
-        divHover.append(spanDelete);
-
+        spanDelete.classList.add("delete")
+        spanDelete.addEventListener("click", e=>thumbContainer.remove())
+        divHover.append(spanDelete)
+        
         // Create a placeholder image for the thumbnail
         let img = document.createElement("img");
+        img.classList.add("card")
         img.src = "/icons/hourglass-split.svg";
         thumbContainer.append(img);
 
@@ -94,7 +95,7 @@ class PanoContainer extends HTMLElement {
         this.panoViewer.setAttribute("fov", fov);
 
         // Delete thumbnail
-        e.target.closest(".thumb-container").remove();
+        e.target.closest(".thumbnail").remove()
     }
 }
 customElements.define("pano-container", PanoContainer);

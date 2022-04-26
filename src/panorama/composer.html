@@ -11,18 +11,24 @@
     </head>
     <body>
         <!-- Main viewer and buttons -->
-        <div id="stage-container" class="ungrouped has-hover">
-            <pano-container id="stage"></pano-container>
-            <button id="help" class="hover bottom left"></button>
-            <button id="save-view" class="hover bottom right"></button>
+        <div id="stage-wrapper" class="card-wrapper has-hover">
+            <pano-container id="stage" class="card"></pano-container>
+            <div class="hover bottom left">
+                <button id="help"></button>
+            </div>
+            <div class="hover bottom right">
+                <button id="save-view"></button>
+            </div>
         </div>
 
         <!-- Thumbnails -->
-        <div id="thumbs" class="grouped has-hover">
-            <button id="dl-all" class="hover bottom right"></button>
-            <p class="placeholder">
-                Click the camera button to add a snapshot...
-            </p>
+        <div id="thumbs-wrapper" class="card-wrapper has-hover">
+            <div class="hover bottom right">
+                <button id="dl-all"></button>
+            </div>
+            <div id="thumbs" class="card">
+                <p class="placeholder">Click the camera button to add a snapshot...</p>
+            </div>
         </div>
 
         <!-- Help popup -->

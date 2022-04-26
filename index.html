@@ -1,87 +1,245 @@
 <!DOCTYPE html>
 
 <html>
-  <head>
-    <meta charset="utf-8">
-  </head>
+    <head>
+        <meta charset="utf-8" />
+    </head>
 
-  <body>
-    <img src="src/icons/SS-100.bmp">
-    <h1>Salvage Search v2</h1>
+    <body>
+        <img src="src/icons/SS-100.bmp" />
+        <h1>Salvage Search v2</h1>
 
-    <p>Salvage Search is a browser plugin that makes it easy to search inventory websites for vehicles and download high-def images. Select your browser below to install it.</p>
+        <p>
+            Salvage Search is a browser plugin that makes it easy to search
+            inventory websites for vehicles and download high-def images. Select
+            your browser below to install it.
+        </p>
 
-    <strong>FIREFOX</strong>
-    <ul>
-      <li>
-        <a href="https://benetherington.com/salvage-search/releases/salvage_search-2.3.3-fx.xpi">Firefox v2.3.3</a>
+        <strong>FIREFOX</strong>
         <ul>
-          <li>Includes IAAI search hotfix.</li>
-          <li>Adds panorama/walkaround raw image downloads to IAAI.</li>
-          <li>2.3.3 should be published as an installable version soon, and is the last expected update until version 3.</li>
+            <li>
+                <a
+                    href="https://benetherington.com/salvage-search/releases/salvage_search-3.0.3-fx.xpi">
+                    Firefox v3.0.3
+                </a>
+                <ul>
+                    <li>
+                        A major update! Most of the work is in reorganization
+                        and stability improvements.
+                    </li>
+                    <li>
+                        Adds exterior walkaround 360 and interior panorama 360
+                        image captures. These are the two features I'm most
+                        excited about!
+                    </li>
+                    <ul>
+                        <li>
+                            Quickly select the walkaround images that you want
+                            with a shopping cart-like interface.
+                        </li>
+                        <li>
+                            View interior panoramas and get high resolution
+                            captures. This involves some annoying 3D graphics
+                            work: there are improvements to come, but it's
+                            pretty functional as-is
+                        </li>
+                    </ul>
+                    <li>Adds panorama/walkaround downloads to Copart.</li>
+                    <li>
+                        Fixes IAAI downloads. It looks like they no longer serve
+                        VIN search results, and they did a minor change to their
+                        image information variable names.
+                    </li>
+                    <li>
+                        Adds a Copart/IAAI selector to the popup. If one is
+                        selected when you click SEARCH, only that yard will be
+                        searched. Importantly, this also allows you to specify a
+                        yard to download images from. Previously, if Copart and
+                        IAAI shared a lot number, the Copart images would be
+                        downloaded, and the IAAI images ignored.
+                    </li>
+                </ul>
+            </li>
         </ul>
-      </li>
-      <li>
-        <a href="https://benetherington.com/salvage-search/releases/salvage_search-3.0.1-fx.zip">Firefox v3.0.1</a> <i>(2/28/22) For advanced users. <a href="https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/">How to install.</a></i>
+        <strong>CHROME</strong>
         <ul>
-          <li>A major update! Most of the work is in reorganization and stability improvements.</li>
-          <li>
-            Adds exterior walkaround 360 and interior panorama 360 image captures. These are the two features I'm most excited about!
-            <li>Quickly select the walkaround images that you want with a shopping cart-like interface.</li>
-            <li>View interior panoramas and get high resolution captures. This involves some annoying 3D graphics work: there are improvements to come, but it's pretty functional as-is</li>
-          </li>
-          <li>Adds panorama/walkaround downloads to Copart.</li>
-          <li>Fixes IAAI downloads. It looks like they no longer serve VIN search results, and they did a minor change to their image information variable names.</li>
-          <li>Adds a Copart/IAAI selector to the popup. If one is selected when you click SEARCH, only that yard will be searched. Importantly, this also allows you to specify a yard to download images from. Previously, if Copart and IAAI shared a lot number, the Copart images would be downloaded, and the IAAI images ignored.</li>
+            <li>
+                <a
+                    href="https://chrome.google.com/webstore/detail/salvage-search/okbjgjdpehblohdlmocliddhkhpkikoh">
+                    Chrome v3.0.3
+                </a>
+            </li>
+            <ul>
+                <li>
+                    See release notes above. Chrome and Firefox are currently on
+                    the same version.
+                </li>
+            </ul>
         </ul>
-      </li>
-    </ul>
-    <strong>CHROME</strong>
-    <ul>
-      <li>
-        <a href="https://chrome.google.com/webstore/detail/salvage-search/okbjgjdpehblohdlmocliddhkhpkikoh?hl=en&authuser=0">Chrome, latest stable version</a>
-      </li>
-      <ul>
-        <li>
-          Chrome will not be updated until version 3 is complete. The Chrome extension is several minor versions behind the Firefox extension.
-        </li>
-      </ul>
-    </ul>
-    <br><br>
+        <br /><br />
 
+        <h2>HOW TO USE</h2>
+        <p>
+            This plugin adds an extension to your toolbar, and should be fairly
+            self-explanatory. If you don't see the icon in your toolbar after
+            installing: <b>In Chrome</b>: click the puzzle piece, then select
+            Salvage Search. You can also click the pushpin to pin the icon to
+            your toolbar. <b>In Firefox</b>: right-click on the toolbar, select
+            "Customize Toolbar...", then drag the Salvage Search icon into the
+            toolbar.
+        </p>
+        <img src="images/toolbar-popup.jpg" />
+        <p>
+            Type a VIN in the text box to enable the <b>Search button</b>.
+            Notifications will appear as salvage yard inventories are searched.
+            If a match is found, it will open in a new tab. If a vehicle cannot
+            be found on those sites, the extension will also search archive
+            sites.
+        </p>
+        <p>
+            IAAI has recently disabled searching by VIN. This extension will
+            attempt to do a VIN search, but if IAAI returns a general terms
+            search instead, no results will be selected. As of v3.0, there are
+            two archive sites that have fairly complete coverage of IAAI's
+            current stock. In v3.1, a third archive site will be added. In the
+            future, it may be neccessary for this extension to search IAAI by
+            zip code, year, make, and model and present vehicles with a partial
+            VIN match, but archive sites seem to be a more effective approach.
+        </p>
+        <p>
+            The second button, the <b>Download Images button</b>, is enabled for
+            vehicles at Copart and IAAI. When you click Download, the extension
+            will fetch and download images for the vehicle. If the salvage yard
+            has high resolution images (normally displayed when you click the HD
+            button on their site), those will be downloaded instead of the
+            standard resolution. If the salvage yard has exterior 360 or
+            interior 360 images, new tabs will open to let you pick the views
+            that you want to download.
+        </p>
+        <p>
+            There are two ways to get the <b>Download Images button</b> to
+            enable. You can type in a lot number and set the slider to Copart or
+            IAAI. You can also click the Salvage Search button while you have a
+            vehicle listing page open, and the fields will pre-fill for you.
+            Image downloads are available for (as far as I can tell) every
+            single vehicle at Copart and IAAI, even if they've been sold and are
+            no longer listed on their websites.
+        </p>
+        <p>
+            Click the <b>GEAR BUTTON</b> to edit your settings, and enable or
+            disable websites to search.
+        </p>
+        <br />
+        <p>
+            This extension has become something I'm proud of! I've worked out a
+            lot of bugs, but everyone uses their computer differently, and
+            something might break. Salvage yard websites aren't designed to make
+            this kind of thing easy, and they might change something without
+            warning. If something doesn't work, or doesn't work the way you'd
+            like, get in touch. Be sure to send me as much info as you can, and
+            I'll see what I can do.
+        </p>
+        <br /><br />
 
-    <h2>HOW TO USE</h2>
-    <p>This plugin adds an extension to your toolbar, and should be fairly self-explanatory:</p>
-    <img src="images/toolbar-popup.jpg">
-    <p>Type a VIN in the text box to enable the <b>SEARCH button</b>. Notifications will appear as Copart, IAAI, and Row52 are searched. If a match is found, it will open in a new tab. If a vehicle cannot be found on those sites, the extension will also search archive sites like Poctra.com.</p>
-    <p>The second button, the <b>DOWNLOAD IMAGES button</b>, only enables on Copart, IAAI, and Poctra listing pages. Even if a vehicle is no longer listed on Copart or IAAI's website, it's often possible to download images if you happen to know the stock number. If you click "download images" while a Poctra listing is open, the extension will try and access images from the original salvage yard. That's right! No more third-party watermarks.
-    <p>Copart loads very quickly, but IAAI will take a little longer, and a progress bar will be displayed. If you click away from the popup while downloading IAAI images, the download may be canceled.</p>
-    <p>You can also click the <b>GEAR BUTTON</b> to edit your settings. Right now, you can turn salvage yards on or off.</p>
-    <br>
-    <p>This extension has become something I'm proud of! I've worked out a lot of bugs, but everyone uses their computer differently, and something might break. Salvage yard websites aren't designed to make this kind of thing easy, and they might change something without warning. If something doesn't work, or doesn't work the way you'd like, get in touch. Be sure to send me as much info as you can, and I'll see what I can do.</p>
-    <br><br>
-    
-    <h2>REQUIRED PERMISSIONS</h2>
-    <p>When you install the extension, it will ask for permissions. Here's what it's doing with them:</p>
-    <ul>
-      <li>Access data on copart.com: Allows the extension to see which Copart listing you have open to know what images to fetch, and to open image tabs directly behind it.</li>
-      <li>Access data on iaai.com: Allows the extension to see which IAAI listing you have open, to grab image IDs from the listing, and then to download images after processing.</li>
-      <li>Access data on avis.aai.com: Allows the extension to get high resolution images, which are accessed from a different domain.</li>
-      <li>Access data in two other domains: Allows the extension to search Row52.com and Poctra.com. Also allows us to search Copart and IAAI based on a Poctra listing.</li>
-      <li>Get data from the clipboard: Allows the extension to pre-fill the VIN search field if you've already copied a VIN.</li>
-      <li>Download files and read and modify the browser's download history: Allows the extension to send images to your downloads folder. We re-name images to eliminate a potential source of PII, and we don't require you to go through a dozen save-as dialogues. No downloads history is accessed, and no monitoring is performed.</li>
-      <li>Access browser tabs: Allows the extension to pull lot/stock/image ID numbers from the currently active tab. In the future, there might be an option to download images from all open tabs. No data is accessed until you click one of the buttons in the pop-up.</li>
-    </ul>
+        <h2>REQUIRED PERMISSIONS</h2>
+        <p>
+            When you install the extension, it will ask for permissions. Here's
+            what it's doing with them:
+        </p>
+        <ul>
+            <li>
+                <b>
+                    (Chrome)
+                    <i>
+                        Read and change your data on a number of websites (show
+                        details) </i
+                    >:
+                </b>
+                See below.
+            </li>
+            <li>
+                <b>(Firefox) <i>Access data on copart.com and iaai.com</i>:</b>
+                Allows search requests to these websites. Allows images to be
+                downloaded from these websites. Also allows scripts to be run on
+                those pages to pre-fill the lot number box and the salvage yard
+                slider.
+            </li>
+            <li>
+                <b>
+                    (Firefox)
+                    <i>Access data on avis.aai.com and spincar.com</i>:
+                </b>
+                Allows high resolution images and 360 image downloads from IAAI,
+                which are accessed from a different domain than their inventory
+                site.
+            </li>
+            <li>
+                <b>
+                    (Firefox)
+                    <i>
+                        Access data on row52.com, poctra.com, and en.bidfax.info </i
+                    >:
+                </b>
+                Allows search requests to these websites. Also allows scripts to
+                be run on those pages to pre-fill the lot number box and the
+                salvage yard slider.
+            </li>
+            <li>
+                <b>
+                    (Firefox) <i>Get data from the clipboard</i> (Chrome)
+                    <i>Read data you copy and paste</i>:
+                </b>
+                Allows the extension to pre-fill the VIN search field if you've
+                already copied a VIN or lot number. This currenlty only works on
+                Firefox.
+            </li>
+            <li>
+                <b>
+                    (Firefox)
+                    <i>
+                        Download files and read and modify the browser's
+                        download history
+                    </i>
+                    (Chrome)
+                    <i> Manage your downloads </i>:
+                </b>
+                Allows the extension to send images to your downloads folder. We
+                re-name images to eliminate a potential source of PII, and we
+                don't require you to go through a dozen save-as dialogues. Your
+                download history is not accessed or changed.
+            </li>
+            <li>
+                <b>
+                    (Firefox)
+                    <i> Access browser tabs </i>
+                    (Chrome)
+                    <i> Read your browsing history </i>:
+                </b>
+                Allows the extension to pre-fill the lot number box and the
+                salvage yard slider from open tabs. This only happens on the
+                websites above.
+            </li>
+        </ul>
 
-    <h2>PLANNED FEATURES</h2>
-    <ul>
-      <li>Download Copart and IAAI's panoramic interior photos and exterior walkarounds</li>
-      <li>Detect CAPTCHA requirements. Sometimes Copart requires a CAPTCHA to do a search, but currently we don't detect when that happens, leading to false negatives.</li>
-      <li>Speed up IAAI image processing time. <i>This is currently in the works for v2.4</i></li>
-      <li>Add extra salvage archive sites.</li>
-    </ul>
-    <br><br><br><br><hr>
-    <p><a href="https://www.github.com/benetherington/salvage-search">Source code and licensing</a></p>
-  </body>
-
+        <h2>PLANNED FEATURES</h2>
+        <ul>
+            <li>
+                <s>
+                    Detect CAPTCHA requirements. Sometimes Copart requires a
+                    CAPTCHA to do a search, but currently we don't detect when
+                    that happens, leading to false negatives.
+                </s>
+                This should be taken care of! Please let me know if you
+                encounter issues.
+            </li>
+            <li>Add extra salvage archive sites.</li>
+        </ul>
+        <br /><br /><br /><br />
+        <hr />
+        <p>
+            <a href="https://www.github.com/benetherington/salvage-search"
+                >Source code and licensing</a
+            >
+        </p>
+    </body>
 </html>

@@ -52,21 +52,29 @@ class WalkaroundViewer extends HTMLElement {
         this.render();
     }
     getThumbnail() {
-        // create a container
-        let div = document.createElement("div");
-        div.classList.add("img-container");
-        div.setAttribute("idx", this.currentIdx);
-        // create a delete hover-icon
-        let span = document.createElement("span");
-        span.classList.add("delete-icon");
-        span.addEventListener("click", (e) => {
-            div.remove();
-        });
-        div.append(span);
+        // Create a container
+        const thumbContainer = document.createElement("div");
+        thumbContainer.classList.add("thumbnail")
+        thumbContainer.classList.add("has-hover")
+        thumbContainer.setAttribute("idx", this.currentIdx)
+        
+        // Create hover toolbar
+        const divHover = document.createElement("div");
+        divHover.classList.add("hover-bar")
+        divHover.classList.add("card")
+        thumbContainer.append(divHover)
+        
+        // Add delete button to toolbar
+        let spanDelete = document.createElement("span");
+        spanDelete.classList.add("delete")
+        spanDelete.addEventListener("click", (e)=>{thumbContainer.remove()})
+        divHover.append(spanDelete)
+        
         // add the current image
         let img = this.imageEl.cloneNode();
-        div.append(img);
-        return div;
+        img.classList.add("card")
+        thumbContainer.append(img)
+        return thumbContainer;
     }
     render() {
         // Check currentIdx and wrap around edges. This will break if

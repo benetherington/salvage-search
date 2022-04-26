@@ -1,13 +1,17 @@
-/*---------------------*\
-  THUMBNAIL EDIT/DELETE
-\*---------------------*/
+/*-----------------------*\
+  THUMBNAIL SAVE/DOWNLOAD
+\*-----------------------*/
 async function saveThumb() {
-    // get thumbnail
+    // Get thumbnail
     let thumbnail = await document.querySelector("#stage").getThumbnail();
-    // add thumbnail to tray
-    document.querySelector("#thumbs").append(thumbnail);
+    
+    // Listen for thumbnail removal and update scrollbar
+    thumbnail.querySelector(".delete").addEventListener("click", moveThumbsScrollbar)
+    
+    // Add thumbnail to tray
+    document.querySelector("#thumbs").append(thumbnail)
+    moveThumbsScrollbar()
 }
-
 function downloadImages() {
     // Name folder
     let folder;
@@ -24,6 +28,35 @@ function downloadImages() {
         });
     });
 }
+
+/*-------------------*\
+  THUMBNAIL SCROLLBAR
+\*-------------------*/
+const moveThumbsScrollbar = ()=>{
+    const thumbs = document.getElementById("thumbs");
+    
+    // Find out how far down we've scrolled
+    const scrollMax = thumbs.scrollHeight - thumbs.clientHeight;
+    const barPosition = thumbs.scrollTop / scrollMax;
+    
+    // Stop now if there's no need to scroll
+    if (scrollMax<=0) return thumbs.style.setProperty("--scroll-height", "0");
+    
+    // Figure out how tall the scrollbar should be
+    const barHeight = thumbs.clientHeight / thumbs.scrollHeight;
+    const barHeightPx = thumbs.clientHeight * barHeight;
+    
+    // Figure out how much whitespace there is, and how much should be above the
+    // scrollbar
+    const whitespace = thumbs.clientHeight - barHeightPx;
+    const barTop = whitespace * barPosition;
+    
+    // Set properties, including margin and padding applied to #thumbs
+    const thumbsContentTop = 15;
+    thumbs.style.setProperty("--scroll-height", barHeightPx-thumbsContentTop+"px")
+    thumbs.style.setProperty("--scroll-top", barTop+thumbsContentTop+"px")
+}
+
 
 /*-----------*\
   HELP BUTTON
@@ -86,10 +119,14 @@ window.addEventListener("load", () => {
     document.getElementById("help").addEventListener("click", toggleHelpPopup);
 
     // THUMBNAIL CREATION
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") saveThumb();
-    });
-    document.getElementById("stage").addEventListener("click", (e) => {
-        if (e.detail === 2) saveThumb();
-    });
-});
+    document.addEventListener("keydown", (e)=>{
+        if (e.key==="Enter") saveThumb();
+    })
+    document.getElementById("stage").addEventListener("click", (e)=>{
+        if (e.detail===2) saveThumb();
+    })
+    
+    // THUMBS SCROLLING
+    document.getElementById("thumbs").addEventListener("scroll", moveThumbsScrollbar)
+    window.addEventListener("resize", moveThumbsScrollbar)
+})

@@ -14,6 +14,13 @@ const notifyAtHalfway = () => {
     };
 };
 
+const throwCaptchaError = (logMessage) => {
+    console.log("Copart wants a CAPTCHA check")
+    if (logMessage) {console.log(logMessage)}
+    browser.tabs.create({url:"https://www.copart.com"})
+    throw "Please complete the CAPTCHA and try again."
+}
+
 const COPART_API = {
     NAME: "copart",
     URL_PATTERN: "*://*.copart.com/lot/*",
@@ -59,10 +66,11 @@ const COPART_API = {
             throw `something went wrong on their end: ${response.status} error.`;
 
         // Check response content
-        let jsn = await response.json();
-        if (!jsn.data.results) throw "something went wrong on their end...";
-        if (!jsn.data.results.content)
-            throw "something went wrong on their end...";
+        let jsn;
+        try {jsn = await response.json();}
+        catch (error) {throwCaptchaError(response)};
+        if (!jsn.data.results               ) throw "something went wrong on their end...";
+        if (!jsn.data.results.content       ) throw "something went wrong on their end...";
         if (!jsn.data.results.content.length) throw "query returned no results";
 
         // Get listing URLs
@@ -117,14 +125,10 @@ const COPART_API = {
             throw `Copart encountered a server error: ${response.status} error.`;
 
         // Check response content
-        if (
-            !response.headers.get("content-type").startsWith("application/json")
-        ) {
-            console.log("Copart wants a CAPTCHA check");
-            browser.tabs.create({url: "https://www.copart.com"});
-            throw "Please complete the CAPTCHA and try again.";
-        }
-
+        if (!response.headers.get("content-type").startsWith("application/json")) {
+            throwCaptchaError()
+        };
+        
         // Get response content
         return await response.json();
     },
