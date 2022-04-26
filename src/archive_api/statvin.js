@@ -210,8 +210,9 @@ const STATVIN_SCRAPER = {
         // salvageName is contained in a div attribute!
         let salvageName;
         try {
-            salvageName = doc.querySelector("div[data-auction-name]").dataset
-                .auctionName.toLowerCase();
+            salvageName = doc
+                .querySelector("div[data-auction-name]")
+                .dataset.auctionName.toLowerCase();
         } catch {}
         return salvageName;
     },

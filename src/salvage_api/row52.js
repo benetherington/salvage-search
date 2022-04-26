@@ -6,7 +6,7 @@ const ROW52_API = {
     // Image downloads are not supported. URL_PATTERN can be not included, but
     // URL_REGEXP needs to be defined but never match.
     URL_REGEXP: /<(?!x)x/,
-    
+
     search: (vin, notify = sendNotification) => {
         return new Promise(async (resolve, reject) => {
             try {
