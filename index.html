@@ -7,60 +7,32 @@
 
     <body>
         <img src="src/icons/SS-100.bmp" />
-        <h1>Salvage Search v2</h1>
+        <h1>Salvage Search v3</h1>
 
         <p>
             Salvage Search is a browser plugin that makes it easy to search
-            inventory websites for vehicles and download high-def images. Select
-            your browser below to install it.
+            inventory websites for vehicles and download high-def images.
         </p>
 
-        <strong>FIREFOX</strong>
+        <strong>INSTALL ON FIREFOX</strong>
         <ul>
             <li>
                 <a
                     href="https://benetherington.com/salvage-search/releases/salvage_search-3.0.3-fx.xpi">
-                    Firefox v3.0.3 -- CLICK TO INSTALL
+                    Firefox v3.0.3
                 </a>
                 <ul>
+                    <li>Adds support for Stat.vin.</li>
                     <li>
-                        A major update! Most of the work is in reorganization
-                        and stability improvements.
+                        Bugfix: some IAAI listings would not trigger 360 popups.
                     </li>
                     <li>
-                        Adds exterior walkaround 360 and interior panorama 360
-                        image captures. These are the two features I'm most
-                        excited about!
-                    </li>
-                    <ul>
-                        <li>
-                            Quickly select the walkaround images that you want
-                            with a shopping cart-like interface.
-                        </li>
-                        <li>
-                            View interior panoramas and get high resolution
-                            captures. This involves some annoying 3D graphics
-                            work: there are improvements to come, but it's
-                            pretty functional as-is
-                        </li>
-                    </ul>
-                    <li>Adds panorama/walkaround downloads to Copart.</li>
-                    <li>
-                        Fixes IAAI downloads. It looks like they no longer serve
-                        VIN search results, and they did a minor change to their
-                        image information variable names.
-                    </li>
-                    <li>
-                        Adds a Copart/IAAI selector to the popup. If one is
-                        selected when you click SEARCH, only that yard will be
-                        searched. Importantly, this also allows you to specify a
-                        yard to download images from. Previously, if Copart and
-                        IAAI shared a lot number, the Copart images would be
-                        downloaded, and the IAAI images ignored.
+                        Interior 360 now lets you drag outside the window while
+                        panning.
                     </li>
                 </ul>
             </li>
-            <li>
+            <!-- <li>
                 <a
                     href="https://benetherington.com/salvage-search/releases/salvage_search-3.1.0-fx.zip">
                     Firefox v3.1.0</a
@@ -75,20 +47,22 @@
                 <ul>
                     <li>Adds support for Stat.vin.</li>
                 </ul>
-            </li>
+            </li> -->
         </ul>
-        <strong>CHROME</strong>
+        <strong>INSTALL ON CHROME</strong>
         <ul>
             <li>
                 <a
                     href="https://chrome.google.com/webstore/detail/salvage-search/okbjgjdpehblohdlmocliddhkhpkikoh">
-                    Chrome v3.0.3
+                    Chrome v3.1.1
                 </a>
             </li>
             <ul>
                 <li>
-                    See release notes above. Chrome and Firefox are currently on
-                    the same version.
+                    See release notes above. Chrome versions are submitted at
+                    the same time as Firefox, but take longer to be approved.
+                    The Chrome webstore may have a slightly older version, but
+                    it will auto-update as needed.
                 </li>
             </ul>
         </ul>
@@ -113,14 +87,12 @@
             sites.
         </p>
         <p>
-            IAAI has recently disabled searching by VIN. This extension will
-            attempt to do a VIN search, but if IAAI returns a general terms
-            search instead, no results will be selected. As of v3.0, there are
-            two archive sites that have fairly complete coverage of IAAI's
-            current stock. In v3.1, a third archive site will be added. In the
-            future, it may be neccessary for this extension to search IAAI by
-            zip code, year, make, and model and present vehicles with a partial
-            VIN match, but archive sites seem to be a more effective approach.
+            IAAI has recently disabled searching by VIN for users without am
+            account. This extension will attempt to do a VIN search, but if IAAI
+            returns a general terms search instead, no results will be
+            displayed, and no error will be generated. Create an IAAI account
+            and make sure you're logged in if you want to ensure that you can
+            find vehicles in inventory.
         </p>
         <p>
             The second button, the <b>Download Images button</b>, is enabled for
@@ -139,7 +111,8 @@
             vehicle listing page open, and the fields will pre-fill for you.
             Image downloads are available for (as far as I can tell) every
             single vehicle at Copart and IAAI, even if they've been sold and are
-            no longer listed on their websites.
+            no longer listed on their websites. Available, that is, if you have
+            a lot number.
         </p>
         <p>
             Click the <b>GEAR BUTTON</b> to edit your settings, and enable or
@@ -240,15 +213,10 @@
         <h2>PLANNED FEATURES</h2>
         <ul>
             <li>
-                <s>
-                    Detect CAPTCHA requirements. Sometimes Copart requires a
-                    CAPTCHA to do a search, but currently we don't detect when
-                    that happens, leading to false negatives.
-                </s>
-                This should be taken care of! Please let me know if you
-                encounter issues.
+                Add extra salvage archive sites as they come and go. These
+                archive sites aren't illegal, but do occasionally get shut down
+                for one reason or another.
             </li>
-            <li>Add extra salvage archive sites.</li>
         </ul>
         <br /><br /><br /><br />
         <hr />
