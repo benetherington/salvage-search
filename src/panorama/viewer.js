@@ -8,10 +8,10 @@ class PanoContainer extends HTMLElement {
         super();
 
         // Create shadow DOM
-        this.attachShadow({mode: "open"});
+        this.attachShadow({mode: 'open'});
 
         // Add shadow style
-        const style = document.createElement("style");
+        const style = document.createElement('style');
         style.textContent = PANO_CONTAINER_STYLE;
         this.shadowRoot.append(style);
     }
@@ -23,10 +23,10 @@ class PanoContainer extends HTMLElement {
         if (this.shadowRoot.childElementCount > 1) return;
 
         // Apply style rules
-        this.classList.add("pano-container");
+        this.classList.add('pano-container');
 
         // add panoviewer
-        this.panoViewer = document.createElement("canvas", {is: "pano-viewer"});
+        this.panoViewer = document.createElement('canvas', {is: 'pano-viewer'});
         this.shadowRoot.append(this.panoViewer);
     }
     addPano(faces) {
@@ -37,32 +37,32 @@ class PanoContainer extends HTMLElement {
     }
     async getThumbnail() {
         // Create a container
-        let thumbContainer = document.createElement("div");
-        thumbContainer.classList.add("thumbnail");
-        thumbContainer.classList.add("has-hover");
+        let thumbContainer = document.createElement('div');
+        thumbContainer.classList.add('thumbnail');
+        thumbContainer.classList.add('has-hover');
 
         // Create hover toolbar
-        let divHover = document.createElement("div");
-        divHover.classList.add("hover-bar");
-        divHover.classList.add("card");
+        let divHover = document.createElement('div');
+        divHover.classList.add('hover-bar');
+        divHover.classList.add('card');
         thumbContainer.append(divHover);
 
         // Add edit button to toolbar
-        let spanEdit = document.createElement("span");
-        spanEdit.classList.add("edit");
-        spanEdit.addEventListener("click", this.restoreFrom.bind(this));
+        let spanEdit = document.createElement('span');
+        spanEdit.classList.add('edit');
+        spanEdit.addEventListener('click', this.restoreFrom.bind(this));
         divHover.append(spanEdit);
 
         // Add delete button to toolbar
-        let spanDelete = document.createElement("span");
-        spanDelete.classList.add("delete");
-        spanDelete.addEventListener("click", (e) => thumbContainer.remove());
+        let spanDelete = document.createElement('span');
+        spanDelete.classList.add('delete');
+        spanDelete.addEventListener('click', (e) => thumbContainer.remove());
         divHover.append(spanDelete);
 
         // Create a placeholder image for the thumbnail
-        let img = document.createElement("img");
-        img.classList.add("card");
-        img.src = "/icons/hourglass-split.svg";
+        let img = document.createElement('img');
+        img.classList.add('card');
+        img.src = '/icons/hourglass-split.svg';
         thumbContainer.append(img);
 
         // Start rendering the current view
@@ -72,12 +72,12 @@ class PanoContainer extends HTMLElement {
 
         // Set view data so we can edit the thumbnail
         let view = {
-            pitch: Number(this.panoViewer.getAttribute("pitch")),
-            yaw: Number(this.panoViewer.getAttribute("yaw")),
-            zoom: Number(this.panoViewer.getAttribute("zoom")),
-            fov: Number(this.panoViewer.getAttribute("fov")),
+            pitch: Number(this.panoViewer.getAttribute('pitch')),
+            yaw: Number(this.panoViewer.getAttribute('yaw')),
+            zoom: Number(this.panoViewer.getAttribute('zoom')),
+            fov: Number(this.panoViewer.getAttribute('fov')),
         };
-        spanEdit.setAttribute("view", JSON.stringify(view));
+        spanEdit.setAttribute('view', JSON.stringify(view));
 
         // Done!
         return thumbContainer;
@@ -85,20 +85,20 @@ class PanoContainer extends HTMLElement {
     restoreFrom(e) {
         // Get view attributes
         const {pitch, yaw, zoom, fov} = JSON.parse(
-            e.target.getAttribute("view"),
+            e.target.getAttribute('view'),
         );
 
         // Set view attributes
-        this.panoViewer.setAttribute("pitch", pitch);
-        this.panoViewer.setAttribute("yaw", yaw);
-        this.panoViewer.setAttribute("zoom", zoom);
-        this.panoViewer.setAttribute("fov", fov);
+        this.panoViewer.setAttribute('pitch', pitch);
+        this.panoViewer.setAttribute('yaw', yaw);
+        this.panoViewer.setAttribute('zoom', zoom);
+        this.panoViewer.setAttribute('fov', fov);
 
         // Delete thumbnail
-        e.target.closest(".thumbnail").remove();
+        e.target.closest('.thumbnail').remove();
     }
 }
-customElements.define("pano-container", PanoContainer);
+customElements.define('pano-container', PanoContainer);
 
 /*-----------*\
   3D PANORAMA
@@ -109,7 +109,7 @@ class PanoViewer extends HTMLCanvasElement {
         const canvas = super();
 
         // Get A WebGL context
-        const gl = canvas.getContext("webgl");
+        const gl = canvas.getContext('webgl');
         if (!gl) return;
 
         // Initialize variables
@@ -125,11 +125,11 @@ class PanoViewer extends HTMLCanvasElement {
         if (this.initiated) return;
 
         // patch in dataset values for cloning purposes
-        if (!this.hasAttribute("pitch")) {
-            this.setAttribute("pitch", 0);
-            this.setAttribute("yaw", 0);
-            this.setAttribute("zoom", -20);
-            this.setAttribute("fov", 60);
+        if (!this.hasAttribute('pitch')) {
+            this.setAttribute('pitch', 0);
+            this.setAttribute('yaw', 0);
+            this.setAttribute('zoom', -20);
+            this.setAttribute('fov', 60);
         }
 
         // if we get resized, we'll still generate the same pixels, and they'll
@@ -143,10 +143,10 @@ class PanoViewer extends HTMLCanvasElement {
         resizeObserver.observe(this);
 
         // Listen for pan/zoom events
-        this.addEventListener("mousemove", this.onMouseMove.bind(this));
-        this.addEventListener("wheel", this.onWheel.bind(this));
-        document.addEventListener("keydown", this.onKeyDown.bind(this));
-        document.addEventListener("keyup", this.onKeyUp.bind(this));
+        this.addEventListener('mousemove', this.onMouseMove.bind(this));
+        this.addEventListener('wheel', this.onWheel.bind(this));
+        document.addEventListener('keydown', this.onKeyDown.bind(this));
+        document.addEventListener('keyup', this.onKeyUp.bind(this));
 
         // Do 3D stuff.
         this.initGl();
@@ -155,50 +155,50 @@ class PanoViewer extends HTMLCanvasElement {
 
     // COMPOSER INTERFACE
     static get observedAttributes() {
-        return ["pitch", "yaw", "zoom", "fov"];
+        return ['pitch', 'yaw', 'zoom', 'fov'];
     }
     attributeChangedCallback(attrName, oldValue, newValue) {
         this.render();
     }
     updateFaces(faces) {
-        const gl = this.getContext("webgl");
+        const gl = this.getContext('webgl');
 
         // Asynchronously load textures
         let texPromises = [];
         texPromises.push(
             this.loadTexture(
                 gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-                faces.pano_r || "images/pano_r.jpg",
+                faces.pano_r || 'images/pano_r.jpg',
             ),
         );
         texPromises.push(
             this.loadTexture(
                 gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-                faces.pano_l || "images/pano_l.jpg",
+                faces.pano_l || 'images/pano_l.jpg',
             ),
         );
         texPromises.push(
             this.loadTexture(
                 gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-                faces.pano_u || "images/pano_u.jpg",
+                faces.pano_u || 'images/pano_u.jpg',
             ),
         );
         texPromises.push(
             this.loadTexture(
                 gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-                faces.pano_d || "images/pano_d.jpg",
+                faces.pano_d || 'images/pano_d.jpg',
             ),
         );
         texPromises.push(
             this.loadTexture(
                 gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-                faces.pano_b || "images/pano_b.jpg",
+                faces.pano_b || 'images/pano_b.jpg',
             ),
         );
         texPromises.push(
             this.loadTexture(
                 gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-                faces.pano_f || "images/pano_f.jpg",
+                faces.pano_f || 'images/pano_f.jpg',
             ),
         );
         this.render();
@@ -207,31 +207,31 @@ class PanoViewer extends HTMLCanvasElement {
         return Promise.all(texPromises);
     }
     goToDriver() {
-        this.setAttribute("pitch", 4);
-        this.setAttribute("yaw", 80);
-        this.setAttribute("zoom", -20);
-        this.setAttribute("fov", 60);
+        this.setAttribute('pitch', 4);
+        this.setAttribute('yaw', 80);
+        this.setAttribute('zoom', -20);
+        this.setAttribute('fov', 60);
         return new Promise((resolve) => this.render(resolve));
     }
     goToPassenger() {
-        this.setAttribute("pitch", 4);
-        this.setAttribute("yaw", -80);
-        this.setAttribute("zoom", -20);
-        this.setAttribute("fov", 60);
+        this.setAttribute('pitch', 4);
+        this.setAttribute('yaw', -80);
+        this.setAttribute('zoom', -20);
+        this.setAttribute('fov', 60);
         return new Promise((resolve) => this.render(resolve));
     }
     goToIp() {
-        this.setAttribute("pitch", 4);
-        this.setAttribute("yaw", 0);
-        this.setAttribute("zoom", -20);
-        this.setAttribute("fov", 60);
+        this.setAttribute('pitch', 4);
+        this.setAttribute('yaw', 0);
+        this.setAttribute('zoom', -20);
+        this.setAttribute('fov', 60);
         return new Promise((resolve) => this.render(resolve));
     }
     goToRear() {
-        this.setAttribute("pitch", -10);
-        this.setAttribute("yaw", 180);
-        this.setAttribute("zoom", -20);
-        this.setAttribute("fov", 60);
+        this.setAttribute('pitch', -10);
+        this.setAttribute('yaw', 180);
+        this.setAttribute('zoom', -20);
+        this.setAttribute('fov', 60);
         return new Promise((resolve) => this.render(resolve));
     }
 
@@ -257,17 +257,17 @@ class PanoViewer extends HTMLCanvasElement {
             const moveAmount = e.y - prevY;
 
             // Get, change, and update zoom attribute
-            let zoom = Number(this.getAttribute("zoom"));
+            let zoom = Number(this.getAttribute('zoom'));
             zoom += moveAmount * 0.1;
-            this.setAttribute("zoom", zoom);
+            this.setAttribute('zoom', zoom);
         } else {
             // Find out how far the cursor has moved
             const yDistance = e.y - prevY;
             const xDistance = e.x - prevX;
 
             // Get pitch and yaw attributes
-            let pitch = Number(this.getAttribute("pitch"));
-            let yaw = Number(this.getAttribute("yaw"));
+            let pitch = Number(this.getAttribute('pitch'));
+            let yaw = Number(this.getAttribute('yaw'));
 
             // Increment pitch and yaw
             pitch += yDistance * 0.1;
@@ -276,8 +276,8 @@ class PanoViewer extends HTMLCanvasElement {
             yaw %= 360;
 
             // Update pitch and yaw attributes
-            this.setAttribute("pitch", pitch);
-            this.setAttribute("yaw", yaw);
+            this.setAttribute('pitch', pitch);
+            this.setAttribute('yaw', yaw);
         }
 
         // Done!
@@ -291,24 +291,24 @@ class PanoViewer extends HTMLCanvasElement {
         let scrollDistance = this.cursorPrev.scrollY - e.wheelDeltaY;
 
         // Get, change, and update the zoom attribute
-        let zoom = Number(this.getAttribute("zoom"));
+        let zoom = Number(this.getAttribute('zoom'));
         zoom -= scrollDistance * moveAmount;
-        this.setAttribute("zoom", zoom);
+        this.setAttribute('zoom', zoom);
 
         // Done!
         this.render();
     }
     onKeyDown(e) {
         // Check for ctrl, but don't unset the cursor (until keyup)
-        const zooming = e.key === "Control";
+        const zooming = e.key === 'Control';
         if (zooming) this.setZoomCursor(true);
 
         // Check for arrow keys (pan/tilt/zoom)
-        if (!e.key.startsWith("Arrow")) return;
-        const keyUp = e.key === "ArrowUp";
-        const keyDown = e.key === "ArrowDown";
-        const keyLeft = e.key === "ArrowLeft";
-        const keyRight = e.key === "ArrowRight";
+        if (!e.key.startsWith('Arrow')) return;
+        const keyUp = e.key === 'ArrowUp';
+        const keyDown = e.key === 'ArrowDown';
+        const keyLeft = e.key === 'ArrowLeft';
+        const keyRight = e.key === 'ArrowRight';
 
         // Set movement multiplier
         let moveAmount = e.shiftKey ? 1 : 5;
@@ -321,9 +321,9 @@ class PanoViewer extends HTMLCanvasElement {
             if (keyDown) direction = -1;
 
             // Get, change, and update the zoom attribute
-            let zoom = Number(this.getAttribute("zoom"));
+            let zoom = Number(this.getAttribute('zoom'));
             zoom += moveAmount * direction;
-            this.setAttribute("zoom", zoom);
+            this.setAttribute('zoom', zoom);
         } else if (keyUp || keyDown) {
             // Which way are we pitching?
             let direction = 0;
@@ -331,9 +331,9 @@ class PanoViewer extends HTMLCanvasElement {
             if (keyDown) direction = -1;
 
             // Get, change, and update the pitch attribute
-            let pitch = Number(this.getAttribute("pitch"));
+            let pitch = Number(this.getAttribute('pitch'));
             pitch += moveAmount * direction;
-            this.setAttribute("pitch", pitch);
+            this.setAttribute('pitch', pitch);
         } else if (keyLeft || keyRight) {
             // Which way are we yawing?
             let direction = 0;
@@ -341,27 +341,27 @@ class PanoViewer extends HTMLCanvasElement {
             if (keyRight) direction = -1;
 
             // Get, change, and update the yaw attribute
-            let yaw = Number(this.getAttribute("yaw"));
+            let yaw = Number(this.getAttribute('yaw'));
             yaw += moveAmount * direction;
-            this.setAttribute("yaw", yaw);
+            this.setAttribute('yaw', yaw);
         }
         this.render();
     }
     onKeyUp(e) {
         // Check for end of zoom state
-        if (e.key === "Control") this.setZoomCursor(false);
+        if (e.key === 'Control') this.setZoomCursor(false);
     }
 
     // CURSOR ZOOM ICON
     setZoomCursor(zooming) {
         // ctrl => show zoom cursor
-        if (zooming) this.style = "cursor: ns-resize;";
-        else this.style = "";
+        if (zooming) this.style = 'cursor: ns-resize;';
+        else this.style = '';
     }
 
     // WEB GRAPHICS LIBRARY
     async getImage(height = 1944, width = 2592) {
-        const gl = this.getContext("webgl");
+        const gl = this.getContext('webgl');
 
         // Scale canvas to full resolution
         let origHeight = gl.canvas.height;
@@ -386,7 +386,7 @@ class PanoViewer extends HTMLCanvasElement {
     }
 
     initGl() {
-        const gl = this.getContext("webgl");
+        const gl = this.getContext('webgl');
 
         // Compile shaders
         const vertex_shader = gl.createShader(gl.VERTEX_SHADER);
@@ -406,9 +406,9 @@ class PanoViewer extends HTMLCanvasElement {
             gl.COMPILE_STATUS,
         );
         if (!vertexShaderStatus)
-            console.error("The vertex shader failed to compile.");
+            console.error('The vertex shader failed to compile.');
         if (!fragmentShaderStatus)
-            console.error("The fragment shader failed to compile.");
+            console.error('The fragment shader failed to compile.');
 
         // Create a shader program
         this.program = gl.createProgram();
@@ -422,17 +422,17 @@ class PanoViewer extends HTMLCanvasElement {
             gl.LINK_STATUS,
         );
         if (!programLinkStatus)
-            console.error("The shader program failed to link.");
+            console.error('The shader program failed to link.');
 
         // Look up memory locations for later use
         this.locations.position = gl.getAttribLocation(
             this.program,
-            "a_position",
+            'a_position',
         );
-        this.locations.skybox = gl.getUniformLocation(this.program, "u_skybox");
+        this.locations.skybox = gl.getUniformLocation(this.program, 'u_skybox');
         this.locations.viewDirectionProjectionInverse = gl.getUniformLocation(
             this.program,
-            "u_viewDirectionProjectionInverse",
+            'u_viewDirectionProjectionInverse',
         );
 
         // Create, bind, and use a position buffer
@@ -447,27 +447,27 @@ class PanoViewer extends HTMLCanvasElement {
         // Load placeholder images
         this.loadTexture(
             gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-            this.pano_r || "images/pano_r.jpg",
+            this.pano_r || 'images/pano_r.jpg',
         );
         this.loadTexture(
             gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-            this.pano_l || "images/pano_l.jpg",
+            this.pano_l || 'images/pano_l.jpg',
         );
         this.loadTexture(
             gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-            this.pano_u || "images/pano_u.jpg",
+            this.pano_u || 'images/pano_u.jpg',
         );
         this.loadTexture(
             gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-            this.pano_d || "images/pano_d.jpg",
+            this.pano_d || 'images/pano_d.jpg',
         );
         this.loadTexture(
             gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-            this.pano_b || "images/pano_b.jpg",
+            this.pano_b || 'images/pano_b.jpg',
         );
         this.loadTexture(
             gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-            this.pano_f || "images/pano_f.jpg",
+            this.pano_f || 'images/pano_f.jpg',
         );
 
         // Set cubemap parameters
@@ -484,7 +484,7 @@ class PanoViewer extends HTMLCanvasElement {
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     }
     loadTexture(target, url) {
-        const gl = this.getContext("webgl");
+        const gl = this.getContext('webgl');
 
         // Build an empty texture for immediate results
         const level = 0;
@@ -508,7 +508,7 @@ class PanoViewer extends HTMLCanvasElement {
         // Asynchronously load the image
         const image = new Image();
         const imageLoadedPromise = new Promise((resolve) => {
-            image.addEventListener("load", () => {
+            image.addEventListener('load', () => {
                 // Now that the image has loaded make copy it to the texture.
                 gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texture);
                 gl.texImage2D(
@@ -528,7 +528,7 @@ class PanoViewer extends HTMLCanvasElement {
         return imageLoadedPromise;
     }
     render(callback) {
-        const gl = this.getContext("webgl");
+        const gl = this.getContext('webgl');
 
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -559,10 +559,10 @@ class PanoViewer extends HTMLCanvasElement {
         );
 
         // lookup view attributes
-        const pitch = Number(this.getAttribute("pitch"));
-        const yaw = Number(this.getAttribute("yaw"));
-        const zoom = Number(this.getAttribute("zoom"));
-        const fov = Number(this.getAttribute("fov"));
+        const pitch = Number(this.getAttribute('pitch'));
+        const yaw = Number(this.getAttribute('yaw'));
+        const zoom = Number(this.getAttribute('zoom'));
+        const fov = Number(this.getAttribute('fov'));
 
         // Compute the projection matrix
         const fieldOfViewRadians = degToRad(fov);
@@ -626,6 +626,6 @@ class PanoViewer extends HTMLCanvasElement {
     }
 }
 
-window.customElements.define("pano-viewer", PanoViewer, {extends: "canvas"});
+window.customElements.define('pano-viewer', PanoViewer, {extends: 'canvas'});
 
 // use document.createElement("canvas", {is:"pano-viewer"}) to create new instances
