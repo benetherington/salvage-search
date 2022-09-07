@@ -1,6 +1,6 @@
 const IAAI_API = {
-    NAME: "iaai",
-    URL_PATTERN: "*://*.iaai.com/*ehicle*etail*",
+    NAME: 'iaai',
+    URL_PATTERN: '*://*.iaai.com/*ehicle*etail*',
     URL_REGEXP: /iaai\.com/,
 
     /*------*\
@@ -10,7 +10,7 @@ const IAAI_API = {
         return new Promise(async (resolve, reject) => {
             try {
                 const searchResults = await IAAI_API.searcher(vin);
-                notify("IAAI: found a match!", "success");
+                notify('IAAI: found a match!', 'success');
                 resolve(searchResults);
             } catch (error) {
                 console.log(`IAAI rejecting: ${error}`);
@@ -23,9 +23,9 @@ const IAAI_API = {
         // Configure VIN search
         const searchUrl = `https://www.iaai.com/Search?SearchVIN=${vin}`;
         const headers = {
-            "User-Agent": window.navigator.userAgent,
-            Accept: "application/json, text/plain, */*",
-            "Content-Type": "application/json;charset=utf-8",
+            'User-Agent': window.navigator.userAgent,
+            Accept: 'application/json, text/plain, */*',
+            'Content-Type': 'application/json;charset=utf-8',
         };
 
         // Fetch search results
@@ -34,11 +34,11 @@ const IAAI_API = {
         // Check status
         if (!response.ok)
             throw `something went wrong on their end: ${response.status} error.`;
-        if (!response.redirected) throw "query returned no results.";
+        if (!response.redirected) throw 'query returned no results.';
 
         // Check response content
         if (!/(itemid|vehicledetails)/.test(response.url))
-            throw "query returned no results.";
+            throw 'query returned no results.';
 
         // Get listing URL
         const listingUrl = response.url;
@@ -46,22 +46,22 @@ const IAAI_API = {
         const extras = [];
 
         // Send back results
-        return {salvageName: "iaai", listingUrl, lotNumber, extras};
+        return {salvageName: 'iaai', listingUrl, lotNumber, extras};
     },
     getVehicleInfo: async (vehicle, options) => {
         if (options.url) {
             let response = await fetch(options.url);
             if (!response.ok) {
-                console.log("IAAI redirect URL invalid");
+                console.log('IAAI redirect URL invalid');
                 return;
             }
             let parser = new DOMParser();
             let doc = parser.parseFromString(
                 await response.text(),
-                "text/html",
+                'text/html',
             );
             let jsn = JSON.parse(
-                doc.querySelector("#ProductDetailsVM").innerText,
+                doc.querySelector('#ProductDetailsVM').innerText,
             );
             vehicle.lotNumber = jsn.VehicleDetailsViewModel.StockNo;
         }
@@ -87,7 +87,7 @@ const IAAI_API = {
                 lotNumber = jsn.auctionInformation.stockNumber;
 
             // Done!
-            const salvageName = "iaai";
+            const salvageName = 'iaai';
             return {lotNumber, salvageName};
         } catch {
             throw "something went wrong getting this vehicle's stock number. Please reload the page and try again.";
@@ -104,14 +104,14 @@ const IAAI_API = {
         // Make request
         const {url, headers} = IAAI_API.buildImageInfoRequest(lotNumber);
         const response = await fetch(url, headers);
-        console.log("IAAI imageInfo request complete");
+        console.log('IAAI imageInfo request complete');
 
         // Check response status
-        if (!response.ok) throw "server error";
+        if (!response.ok) throw 'server error';
 
         // Check response content
-        if (response.headers.get("content-length") <= "0") {
-            throw "no images found.";
+        if (response.headers.get('content-length') <= '0') {
+            throw 'no images found.';
         }
 
         // Everything looks good!
@@ -119,16 +119,16 @@ const IAAI_API = {
     },
     buildImageInfoRequest: (lotNumber) => {
         // Create URL with search body
-        const url = new URL("https://iaai.com/Images/GetJsonImageDimensions");
+        const url = new URL('https://iaai.com/Images/GetJsonImageDimensions');
         url.searchParams.append(
-            "json",
+            'json',
             JSON.stringify({stockNumber: lotNumber}),
         );
 
         // Create headers
         const headers = {
-            "User-Agent": window.navigator.userAgent,
-            Accept: "application/json, text/plain, */*",
+            'User-Agent': window.navigator.userAgent,
+            Accept: 'application/json, text/plain, */*',
         };
 
         return {url, headers};
@@ -136,7 +136,7 @@ const IAAI_API = {
 
     // Hero images
     heroImages: async (imageInfo) => {
-        console.log("IAAI downloading images.");
+        console.log('IAAI downloading images.');
 
         // TODO: Validate imageInfo
 
@@ -196,20 +196,20 @@ const IAAI_API = {
         return {x, y, bmp};
     },
     getTileUrl: (key, x, y) => {
-        const url = new URL("https://anvis.iaai.com/deepzoom");
-        url.searchParams.append("imageKey", key.K);
-        url.searchParams.append("level", 12);
-        url.searchParams.append("x", x);
-        url.searchParams.append("y", y);
-        url.searchParams.append("overlap", 0);
-        url.searchParams.append("tilesize", IAAI_API.TILE_SIZE);
+        const url = new URL('https://anvis.iaai.com/deepzoom');
+        url.searchParams.append('imageKey', key.K);
+        url.searchParams.append('level', 12);
+        url.searchParams.append('x', x);
+        url.searchParams.append('y', y);
+        url.searchParams.append('overlap', 0);
+        url.searchParams.append('tilesize', IAAI_API.TILE_SIZE);
         return url;
     },
     // Tile stitching
     stitchImage: ({key, tiles}) => {
         // Create canvas
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
         canvas.width = key.W;
         canvas.height = key.H;
 
@@ -220,7 +220,7 @@ const IAAI_API = {
         });
 
         // Export canvas
-        const dataURL = canvas.toDataURL("image/jpeg");
+        const dataURL = canvas.toDataURL('image/jpeg');
         const objectURL = urlFromDataUrl(dataURL);
 
         // Done!
@@ -251,24 +251,19 @@ const IAAI_API = {
 
         try {
             // Build request, turning spincar viewer url into the raw images url.
-            const spinUrl = imageInfo.Image360Url;
-            const spinPath = /com\/(.*)/.exec(spinUrl)[1];
-            const apiUrl = "https://api.spincar.com/spin/" + spinPath;
+            const spinUrl = new URL(imageInfo.Image360Url);
+            const spinPath = /\/([^!]*)/.exec(spinUrl.pathname)[1];
+            const apiUrl = 'https://api.spincar.com/spin/' + spinPath;
             const headers = {
-                "User-Agent": window.navigator.userAgent,
-                Accept: "application/json",
+                'User-Agent': window.navigator.userAgent,
+                Accept: 'application/json',
             };
 
             // Send request
-            const spincarRequest = fetch(apiUrl, headers).then((r) => r.json());
-            spincarRequest.catch((error) => {
-                console.error("Spincar request failed!");
-                console.error(error);
-                return;
-            });
-            return spincarRequest;
+            const spincarRequest = await fetch(apiUrl, headers);
+            return spincarRequest.json();
         } catch (error) {
-            console.error("IAAI failed while requesting Spincar info.");
+            console.error('IAAI failed while requesting Spincar info.');
             console.error(`spinUrl: ${spinUrl}`);
             console.error(`apiUrl: ${apiUrl}`);
             console.error(error);
@@ -302,23 +297,23 @@ const IAAI_API = {
         let walkSettled = await Promise.allSettled(walkPromises);
 
         // Check for errors, hand back object URLs
-        return walkSettled.map((p) => p.value || "TODO: add rejected image");
+        return walkSettled.map((p) => p.value || 'TODO: add rejected image');
     },
     panoramaObjectUrls: async (bonusInfo) => {
         // Validate bonusInfo
         if (!bonusInfo.cdn_image_prefix) return;
 
         // Notify user
-        sendNotification("Downloading interior 360.");
+        sendNotification('Downloading interior 360.');
 
         // Build image URLs
         const faceNames = [
-            "pano_f",
-            "pano_l",
-            "pano_b",
-            "pano_r",
-            "pano_u",
-            "pano_d",
+            'pano_f',
+            'pano_l',
+            'pano_b',
+            'pano_r',
+            'pano_u',
+            'pano_d',
         ];
         let spincarUrls = faceNames.map(
             (cubeFace) =>
@@ -331,7 +326,7 @@ const IAAI_API = {
 
         // Check for errors, add face labels
         let panoObjectUrls = panoSettled.map((promise, idx) => {
-            const url = promise.value || "TODO: add rejected image";
+            const url = promise.value || 'TODO: add rejected image';
             const face = faceNames[idx];
             return [face, url];
         });
