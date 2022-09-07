@@ -1,13 +1,10 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "src"
-		}
-	],
-	"settings": {
-		"prettier.configPath": "C:\\salvage-search\\.prettierrc"
-	}
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "src"
+        }
+    ],
 }
