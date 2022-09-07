@@ -143,7 +143,7 @@ class PanoViewer extends HTMLCanvasElement {
         resizeObserver.observe(this);
 
         // Listen for pan/zoom events
-        this.addEventListener('mousemove', this.onMouseMove.bind(this));
+        this.addEventListener('pointermove', this.onPointerMove.bind(this));
         this.addEventListener('wheel', this.onWheel.bind(this));
         document.addEventListener('keydown', this.onKeyDown.bind(this));
         document.addEventListener('keyup', this.onKeyUp.bind(this));
@@ -236,7 +236,7 @@ class PanoViewer extends HTMLCanvasElement {
     }
 
     // ZOOM/PAN EVENTS
-    onMouseMove(e) {
+    onPointerMove(e) {
         // Save cursor position to compare against later
         const {x: prevX, y: prevY} = this.cursorPrev;
         this.cursorPrev.x = e.x;
@@ -249,8 +249,9 @@ class PanoViewer extends HTMLCanvasElement {
         // Update cursor
         this.setZoomCursor(zooming);
 
-        // If we're not dragging, we're done
-        if (!dragging) return;
+        // If we're dragging, capture pointer
+        if (dragging) this.setPointerCapture(e.pointerId);
+        else return;
 
         if (zooming) {
             // Find how far the curor has moved up
