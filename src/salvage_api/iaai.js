@@ -36,6 +36,10 @@ const IAAI_API = {
             throw `something went wrong on their end: ${response.status} error.`;
         if (!response.redirected) throw 'query returned no results.';
 
+        // Check that a user is logged in
+        const txt = await response.text();
+        IAAI_API.checkLoggedIn(txt);
+
         // Check response content
         if (!/(itemid|vehicledetails)/.test(response.url))
             throw 'query returned no results.';
@@ -65,6 +69,13 @@ const IAAI_API = {
             );
             vehicle.lotNumber = jsn.VehicleDetailsViewModel.StockNo;
         }
+    },
+    checkLoggedIn: (txt) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(txt, 'text/html');
+
+        const loggedInUserName = doc.querySelector('.header__avatar-name');
+        if (!loggedInUserName) throw 'please log in.';
     },
 
     /*------*\
