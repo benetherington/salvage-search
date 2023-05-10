@@ -117,6 +117,31 @@ const IAAI_API = {
         // Everything looks good!
         return response.json();
     },
+
+    fetchImageKeysFromListingPage: async (lotNumber) => {
+        console.log(
+            'Attempting to bet image info from IAAI page generation bug',
+        );
+        const url = `https://www.iaai.com/vehicledetail/${lotNumber}~US`;
+        const response = await fetch(url);
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(await response.text(), 'text/html');
+
+        const generatorMistake = doc.getElementById('fullViewImg').outerHTML;
+        const jsnMatch = /dimensionsimagekey="(.*?)\)/.exec(generatorMistake);
+        if (!jsnMatch) return;
+
+        return JSON.parse(jsnMatch[1].toUpperCase());
+    },
+
+    fetchNewSpinDetails: async () => {
+        const productDetails = JSON.parse(
+            document.getElementById('ProductDetailsVM').textContent,
+        );
+        const imageDetails = productDetails.inventoryView.imageDimensions;
+    },
+
     buildImageInfoRequest: (lotNumber) => {
         // Create URL with search body
         const url = new URL('https://iaai.com/Images/GetJsonImageDimensions');
@@ -196,7 +221,7 @@ const IAAI_API = {
         return {x, y, bmp};
     },
     getTileUrl: (key, x, y) => {
-        const url = new URL('https://anvis.iaai.com/deepzoom');
+        const url = new URL('https://vis.iaai.com/deepzoom');
         url.searchParams.append('imageKey', key.K);
         url.searchParams.append('level', 12);
         url.searchParams.append('x', x);
