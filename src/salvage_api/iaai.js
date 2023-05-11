@@ -155,7 +155,9 @@ const IAAI_API = {
 
     buildImageInfoRequest: (lotNumber) => {
         // Create URL with search body
-        const url = new URL('https://iaai.com/Images/GetJsonImageDimensions');
+        const url = new URL(
+            'https://www.iaai.com/Images/GetJsonImageDimensions',
+        );
         url.searchParams.append(
             'json',
             JSON.stringify({stockNumber: lotNumber}),
