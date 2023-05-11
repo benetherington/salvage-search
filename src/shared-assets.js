@@ -67,10 +67,32 @@ const fetchImageData = async (url) => {
 
     return imageData;
 };
-const fetchObjectUrl = (imageUrl) => {
-    return fetch(imageUrl)
-        .then((response) => response.blob())
-        .then((blob) => URL.createObjectURL(blob));
+const fetchObjectUrl = async (imageUrl) => {
+    await requestOriginPermissions(imageUrl);
+
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+};
+
+const requestOriginPermissions = async (urlString) => {
+    // Construct origins pattern
+    const url = new URL(urlString);
+    const hostPattern = url.origin + '/*';
+
+    // Check if we're permissioned for this host
+    const havePermission = await browser.permissions.contains({
+        origins: [hostPattern],
+    });
+    if (havePermission) return;
+
+    // Request permission for this host
+    const permissionGranted = await browser.permissions.request({
+        origins: [hostPattern],
+    });
+
+    if (!permissionGranted)
+        throw `can't get images without permission to access ${url.host}`;
 };
 
 /*----------------*\
