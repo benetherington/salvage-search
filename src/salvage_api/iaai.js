@@ -89,13 +89,22 @@ const IAAI_API = {
             });
 
             // Parse out lotNumber
-            let lotNumber;
             const jsn = JSON.parse(lastEvaluated[0]);
-            // Not sure if below are alternatives, or the first was superceded.
-            if (jsn.VehicleDetailsViewModel)
-                lotNumber = jsn.VehicleDetailsViewModel.StockNo;
-            if (jsn.auctionInformation)
-                lotNumber = jsn.auctionInformation.stockNumber;
+            const lotNumber =
+                jsn?.VehicleDetailsViewModel?.StockNo ||
+                jsn?.auctionInformation?.stockNumber ||
+                jsn?.inventoryView?.attributes?.StockNumber ||
+                jsn?.inventoryView?.vehicleInformation?.$values?.find(
+                    (v) => v.key === 'StockHash',
+                )?.value;
+
+            // Inventory ID and image Ids are also available here
+            // const inventoryId =
+            //     jsn?.inventoryView?.attributes?.Id ||
+            //     jsn?.inventoryView?.attributes?.SalvageId;
+
+            // jsn?.inventoryView?.attributes?.KeyImageLink ||
+            //     jsn?.inventoryView?.attributes?.Link360;
 
             // Done!
             const salvageName = 'iaai';
