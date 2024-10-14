@@ -110,16 +110,22 @@ const IAAI_API = {
         if (!response.ok) throw 'server error';
 
         // Check response content
-        if (response.headers.get('content-length') <= '0') {
-            throw 'no images found.';
-        }
+        // if (response.headers.get('content-length') <= '0') {
+        //     throw 'no images found.';
+        // }
 
         // Everything looks good!
-        return response.json();
+        try {
+            return response.json();
+        } catch {
+            throw 'no images found.';
+        }
     },
     buildImageInfoRequest: (lotNumber) => {
         // Create URL with search body
-        const url = new URL('https://iaai.com/Images/GetJsonImageDimensions');
+        const url = new URL(
+            'https://www.iaai.com/Images/GetJsonImageDimensions',
+        );
         url.searchParams.append(
             'json',
             JSON.stringify({stockNumber: lotNumber}),
